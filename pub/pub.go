@@ -21,11 +21,14 @@ func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return &Publisher{
+	p := &Publisher{
 		ID:      uuid.New(),
 		Channel: ch,
-	}, nil
+	}
+	defer func() {
+		slog.Info("Creating publisher with ID: " + p.ID.String())
+	}()
+	return p, nil
 
 }
 func (p *Publisher) Publish(ctx context.Context, msg interface{}) error {

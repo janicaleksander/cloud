@@ -1,6 +1,8 @@
 package sub
 
 import (
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/event"
 	"github.com/janicaleksander/cloud/utils"
@@ -28,12 +30,16 @@ func NewSubscriber[T event.Event](conn *amqp.Connection) (*Subscriber, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Subscriber{
+	s := &Subscriber{
 		ID:      uuid.New(),
 		Channel: ch,
 		Queue:   q,
 		Type:    name,
-	}, nil
+	}
+	defer func() {
+		slog.Info("Creating subscriber with ID: " + s.ID.String() + ", for queue: " + s.Queue.Name)
+	}()
+	return s, nil
 }
 
 func (s *Subscriber) Consume() (<-chan amqp.Delivery, error) {

@@ -44,7 +44,6 @@ func main() {
 		slog.Error("Can't load .env file")
 		return
 	}
-
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
 		slog.Error("Can't connect to amqp")
@@ -69,9 +68,14 @@ func main() {
 	mustSubscribe[event.Type3Event](conn, func(msgs <-chan amqp.Delivery, s *sub.Subscriber) {
 		for msg := range msgs {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			slog.Info(fmt.Sprintf(
-				"Received a message: %s, from queue: %s, msg type %s, by consumer %s",
-				msg.Body, s.Queue.Name, s.Type, s.ID))
+			slog.Info(
+				fmt.Sprintf("Received a message: %s, from queue: %s, msg type %s, by consumer %s",
+					msg.Body,
+					s.Queue.Name,
+					s.Type,
+					s.ID,
+				),
+			)
 			if err := p14.Publish(ctx, event.NewType4Event()); err != nil {
 				slog.Error("Failed to publish Type4Event: " + err.Error())
 			}

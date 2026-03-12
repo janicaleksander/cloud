@@ -73,6 +73,22 @@ func main() {
 		return
 	}
 	defer p31.Channel.Close()
+
+	p12, err := pub.NewPublisher(conn)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	defer p12.Channel.Close()
+
+	p13, err := pub.NewPublisher(conn)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	defer p13.Channel.Close()
+
+	// start publishers
 	type1Publishers := []*pub.Publisher{p11, p21, p31}
 	go func() {
 		for {
@@ -86,21 +102,7 @@ func main() {
 			time.Sleep(type1Delay)
 		}
 	}()
-
-	p12, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p12.Channel.Close()
 	publishWithRandomDelay(p12, func() interface{} { return event.NewType2Event() }, utils.GetTypeName(event.NewType2Event()))
-
-	p13, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p13.Channel.Close()
 	publishWithRandomDelay(p13, func() interface{} { return event.NewType3Event() }, utils.GetTypeName(event.NewType3Event()))
 
 	<-done
