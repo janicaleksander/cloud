@@ -14,13 +14,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-/*
-2 konsumentów zdarzenia typu 1
-1 konsumenta zdarzenia typu 2
-1 konsumenta zdarzenia typu 3, który po przetworzeniu zdarzenia wygeneruje zdarzenie typu 4 i je opublikuje.
-1 konsumenta zdarzenia typu 4.
-*/
-
 func processMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) {
 	for msg := range delivery {
 		slog.Info(fmt.Sprintf(
@@ -30,112 +23,62 @@ func processMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) 
 			subscriber.Type,
 			subscriber.ID))
 	}
+}
 
+func mustSubscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.Delivery, *sub.Subscriber)) {
+	s, err := sub.NewSubscriber[T](conn)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	msgs, err := s.Consume()
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	go handler(msgs, s)
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		slog.Error("Can't load .env file")
 		return
 	}
+
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
-		slog.Error("Can't connect to amqp ")
+		slog.Error("Can't connect to amqp")
 		return
 	}
 	defer conn.Close()
-	done := make(chan struct{})
 
-	// First Type1Event subscriber
-	s11, err := sub.NewSubscriber[event.Type1Event](conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	msgs11, err := s11.Consume()
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	go func() {
-		processMessages(msgs11, s11)
-	}()
+	// 2x Type1Event, 1x Type2Event, 1x Type4Event
+	mustSubscribe[event.Type1Event](conn, processMessages)
+	mustSubscribe[event.Type1Event](conn, processMessages)
+	mustSubscribe[event.Type2Event](conn, processMessages)
+	mustSubscribe[event.Type4Event](conn, processMessages)
 
-	// Second Type1Event subscriber
-	s21, err := sub.NewSubscriber[event.Type1Event](conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	msgs21, err := s21.Consume()
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	go func() {
-		processMessages(msgs21, s21)
-	}()
-
-	// Type2Event subscriber
-	s12, err := sub.NewSubscriber[event.Type2Event](conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	msgs12, err := s12.Consume()
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	go func() {
-		processMessages(msgs12, s12)
-	}()
-
-	// Type3Event subscriber - generates and publishes Type4Event
-	s13, err := sub.NewSubscriber[event.Type3Event](conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	msgs13, err := s13.Consume()
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
+	// Type3Event -> publikuje Type4Event
 	p14, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
 		return
 	}
 	defer p14.Channel.Close()
-	go func() {
-		for msg := range msgs13 {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			slog.Info(fmt.Sprintf("Received a message: %s, from queue: %s, msg type %s, by consumer %s", msg.Body, s13.Queue.Name, s13.Type, s13.ID))
-			// Generate and publish Type4Event
-			err := p14.Publish(ctx, event.NewType4Event())
-			if err != nil {
+
+	mustSubscribe[event.Type3Event](conn, func(msgs <-chan amqp.Delivery, s *sub.Subscriber) {
+		for msg := range msgs {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			slog.Info(fmt.Sprintf(
+				"Received a message: %s, from queue: %s, msg type %s, by consumer %s",
+				msg.Body, s.Queue.Name, s.Type, s.ID))
+			if err := p14.Publish(ctx, event.NewType4Event()); err != nil {
 				slog.Error("Failed to publish Type4Event: " + err.Error())
 			}
 			cancel()
 		}
-	}()
+	})
 
-	// Type4Event subscriber
-	s14, err := sub.NewSubscriber[event.Type4Event](conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	msgs14, err := s14.Consume()
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	go func() {
-		processMessages(msgs14, s14)
-	}()
-
+	done := make(chan struct{})
 	<-done
 }

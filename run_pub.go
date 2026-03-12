@@ -25,39 +25,15 @@ const (
 	randomDelayRange = 5
 )
 
-func createPublisher(conn *amqp.Connection) (*pub.Publisher, error) {
-	p, err := pub.NewPublisher(conn)
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-func publishWithContext(p *pub.Publisher, msg interface{}, eventType string) {
-	ctx, cancel := context.WithTimeout(context.Background(), publishTimeout)
-	defer cancel()
-
-	err := p.Publish(ctx, msg)
-	if err != nil {
-		slog.Error("Failed to publish " + eventType + ": " + err.Error())
-	}
-}
-
-func runType1Publishers(publishers []*pub.Publisher) {
+func publishWithRandomDelay(p *pub.Publisher, eventGenerator func() interface{}, eventType string) {
 	go func() {
 		for {
-			for _, p := range publishers {
-				publishWithContext(p, event.NewType1Event(), utils.GetTypeName(event.NewType1Event()))
+			ctx, cancel := context.WithTimeout(context.Background(), publishTimeout)
+			err := p.Publish(ctx, eventGenerator())
+			if err != nil {
+				slog.Error("Failed to publish " + eventType + ": " + err.Error())
 			}
-			time.Sleep(type1Delay)
-		}
-	}()
-}
-
-func runRandomPublisher(p *pub.Publisher, eventGenerator func() interface{}, eventType string) {
-	go func() {
-		for {
-			publishWithContext(p, eventGenerator(), eventType)
+			cancel()
 			time.Sleep(time.Second * time.Duration(rand.Intn(randomDelayRange)+1))
 		}
 	}()
@@ -71,42 +47,61 @@ func main() {
 	}
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
-		slog.Error("Can't connect to amqp")
+		slog.Error("Can't connect to amqp ")
 		return
 	}
 	defer conn.Close()
+	done := make(chan struct{})
 
-	// Create Type1Event publishers (3 publishers)
-	type1Publishers := make([]*pub.Publisher, 3)
-	for i := 0; i < 3; i++ {
-		p, err := createPublisher(conn)
-		if err != nil {
-			slog.Error("Failed to create Type1Event publisher: " + err.Error())
-			return
-		}
-		defer p.Channel.Close()
-		type1Publishers[i] = p
-	}
-	runType1Publishers(type1Publishers)
-
-	// Create and run Type2Event publisher
-	p12, err := createPublisher(conn)
+	p11, err := pub.NewPublisher(conn)
 	if err != nil {
-		slog.Error("Failed to create Type2Event publisher: " + err.Error())
+		slog.Error(err.Error())
+		return
+	}
+	defer p11.Channel.Close()
+
+	p21, err := pub.NewPublisher(conn)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	defer p21.Channel.Close()
+
+	p31, err := pub.NewPublisher(conn)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	defer p31.Channel.Close()
+	type1Publishers := []*pub.Publisher{p11, p21, p31}
+	go func() {
+		for {
+			ctx, cancel := context.WithTimeout(context.Background(), publishTimeout)
+			for _, p := range type1Publishers {
+				if err := p.Publish(ctx, event.NewType1Event()); err != nil {
+					slog.Error("Failed to publish Type1Event: " + err.Error())
+				}
+			}
+			cancel()
+			time.Sleep(type1Delay)
+		}
+	}()
+
+	p12, err := pub.NewPublisher(conn)
+	if err != nil {
+		slog.Error(err.Error())
 		return
 	}
 	defer p12.Channel.Close()
-	runRandomPublisher(p12, func() interface{} { return event.NewType2Event() }, "Type2Event")
+	publishWithRandomDelay(p12, func() interface{} { return event.NewType2Event() }, utils.GetTypeName(event.NewType2Event()))
 
-	// Create and run Type3Event publisher
-	p13, err := createPublisher(conn)
+	p13, err := pub.NewPublisher(conn)
 	if err != nil {
-		slog.Error("Failed to create Type3Event publisher: " + err.Error())
+		slog.Error(err.Error())
 		return
 	}
 	defer p13.Channel.Close()
-	runRandomPublisher(p13, func() interface{} { return event.NewType3Event() }, "Type3Event")
+	publishWithRandomDelay(p13, func() interface{} { return event.NewType3Event() }, utils.GetTypeName(event.NewType3Event()))
 
-	done := make(chan struct{})
 	<-done
 }
