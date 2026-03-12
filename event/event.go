@@ -2,61 +2,49 @@ package event
 
 import "github.com/google/uuid"
 
-const (
-	TYPE1 = "TYPE1"
-	TYPE2 = "TYPE2"
-	TYPE3 = "TYPE3"
-	TYPE4 = "TYPE4"
-)
-
+type Event interface {
+	Type1Event | Type2Event | Type3Event | Type4Event
+}
 type Type1Event struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id string `json:"id"`
 }
 
-func NewType1Event() *Type1Event {
+func NewType1Event() Type1Event {
 	id, _ := uuid.NewRandom()
-	return &Type1Event{
-		Id:   id.String(),
-		Name: TYPE1,
+	return Type1Event{
+		Id: id.String(),
 	}
 }
 
 type Type2Event struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id string `json:"id"`
 }
 
-func NewType2Event() *Type2Event {
+func NewType2Event() Type2Event {
 	id, _ := uuid.NewRandom()
-	return &Type2Event{
-		Id:   id.String(),
-		Name: TYPE2,
+	return Type2Event{
+		Id: id.String(),
 	}
 }
 
 type Type3Event struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id string `json:"id"`
 }
 
-func NewType3Event() *Type3Event {
+func NewType3Event() Type3Event {
 	id, _ := uuid.NewRandom()
-	return &Type3Event{
-		Id:   id.String(),
-		Name: TYPE3,
+	return Type3Event{
+		Id: id.String(),
 	}
 }
 
 type Type4Event struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id string `json:"id"`
 }
 
-func NewType4Event() *Type4Event {
+func NewType4Event() Type4Event {
 	id, _ := uuid.NewRandom()
-	return &Type4Event{
-		Id:   id.String(),
-		Name: TYPE4,
+	return Type4Event{
+		Id: id.String(),
 	}
 }
