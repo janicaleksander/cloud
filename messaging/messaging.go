@@ -10,17 +10,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func ProcessMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) {
-	for msg := range delivery {
-		slog.Info(fmt.Sprintf(
-			"Received a message: %s, from queue: %s, msg type %s, by consumer %s",
-			msg.Body,
-			subscriber.Queue.Name,
-			subscriber.Queue.Name,
-			subscriber.ID))
-	}
-}
-
 func Subscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.Delivery, *sub.Subscriber)) {
 	s, err := sub.NewSubscriber[T](conn, os.Getenv("EXCHANGE_NAME"))
 	if err != nil {
@@ -33,4 +22,15 @@ func Subscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.De
 		return
 	}
 	go handler(msgs, s)
+}
+
+func ProcessMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) {
+	for msg := range delivery {
+		slog.Info(fmt.Sprintf(
+			"Received a message: %s, from queue: %s, msg type %s, by consumer %s",
+			msg.Body,
+			subscriber.Queue.Name,
+			subscriber.Queue.Name,
+			subscriber.ID))
+	}
 }

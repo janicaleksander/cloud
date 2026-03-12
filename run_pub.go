@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"math/rand"
 	"os"
 	"time"
 
@@ -18,7 +17,6 @@ const (
 	type1Delay       = 2 * time.Second
 	publishTimeout   = 5 * time.Second
 	randomDelayRange = 5
-	type1Count       = 3
 )
 
 func startPublisher(p *pub.Publisher, generator func() any, delay func() time.Duration) {
@@ -57,12 +55,13 @@ func main() {
 		defer publishers[i].Channel.Close()
 	}
 
+	var type1Count = 3
 	for i := 0; i < type1Count; i++ {
 		startPublisher(publishers[i], func() any { return event.NewType1Event() }, utils.Delay(type1Delay))
 	}
 
-	startPublisher(publishers[type1Count], func() any { return event.NewType2Event() }, utils.Delay(time.Second*time.Duration(rand.Intn(randomDelayRange)+1)))
-	startPublisher(publishers[type1Count+1], func() any { return event.NewType3Event() }, utils.Delay(time.Second*time.Duration(rand.Intn(randomDelayRange)+1)))
+	startPublisher(publishers[type1Count], func() any { return event.NewType2Event() }, utils.RandomDelay(randomDelayRange))
+	startPublisher(publishers[type1Count+1], func() any { return event.NewType3Event() }, utils.RandomDelay(randomDelayRange))
 
 	done := make(chan struct{})
 	<-done
