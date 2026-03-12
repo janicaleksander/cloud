@@ -9,6 +9,7 @@ import (
 
 	"github.com/janicaleksander/cloud/event"
 	"github.com/janicaleksander/cloud/pub"
+	"github.com/janicaleksander/cloud/utils"
 	"github.com/joho/godotenv"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -46,7 +47,7 @@ func runType1Publishers(publishers []*pub.Publisher) {
 	go func() {
 		for {
 			for _, p := range publishers {
-				publishWithContext(p, event.NewType1Event(), "Type1Event")
+				publishWithContext(p, event.NewType1Event(), utils.GetTypeName(event.NewType1Event()))
 			}
 			time.Sleep(type1Delay)
 		}
