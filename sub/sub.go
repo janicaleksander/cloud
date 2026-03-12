@@ -13,8 +13,7 @@ type Subscriber struct {
 	ID           uuid.UUID
 	ExchangeName string
 	Channel      *amqp.Channel
-	Queue        amqp.Queue
-	Type         any
+	Queue        amqp.Queue // queue name is the same as type sending through this queue (routing key == queue name)
 }
 
 func NewSubscriber[T event.Event](conn *amqp.Connection, exchangeName string) (*Subscriber, error) {
@@ -36,14 +35,25 @@ func NewSubscriber[T event.Event](conn *amqp.Connection, exchangeName string) (*
 		ExchangeName: exchangeName,
 		Channel:      ch,
 		Queue:        q,
-		Type:         name,
+	}
+	err = s.Bind()
+	if err != nil {
+		return nil, err
 	}
 	defer func() {
 		slog.Info("Creating subscriber with ID: " + s.ID.String() + ", for queue: " + s.Queue.Name)
 	}()
 	return s, nil
 }
+func (s *Subscriber) Bind() error {
+	return s.Channel.QueueBind(
+		s.Queue.Name,   // queue name
+		s.Queue.Name,   // routing key
+		s.ExchangeName, //exchange name
+		false,
+		nil)
 
+}
 func (s *Subscriber) Consume() (<-chan amqp.Delivery, error) {
 	msgs, err := s.Channel.Consume(
 		s.Queue.Name,

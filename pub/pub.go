@@ -40,8 +40,8 @@ func (p *Publisher) Publish(ctx context.Context, msg interface{}) error {
 		return err
 	}
 	err = p.Channel.PublishWithContext(ctx,
-		"",
-		utils.GetTypeName(msg),
+		p.ExchangeName,         // this is exchange name
+		utils.GetTypeName(msg), // this is the routing key
 		false,
 		false,
 		amqp.Publishing{

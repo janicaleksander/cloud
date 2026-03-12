@@ -20,12 +20,12 @@ func processMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) 
 			"Received a message: %s, from queue: %s, msg type %s, by consumer %s",
 			msg.Body,
 			subscriber.Queue.Name,
-			subscriber.Type,
+			subscriber.Queue.Name,
 			subscriber.ID))
 	}
 }
 
-func mustSubscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.Delivery, *sub.Subscriber)) {
+func subscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.Delivery, *sub.Subscriber)) {
 	s, err := sub.NewSubscriber[T](conn, os.Getenv("EXCHANGE_NAME"))
 	if err != nil {
 		slog.Error(err.Error())
@@ -52,10 +52,10 @@ func main() {
 	defer conn.Close()
 
 	// 2x Type1Event, 1x Type2Event, 1x Type4Event
-	mustSubscribe[event.Type1Event](conn, processMessages)
-	mustSubscribe[event.Type1Event](conn, processMessages)
-	mustSubscribe[event.Type2Event](conn, processMessages)
-	mustSubscribe[event.Type4Event](conn, processMessages)
+	subscribe[event.Type1Event](conn, processMessages)
+	subscribe[event.Type1Event](conn, processMessages)
+	subscribe[event.Type2Event](conn, processMessages)
+	subscribe[event.Type4Event](conn, processMessages)
 
 	// Type3Event -> publikuje Type4Event
 	p14, err := pub.NewPublisher(conn, os.Getenv("EXCHANGE_NAME"))
@@ -65,14 +65,14 @@ func main() {
 	}
 	defer p14.Channel.Close()
 
-	mustSubscribe[event.Type3Event](conn, func(msgs <-chan amqp.Delivery, s *sub.Subscriber) {
+	subscribe[event.Type3Event](conn, func(msgs <-chan amqp.Delivery, s *sub.Subscriber) {
 		for msg := range msgs {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			slog.Info(
 				fmt.Sprintf("Received a message: %s, from queue: %s, msg type %s, by consumer %s",
 					msg.Body,
 					s.Queue.Name,
-					s.Type,
+					s.Queue.Name,
 					s.ID,
 				),
 			)
