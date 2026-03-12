@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/janicaleksander/cloud/event"
 	"github.com/janicaleksander/cloud/pub"
@@ -43,6 +45,7 @@ func main() {
 		slog.Error(err.Error())
 		return
 	}
+	defer p14.Channel.Close()
 	go func() {
 		for msg := range msgs13 {
 			slog.Info(fmt.Sprintf(
@@ -52,7 +55,12 @@ func main() {
 				s13.Type,
 				s13.ID))
 			// Generate and publish Type4Event
-			p14.Publish(event.NewType4Event())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			err := p14.Publish(ctx, event.NewType4Event())
+			if err != nil {
+				slog.Error("Failed to publish Type4Event: " + err.Error())
+			}
+			cancel()
 		}
 	}()
 

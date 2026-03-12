@@ -1,6 +1,7 @@
 package pub
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -27,14 +28,13 @@ func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 	}, nil
 
 }
-func (p *Publisher) Publish(msg interface{}) {
+func (p *Publisher) Publish(ctx context.Context, msg interface{}) error {
 	slog.Info(fmt.Sprintf("Publishing message: %v, type: %s, by publisher %s", msg, utils.GetTypeName(msg), p.ID))
 	bytes, err := json.Marshal(msg)
 	if err != nil {
-		slog.Error(err.Error())
-		return
+		return err
 	}
-	err = p.Channel.Publish(
+	err = p.Channel.PublishWithContext(ctx,
 		"",
 		utils.GetTypeName(msg),
 		false,
@@ -43,7 +43,5 @@ func (p *Publisher) Publish(msg interface{}) {
 			ContentType: "application/json",
 			Body:        bytes,
 		})
-	if err != nil {
-		slog.Error(err.Error())
-	}
+	return err
 }

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/janicaleksander/cloud/event"
 	"github.com/janicaleksander/cloud/pub"
@@ -109,9 +111,14 @@ func main() {
 	defer p14.Channel.Close()
 	go func() {
 		for msg := range msgs13 {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			slog.Info(fmt.Sprintf("Received a message: %s, from queue: %s, msg type %s, by consumer %s", msg.Body, s13.Queue.Name, s13.Type, s13.ID))
 			// Generate and publish Type4Event
-			p14.Publish(event.NewType4Event())
+			err := p14.Publish(ctx, event.NewType4Event())
+			if err != nil {
+				slog.Error("Failed to publish Type4Event: " + err.Error())
+			}
+			cancel()
 		}
 	}()
 
