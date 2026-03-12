@@ -38,15 +38,21 @@ func main() {
 	p11, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
+	defer p11.Channel.Close()
 	p21, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
+	defer p21.Channel.Close()
 	p31, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
+	defer p31.Channel.Close()
 	go func() {
 		for {
 			p11.Publish(event.NewType1Event())
@@ -58,7 +64,9 @@ func main() {
 	p12, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
+	defer p12.Channel.Close()
 	go func() {
 		for {
 			p12.Publish(event.NewType2Event())
@@ -68,7 +76,9 @@ func main() {
 	p13, err := pub.NewPublisher(conn)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
+	defer p13.Channel.Close()
 	go func() {
 		for {
 			p13.Publish(event.NewType3Event())

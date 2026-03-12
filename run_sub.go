@@ -106,6 +106,7 @@ func main() {
 		slog.Error(err.Error())
 		return
 	}
+	defer p14.Channel.Close()
 	go func() {
 		for msg := range msgs13 {
 			slog.Info(fmt.Sprintf("Received a message: %s, from queue: %s, msg type %s, by consumer %s", msg.Body, s13.Queue.Name, s13.Type, s13.ID))

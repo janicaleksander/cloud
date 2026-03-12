@@ -12,7 +12,7 @@ import (
 
 type Publisher struct {
 	ID      uuid.UUID
-	channel *amqp.Channel
+	Channel *amqp.Channel
 }
 
 func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
@@ -23,7 +23,7 @@ func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
 
 	return &Publisher{
 		ID:      uuid.New(),
-		channel: ch,
+		Channel: ch,
 	}, nil
 
 }
@@ -34,7 +34,7 @@ func (p *Publisher) Publish(msg interface{}) {
 		slog.Error(err.Error())
 		return
 	}
-	err = p.channel.Publish(
+	err = p.Channel.Publish(
 		"",
 		utils.GetTypeName(msg),
 		false,
