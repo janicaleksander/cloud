@@ -12,18 +12,20 @@ import (
 )
 
 type Publisher struct {
-	ID      uuid.UUID
-	Channel *amqp.Channel
+	ID           uuid.UUID
+	ExchangeName string
+	Channel      *amqp.Channel
 }
 
-func NewPublisher(conn *amqp.Connection) (*Publisher, error) {
+func NewPublisher(conn *amqp.Connection, exchangeName string) (*Publisher, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
 	}
 	p := &Publisher{
-		ID:      uuid.New(),
-		Channel: ch,
+		ID:           uuid.New(),
+		ExchangeName: exchangeName,
+		Channel:      ch,
 	}
 	defer func() {
 		slog.Info("Creating publisher with ID: " + p.ID.String())

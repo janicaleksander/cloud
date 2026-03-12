@@ -14,96 +14,56 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-/*
-1.	3 publisherów generujących zdarzenia typu 1, publikujących je w takich samych odstępach czasowych
-2.	1 publishera generującego zdarzenia typu 2, publikujący je w losowym odstępie czasowym
-3.	1 publishera generującego zdarzenia typu 3, publikujący je w losowym odstępie czasowym.
-*/
 const (
 	type1Delay       = 2 * time.Second
 	publishTimeout   = 5 * time.Second
 	randomDelayRange = 5
+	type1Count       = 3
 )
 
-func publishWithRandomDelay(p *pub.Publisher, eventGenerator func() interface{}, eventType string) {
+func startPublisher(p *pub.Publisher, generator func() any, delay func() time.Duration) {
 	go func() {
 		for {
 			ctx, cancel := context.WithTimeout(context.Background(), publishTimeout)
-			err := p.Publish(ctx, eventGenerator())
-			if err != nil {
-				slog.Error("Failed to publish " + eventType + ": " + err.Error())
+			if err := p.Publish(ctx, generator()); err != nil {
+				slog.Error("Failed to publish: " + err.Error())
 			}
 			cancel()
-			time.Sleep(time.Second * time.Duration(rand.Intn(randomDelayRange)+1))
+			time.Sleep(delay())
 		}
 	}()
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		slog.Error("Can't load .env file")
 		return
 	}
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
-		slog.Error("Can't connect to amqp ")
+		slog.Error("Can't connect to amqp")
 		return
 	}
 	defer conn.Close()
-	done := make(chan struct{})
+	exchange := os.Getenv("EXCHANGE_NAME")
 
-	p11, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p11.Channel.Close()
-
-	p21, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p21.Channel.Close()
-
-	p31, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p31.Channel.Close()
-
-	p12, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p12.Channel.Close()
-
-	p13, err := pub.NewPublisher(conn)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-	defer p13.Channel.Close()
-
-	// start publishers
-	type1Publishers := []*pub.Publisher{p11, p21, p31}
-	go func() {
-		for {
-			ctx, cancel := context.WithTimeout(context.Background(), publishTimeout)
-			for _, p := range type1Publishers {
-				if err := p.Publish(ctx, event.NewType1Event()); err != nil {
-					slog.Error("Failed to publish Type1Event: " + err.Error())
-				}
-			}
-			cancel()
-			time.Sleep(type1Delay)
+	publishers := make([]*pub.Publisher, 5)
+	for i := range publishers {
+		publishers[i], err = pub.NewPublisher(conn, exchange)
+		if err != nil {
+			slog.Error("Spawning publisher error ", err.Error())
+			return
 		}
-	}()
-	publishWithRandomDelay(p12, func() interface{} { return event.NewType2Event() }, utils.GetTypeName(event.NewType2Event()))
-	publishWithRandomDelay(p13, func() interface{} { return event.NewType3Event() }, utils.GetTypeName(event.NewType3Event()))
+		defer publishers[i].Channel.Close()
+	}
 
+	for i := 0; i < type1Count; i++ {
+		startPublisher(publishers[i], func() any { return event.NewType1Event() }, utils.Delay(type1Delay))
+	}
+
+	startPublisher(publishers[type1Count], func() any { return event.NewType2Event() }, utils.Delay(time.Second*time.Duration(rand.Intn(randomDelayRange)+1)))
+	startPublisher(publishers[type1Count+1], func() any { return event.NewType3Event() }, utils.Delay(time.Second*time.Duration(rand.Intn(randomDelayRange)+1)))
+
+	done := make(chan struct{})
 	<-done
 }

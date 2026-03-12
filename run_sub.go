@@ -26,7 +26,7 @@ func processMessages(delivery <-chan amqp.Delivery, subscriber *sub.Subscriber) 
 }
 
 func mustSubscribe[T event.Event](conn *amqp.Connection, handler func(<-chan amqp.Delivery, *sub.Subscriber)) {
-	s, err := sub.NewSubscriber[T](conn)
+	s, err := sub.NewSubscriber[T](conn, os.Getenv("EXCHANGE_NAME"))
 	if err != nil {
 		slog.Error(err.Error())
 		return
@@ -58,7 +58,7 @@ func main() {
 	mustSubscribe[event.Type4Event](conn, processMessages)
 
 	// Type3Event -> publikuje Type4Event
-	p14, err := pub.NewPublisher(conn)
+	p14, err := pub.NewPublisher(conn, os.Getenv("EXCHANGE_NAME"))
 	if err != nil {
 		slog.Error(err.Error())
 		return

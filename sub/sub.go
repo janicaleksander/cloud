@@ -10,13 +10,14 @@ import (
 )
 
 type Subscriber struct {
-	ID      uuid.UUID
-	Channel *amqp.Channel
-	Queue   amqp.Queue
-	Type    any
+	ID           uuid.UUID
+	ExchangeName string
+	Channel      *amqp.Channel
+	Queue        amqp.Queue
+	Type         any
 }
 
-func NewSubscriber[T event.Event](conn *amqp.Connection) (*Subscriber, error) {
+func NewSubscriber[T event.Event](conn *amqp.Connection, exchangeName string) (*Subscriber, error) {
 	var sample T
 	name := utils.GetTypeName(sample)
 
@@ -31,10 +32,11 @@ func NewSubscriber[T event.Event](conn *amqp.Connection) (*Subscriber, error) {
 		return nil, err
 	}
 	s := &Subscriber{
-		ID:      uuid.New(),
-		Channel: ch,
-		Queue:   q,
-		Type:    name,
+		ID:           uuid.New(),
+		ExchangeName: exchangeName,
+		Channel:      ch,
+		Queue:        q,
+		Type:         name,
 	}
 	defer func() {
 		slog.Info("Creating subscriber with ID: " + s.ID.String() + ", for queue: " + s.Queue.Name)
