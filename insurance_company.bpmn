@@ -1,0 +1,787 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Definitions_Car_Damage_Insurance_Claim_System" targetNamespace="http://example.com/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.13.1">
+  <message id="Message_Car_Damage_Insurance_Claim_System" name="Car Damage Insurance Claim System" />
+  <collaboration id="Collaboration_Car_Damage_Insurance_Claim_System">
+    <participant id="Participant_Client" name="Client" processRef="Process_Client" />
+    <participant id="Participant_Claim_Service" name="Claim Service" processRef="Process_Claim_Service" />
+    <participant id="Participant_Notification_Service" name="Notification Service" processRef="Process_Notification_Service" />
+    <participant id="Participant_Policy_Verification_Service" name="Policy Verification Service" processRef="Process_Policy_Verification_Service" />
+    <participant id="Participant_Valuation_Service" name="Valuation Service" processRef="Process_Valuation_Service" />
+    <participant id="Participant_Decision_Service" name="Decision Service" processRef="Process_Decision_Service" />
+    <messageFlow id="Flow_rel-Publish_ValuationCalculated-Read_DB_Decisions-forward_dashed-ValuationCalculated" name="ValuationCalculated" sourceRef="Publish_ValuationCalculated" targetRef="Event_1dl16d4" />
+    <messageFlow id="Flow_0jasgey" name="form + files with photos" sourceRef="Activity_0fzh94t" targetRef="Event_1aq8af2" />
+    <messageFlow id="Flow_1mi653l" name="claim submitted" sourceRef="Publish_ClaimSubmitted" targetRef="Event_18z9f9r" />
+    <messageFlow id="Flow_1gubi6a" name="policy verified" sourceRef="Publish_PolicyVerified" targetRef="Event_0ypv9xp" />
+    <messageFlow id="Flow_1cjc445" sourceRef="Publish_ClaimSubmitted" targetRef="Event_1ai4a5q" />
+    <messageFlow id="Flow_03eri51" sourceRef="Publish_PolicyVerified" targetRef="Event_1ai4a5q" />
+    <messageFlow id="Flow_18cf5xx" sourceRef="Publish_PolicyDenied" targetRef="Event_1ai4a5q" />
+    <messageFlow id="Flow_1sxh30y" sourceRef="Publish_PayoutApproved" targetRef="Event_1ai4a5q" />
+    <messageFlow id="Flow_14lda2x" sourceRef="Activity_1rcn61a" targetRef="Event_1ai4a5q" />
+    <messageFlow id="Flow_1c1385o" sourceRef="Activity_0i1c99c" targetRef="Activity_1mqno4d" />
+    <messageFlow id="Flow_1g8zalr" sourceRef="Activity_0pacr3q" targetRef="Receive_rejection" />
+    <messageFlow id="Flow_05vj6o7" sourceRef="Activity_04030f1" targetRef="Receive_payout_approval" />
+  </collaboration>
+  <process id="Process_Client" isExecutable="true">
+    <laneSet id="LaneSet_Client">
+      <lane id="Lane_Client_Lane">
+        <flowNodeRef>Activity_0fzh94t</flowNodeRef>
+        <flowNodeRef>Activity_1mqno4d</flowNodeRef>
+        <flowNodeRef>Receive_rejection</flowNodeRef>
+        <flowNodeRef>Event_0dc8vsi</flowNodeRef>
+        <flowNodeRef>Event_1nak663</flowNodeRef>
+        <flowNodeRef>Receive_payout_approval</flowNodeRef>
+        <flowNodeRef>Claim_complete</flowNodeRef>
+        <flowNodeRef>Event_1usz1jx</flowNodeRef>
+      </lane>
+    </laneSet>
+    <task id="Activity_0fzh94t" name="Submit claim">
+      <incoming>Flow_0w1vex1</incoming>
+    </task>
+    <task id="Activity_1mqno4d" name="Receive no such policy">
+      <outgoing>Flow_1ul95to</outgoing>
+    </task>
+    <task id="Receive_rejection" name="Receive payout rejection">
+      <outgoing>Flow_1spa8x8</outgoing>
+    </task>
+    <sequenceFlow id="Flow_1r9m3vc" sourceRef="Receive_payout_approval" targetRef="Claim_complete" />
+    <sequenceFlow id="Flow_0w1vex1" sourceRef="Event_1usz1jx" targetRef="Activity_0fzh94t" />
+    <endEvent id="Event_0dc8vsi" name="Claim completed - rejection">
+      <incoming>Flow_1spa8x8</incoming>
+    </endEvent>
+    <endEvent id="Event_1nak663" name="Claim completed  - denied">
+      <incoming>Flow_1ul95to</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_1spa8x8" sourceRef="Receive_rejection" targetRef="Event_0dc8vsi" />
+    <task id="Receive_payout_approval" name="Receive payout approval">
+      <outgoing>Flow_1r9m3vc</outgoing>
+    </task>
+    <endEvent id="Claim_complete" name="Claim complete">
+      <incoming>Flow_1r9m3vc</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_1ul95to" sourceRef="Activity_1mqno4d" targetRef="Event_1nak663" />
+    <startEvent id="Event_1usz1jx" name="Start">
+      <outgoing>Flow_0w1vex1</outgoing>
+    </startEvent>
+  </process>
+  <process id="Process_Claim_Service" isExecutable="true">
+    <laneSet id="LaneSet_Claim_Service">
+      <lane id="Lane_Claim_Service_Lane">
+        <flowNodeRef>Event_1aq8af2</flowNodeRef>
+        <flowNodeRef>Receive_claim</flowNodeRef>
+        <flowNodeRef>Publish_ClaimSubmitted</flowNodeRef>
+        <flowNodeRef>Save_claim_to_DB</flowNodeRef>
+        <flowNodeRef>Log_file_metadata</flowNodeRef>
+      </lane>
+    </laneSet>
+    <intermediateCatchEvent id="Event_1aq8af2" name="Catch event">
+      <outgoing>Flow_1v1a3fp</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_1nhw23n" />
+    </intermediateCatchEvent>
+    <task id="Receive_claim" name="Receive claim">
+      <incoming>Flow_1v1a3fp</incoming>
+    </task>
+    <task id="Publish_ClaimSubmitted" name="Publish ClaimSubmitted" />
+    <task id="Save_claim_to_DB" name="Save claim to DB">
+      <dataOutputAssociation id="DataOutputAssociation_0i2mm5k">
+        <targetRef>DataStoreReference_0bmlx5k</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <dataStoreReference id="DataStoreReference_0bmlx5k" name="DB_Claims" />
+    <task id="Log_file_metadata" name="Log file metadata">
+      <incoming>Flow_rel-Receive_claim-Read_DB_Claims-forward</incoming>
+    </task>
+    <sequenceFlow id="Flow_1v1a3fp" sourceRef="Event_1aq8af2" targetRef="Receive_claim" />
+    <sequenceFlow id="Flow_rel-Receive_claim-Read_DB_Claims-forward" sourceRef="Receive_claim" targetRef="Log_file_metadata" />
+    <sequenceFlow id="Flow_rel-Save_claim_to_DB-Publish_ClaimSubmitted-forward" sourceRef="Save_claim_to_DB" targetRef="Publish_ClaimSubmitted" />
+    <sequenceFlow id="Flow_rel-Log_file_metadata-Save_claim_to_DB-forward" sourceRef="Log_file_metadata" targetRef="Save_claim_to_DB" />
+  </process>
+  <process id="Process_Notification_Service" isExecutable="true">
+    <laneSet id="LaneSet_Notification_Service" />
+    <intermediateCatchEvent id="Event_1ai4a5q">
+      <outgoing>Flow_1nht7et</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_1mi9gbc" />
+    </intermediateCatchEvent>
+    <task id="Activity_1lszho9" name="Policy submitted notification">
+      <incoming>Flow_00u4js2</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_0dbarb6">
+        <targetRef>DataStoreReference_1bpv7uf</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <dataStoreReference id="DataStoreReference_1bpv7uf" name="DB_Notifications" />
+    <task id="Activity_0cvphlc" name="Policy verified notification">
+      <incoming>Flow_0yexfa5</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_0qddg5h">
+        <targetRef>DataStoreReference_1bpv7uf</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Activity_0i1c99c" name="Policy denied notification">
+      <incoming>Flow_1k8h47c</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_0w26zw0">
+        <targetRef>DataStoreReference_1bpv7uf</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Activity_04030f1" name="Payout approved notification">
+      <incoming>Flow_16e75yt</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_1g18gdi">
+        <targetRef>DataStoreReference_1bpv7uf</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Activity_0pacr3q" name="Payout rejected notification">
+      <incoming>Flow_1h9rtcn</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_0h25dfe">
+        <targetRef>DataStoreReference_1bpv7uf</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <sequenceFlow id="Flow_1nht7et" sourceRef="Event_1ai4a5q" targetRef="Gateway_0f2id2y" />
+    <sequenceFlow id="Flow_00u4js2" sourceRef="Gateway_0f2id2y" targetRef="Activity_1lszho9" />
+    <sequenceFlow id="Flow_0yexfa5" sourceRef="Gateway_0f2id2y" targetRef="Activity_0cvphlc" />
+    <sequenceFlow id="Flow_1k8h47c" sourceRef="Gateway_0f2id2y" targetRef="Activity_0i1c99c" />
+    <sequenceFlow id="Flow_16e75yt" sourceRef="Gateway_0f2id2y" targetRef="Activity_04030f1" />
+    <sequenceFlow id="Flow_1h9rtcn" sourceRef="Gateway_0f2id2y" targetRef="Activity_0pacr3q" />
+    <exclusiveGateway id="Gateway_0f2id2y" name="switch">
+      <incoming>Flow_1nht7et</incoming>
+      <outgoing>Flow_00u4js2</outgoing>
+      <outgoing>Flow_0yexfa5</outgoing>
+      <outgoing>Flow_1k8h47c</outgoing>
+      <outgoing>Flow_16e75yt</outgoing>
+      <outgoing>Flow_1h9rtcn</outgoing>
+    </exclusiveGateway>
+  </process>
+  <process id="Process_Policy_Verification_Service" isExecutable="true">
+    <laneSet id="LaneSet_Policy_Verification_Service">
+      <lane id="Lane_Policy_Verification_Service_Lane">
+        <flowNodeRef>Publish_PolicyVerified</flowNodeRef>
+        <flowNodeRef>Publish_PolicyDenied</flowNodeRef>
+        <flowNodeRef>Policy_valid_</flowNodeRef>
+        <flowNodeRef>Check_policy</flowNodeRef>
+        <flowNodeRef>Read_DB_Policies</flowNodeRef>
+        <flowNodeRef>Event_18z9f9r</flowNodeRef>
+      </lane>
+    </laneSet>
+    <task id="Publish_PolicyVerified" name="Publish PolicyVerified" />
+    <task id="Publish_PolicyDenied" name="Publish PolicyDenied" />
+    <exclusiveGateway id="Policy_valid_" name="Policy valid?" />
+    <task id="Check_policy" name="Check policy" />
+    <task id="Read_DB_Policies" name="Read DB Policies">
+      <incoming>Flow_0i9z6uf</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_0q88o5e">
+        <targetRef>DataStoreReference_0te6cer</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <intermediateCatchEvent id="Event_18z9f9r" name="Catch event">
+      <outgoing>Flow_0i9z6uf</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_0m4kpwq" />
+    </intermediateCatchEvent>
+    <dataStoreReference id="DataStoreReference_0te6cer" name="DB_Policies" />
+    <sequenceFlow id="Flow_rel-Policy_valid_-Publish_PolicyVerified-forward-Valid" name="Valid" sourceRef="Policy_valid_" targetRef="Publish_PolicyVerified" />
+    <sequenceFlow id="Flow_rel-Policy_valid_-Publish_PolicyDenied-forward-Invalid" name="Invalid" sourceRef="Policy_valid_" targetRef="Publish_PolicyDenied" />
+    <sequenceFlow id="Flow_rel-Check_policy-Policy_valid_-forward" sourceRef="Check_policy" targetRef="Policy_valid_" />
+    <sequenceFlow id="Flow_rel-Read_DB_Policies-Check_policy-forward" sourceRef="Read_DB_Policies" targetRef="Check_policy" />
+    <sequenceFlow id="Flow_0i9z6uf" sourceRef="Event_18z9f9r" targetRef="Read_DB_Policies" />
+  </process>
+  <process id="Process_Valuation_Service" isExecutable="true">
+    <laneSet id="LaneSet_Valuation_Service">
+      <lane id="Lane_Valuation_Service_Lane">
+        <flowNodeRef>Publish_ValuationCalculated</flowNodeRef>
+        <flowNodeRef>Save_valuation</flowNodeRef>
+        <flowNodeRef>Calculate_damage_cost</flowNodeRef>
+        <flowNodeRef>Read_DB_Valuations</flowNodeRef>
+        <flowNodeRef>Event_0ypv9xp</flowNodeRef>
+      </lane>
+    </laneSet>
+    <task id="Publish_ValuationCalculated" name="Publish ValuationCalculated" />
+    <task id="Save_valuation" name="Save valuation">
+      <dataOutputAssociation id="DataOutputAssociation_1wk043s">
+        <targetRef>DataStoreReference_08ohljz</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Calculate_damage_cost" name="Calculate damage cost" />
+    <task id="Read_DB_Valuations" name="Read DB Valuations">
+      <incoming>Flow_04hwusg</incoming>
+      <dataOutputAssociation id="DataOutputAssociation_1lr98ow">
+        <targetRef>DataStoreReference_0z7y4j3</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <intermediateCatchEvent id="Event_0ypv9xp" name="Catch event">
+      <outgoing>Flow_04hwusg</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_13wjnhr" />
+    </intermediateCatchEvent>
+    <dataStoreReference id="DataStoreReference_0z7y4j3" name="DB_Valuations" />
+    <dataStoreReference id="DataStoreReference_08ohljz" name="DB_Valuations" />
+    <sequenceFlow id="Flow_rel-Save_valuation-Publish_ValuationCalculated-forward" sourceRef="Save_valuation" targetRef="Publish_ValuationCalculated" />
+    <sequenceFlow id="Flow_rel-Calculate_damage_cost-Save_valuation-forward" sourceRef="Calculate_damage_cost" targetRef="Save_valuation" />
+    <sequenceFlow id="Flow_rel-Read_DB_Valuations-Calculate_damage_cost-forward" sourceRef="Read_DB_Valuations" targetRef="Calculate_damage_cost" />
+    <sequenceFlow id="Flow_04hwusg" sourceRef="Event_0ypv9xp" targetRef="Read_DB_Valuations" />
+  </process>
+  <process id="Process_Decision_Service" isExecutable="true">
+    <laneSet id="LaneSet_Decision_Service">
+      <lane id="Lane_Decision_Service_Lane">
+        <flowNodeRef>Event_1dl16d4</flowNodeRef>
+        <flowNodeRef>Gateway_0tz4c0k</flowNodeRef>
+        <flowNodeRef>Activity_1h3b1h3</flowNodeRef>
+        <flowNodeRef>Evaluate_payout</flowNodeRef>
+        <flowNodeRef>Publish_PayoutApproved</flowNodeRef>
+        <flowNodeRef>Save_decision</flowNodeRef>
+        <flowNodeRef>Activity_09z0xqx</flowNodeRef>
+        <flowNodeRef>Activity_1rcn61a</flowNodeRef>
+      </lane>
+    </laneSet>
+    <intermediateCatchEvent id="Event_1dl16d4" name="Catch event">
+      <outgoing>Flow_0p4deyn</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_136jfqe" />
+    </intermediateCatchEvent>
+    <exclusiveGateway id="Gateway_0tz4c0k" name="Valuation valid?">
+      <incoming>Flow_0b9d60g</incoming>
+      <outgoing>Flow_04okst4</outgoing>
+      <outgoing>Flow_1xekbye</outgoing>
+    </exclusiveGateway>
+    <task id="Activity_1h3b1h3" name="Check calculated amount">
+      <incoming>Flow_0p4deyn</incoming>
+      <outgoing>Flow_0b9d60g</outgoing>
+    </task>
+    <task id="Evaluate_payout" name="Evaluate payout">
+      <incoming>Flow_04okst4</incoming>
+    </task>
+    <task id="Publish_PayoutApproved" name="Publish PayoutApproved" />
+    <task id="Save_decision" name="Save decision">
+      <dataOutputAssociation id="DataOutputAssociation_07xj8hf">
+        <targetRef>DataStoreReference_0wc7yfv</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Activity_09z0xqx" name="Save decision">
+      <incoming>Flow_1xekbye</incoming>
+      <outgoing>Flow_0kkd8tc</outgoing>
+      <dataOutputAssociation id="DataOutputAssociation_0qiij9n">
+        <targetRef>DataStoreReference_0wc7yfv</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <task id="Activity_1rcn61a" name="Publish PayoutRejected">
+      <incoming>Flow_0kkd8tc</incoming>
+    </task>
+    <dataStoreReference id="DataStoreReference_0wc7yfv" name="DB_Decisions" />
+    <sequenceFlow id="Flow_0p4deyn" sourceRef="Event_1dl16d4" targetRef="Activity_1h3b1h3" />
+    <sequenceFlow id="Flow_0b9d60g" sourceRef="Activity_1h3b1h3" targetRef="Gateway_0tz4c0k" />
+    <sequenceFlow id="Flow_04okst4" name="valid" sourceRef="Gateway_0tz4c0k" targetRef="Evaluate_payout" />
+    <sequenceFlow id="Flow_1xekbye" name="invalid" sourceRef="Gateway_0tz4c0k" targetRef="Activity_09z0xqx" />
+    <sequenceFlow id="Flow_rel-Evaluate_payout-Save_decision-forward" sourceRef="Evaluate_payout" targetRef="Save_decision" />
+    <sequenceFlow id="Flow_rel-Save_decision-Publish_PayoutApproved-forward" sourceRef="Save_decision" targetRef="Publish_PayoutApproved" />
+    <sequenceFlow id="Flow_0kkd8tc" sourceRef="Activity_09z0xqx" targetRef="Activity_1rcn61a" />
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_Car_Damage_Insurance_Claim_System">
+      <bpmndi:BPMNShape id="Participant_Client_di" bpmnElement="Participant_Client" isHorizontal="true">
+        <dc:Bounds x="300" y="80" width="1240" height="638" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneShape_Client_Lane" bpmnElement="Lane_Client_Lane" isHorizontal="true">
+        <dc:Bounds x="330" y="80" width="1210" height="638" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0fzh94t_di" bpmnElement="Activity_0fzh94t">
+        <dc:Bounds x="360" y="460" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1mqno4d_di" bpmnElement="Activity_1mqno4d">
+        <dc:Bounds x="740" y="130" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Receive_rejection" bpmnElement="Receive_rejection">
+        <dc:Bounds x="811" y="234" width="138" height="72" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1kao5ku" bpmnElement="Event_0dc8vsi">
+        <dc:Bounds x="1225" y="305" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1209" y="355" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0lc6ev7" bpmnElement="Event_1nak663">
+        <dc:Bounds x="1225" y="205" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1208" y="255" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Receive_payout_approval" bpmnElement="Receive_payout_approval">
+        <dc:Bounds x="821" y="394" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Claim_complete" bpmnElement="Claim_complete">
+        <dc:Bounds x="1225" y="405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1212" y="455" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1usz1jx_di" bpmnElement="Event_1usz1jx">
+        <dc:Bounds x="392" y="392" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="398" y="368" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1r9m3vc_di" bpmnElement="Flow_1r9m3vc">
+        <di:waypoint x="959" y="430" />
+        <di:waypoint x="1225" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0w1vex1_di" bpmnElement="Flow_0w1vex1">
+        <di:waypoint x="410" y="428" />
+        <di:waypoint x="410" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1spa8x8_di" bpmnElement="Flow_1spa8x8">
+        <di:waypoint x="949" y="270" />
+        <di:waypoint x="1087" y="270" />
+        <di:waypoint x="1087" y="330" />
+        <di:waypoint x="1225" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ul95to_di" bpmnElement="Flow_1ul95to">
+        <di:waypoint x="840" y="170" />
+        <di:waypoint x="1033" y="170" />
+        <di:waypoint x="1033" y="230" />
+        <di:waypoint x="1225" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Claim_Service_di" bpmnElement="Participant_Claim_Service" isHorizontal="true">
+        <dc:Bounds x="300" y="560" width="1240" height="279" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneShape_Claim_Service_Lane" bpmnElement="Lane_Claim_Service_Lane" isHorizontal="true">
+        <dc:Bounds x="330" y="560" width="1210" height="279" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03c3p0y_di" bpmnElement="Event_1aq8af2">
+        <dc:Bounds x="392" y="745" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="380" y="788" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Receive_claim" bpmnElement="Receive_claim">
+        <dc:Bounds x="511" y="727" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Publish_ClaimSubmitted" bpmnElement="Publish_ClaimSubmitted">
+        <dc:Bounds x="1221" y="727" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Save_claim_to_DB" bpmnElement="Save_claim_to_DB">
+        <dc:Bounds x="991" y="727" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_0bmlx5k_di" bpmnElement="DataStoreReference_0bmlx5k">
+        <dc:Bounds x="1035" y="625" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1032" y="595" width="56" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Log_file_metadata" bpmnElement="Log_file_metadata">
+        <dc:Bounds x="741" y="727" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1v1a3fp_di" bpmnElement="Flow_1v1a3fp">
+        <di:waypoint x="428" y="763" />
+        <di:waypoint x="511" y="763" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Receive_claim-Read_DB_Claims-forward" bpmnElement="Flow_rel-Receive_claim-Read_DB_Claims-forward">
+        <di:waypoint x="649" y="763" />
+        <di:waypoint x="741" y="763" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Save_claim_to_DB-Publish_ClaimSubmitted-forward" bpmnElement="Flow_rel-Save_claim_to_DB-Publish_ClaimSubmitted-forward">
+        <di:waypoint x="1129" y="763" />
+        <di:waypoint x="1221" y="763" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Log_file_metadata-Save_claim_to_DB-forward" bpmnElement="Flow_rel-Log_file_metadata-Save_claim_to_DB-forward">
+        <di:waypoint x="879" y="763" />
+        <di:waypoint x="991" y="763" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Notification_Service_di" bpmnElement="Participant_Notification_Service" isHorizontal="true">
+        <dc:Bounds x="300" y="2010" width="1245" height="560" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12xjbyx_di" bpmnElement="Event_1ai4a5q">
+        <dc:Bounds x="362" y="2272" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lszho9_di" bpmnElement="Activity_1lszho9">
+        <dc:Bounds x="470" y="2040" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_1bpv7uf_di" bpmnElement="DataStoreReference_1bpv7uf">
+        <dc:Bounds x="795" y="2265" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="779" y="2322" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0cvphlc_di" bpmnElement="Activity_0cvphlc">
+        <dc:Bounds x="590" y="2150" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_173b4g0" bpmnElement="Activity_0i1c99c">
+        <dc:Bounds x="590" y="2250" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_07mwuoh" bpmnElement="Activity_04030f1">
+        <dc:Bounds x="590" y="2350" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0si3y4h" bpmnElement="Activity_0pacr3q">
+        <dc:Bounds x="510" y="2460" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0b3k0wb_di" bpmnElement="Gateway_0f2id2y" isMarkerVisible="true">
+        <dc:Bounds x="495" y="2265" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="504" y="2325" width="31" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1nht7et_di" bpmnElement="Flow_1nht7et">
+        <di:waypoint x="398" y="2290" />
+        <di:waypoint x="495" y="2290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00u4js2_di" bpmnElement="Flow_00u4js2">
+        <di:waypoint x="520" y="2265" />
+        <di:waypoint x="520" y="2120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yexfa5_di" bpmnElement="Flow_0yexfa5">
+        <di:waypoint x="520" y="2265" />
+        <di:waypoint x="520" y="2190" />
+        <di:waypoint x="590" y="2190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1k8h47c_di" bpmnElement="Flow_1k8h47c">
+        <di:waypoint x="545" y="2290" />
+        <di:waypoint x="590" y="2290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16e75yt_di" bpmnElement="Flow_16e75yt">
+        <di:waypoint x="520" y="2315" />
+        <di:waypoint x="520" y="2390" />
+        <di:waypoint x="590" y="2390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1h9rtcn_di" bpmnElement="Flow_1h9rtcn">
+        <di:waypoint x="520" y="2315" />
+        <di:waypoint x="520" y="2460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Policy_Verification_Service_di" bpmnElement="Participant_Policy_Verification_Service" isHorizontal="true">
+        <dc:Bounds x="300" y="910" width="1245" height="286" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneShape_Policy_Verification_Service_Lane" bpmnElement="Lane_Policy_Verification_Service_Lane" isHorizontal="true">
+        <dc:Bounds x="330" y="910" width="1215" height="286" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Publish_PolicyVerified" bpmnElement="Publish_PolicyVerified">
+        <dc:Bounds x="1096" y="955" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Publish_PolicyDenied" bpmnElement="Publish_PolicyDenied">
+        <dc:Bounds x="1096" y="1084" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Policy_valid_" bpmnElement="Policy_valid_" isMarkerVisible="true">
+        <dc:Bounds x="840" y="966" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="834" y="942" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Check_policy" bpmnElement="Check_policy">
+        <dc:Bounds x="656" y="955" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Read_DB_Policies" bpmnElement="Read_DB_Policies">
+        <dc:Bounds x="426" y="955" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_009cu6x_di" bpmnElement="Event_18z9f9r">
+        <dc:Bounds x="347" y="973" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="335" y="1016" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_0te6cer_di" bpmnElement="DataStoreReference_0te6cer">
+        <dc:Bounds x="470" y="1095" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="465" y="1152" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Policy_valid_-Publish_PolicyVerified-forward-Valid" bpmnElement="Flow_rel-Policy_valid_-Publish_PolicyVerified-forward-Valid">
+        <di:waypoint x="890" y="991" />
+        <di:waypoint x="1096" y="991" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="982" y="966" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Policy_valid_-Publish_PolicyDenied-forward-Invalid" bpmnElement="Flow_rel-Policy_valid_-Publish_PolicyDenied-forward-Invalid">
+        <di:waypoint x="865" y="1016" />
+        <di:waypoint x="865" y="1120" />
+        <di:waypoint x="1096" y="1120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="978" y="1106" width="32" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Check_policy-Policy_valid_-forward" bpmnElement="Flow_rel-Check_policy-Policy_valid_-forward">
+        <di:waypoint x="794" y="991" />
+        <di:waypoint x="840" y="991" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Read_DB_Policies-Check_policy-forward" bpmnElement="Flow_rel-Read_DB_Policies-Check_policy-forward">
+        <di:waypoint x="564" y="991" />
+        <di:waypoint x="656" y="991" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0i9z6uf_di" bpmnElement="Flow_0i9z6uf">
+        <di:waypoint x="383" y="991" />
+        <di:waypoint x="426" y="991" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Valuation_Service_di" bpmnElement="Participant_Valuation_Service" isHorizontal="true">
+        <dc:Bounds x="300" y="1248" width="1250" height="252" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneShape_Valuation_Service_Lane" bpmnElement="Lane_Valuation_Service_Lane" isHorizontal="true">
+        <dc:Bounds x="330" y="1248" width="1220" height="252" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Publish_ValuationCalculated" bpmnElement="Publish_ValuationCalculated">
+        <dc:Bounds x="1131" y="1293" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Save_valuation" bpmnElement="Save_valuation">
+        <dc:Bounds x="941" y="1293" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Calculate_damage_cost" bpmnElement="Calculate_damage_cost">
+        <dc:Bounds x="741" y="1293" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Read_DB_Valuations" bpmnElement="Read_DB_Valuations">
+        <dc:Bounds x="551" y="1293" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0vp2pfa_di" bpmnElement="Event_0ypv9xp">
+        <dc:Bounds x="362" y="1311" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="350" y="1354" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStoreReference_0z7y4j3_di" bpmnElement="DataStoreReference_0z7y4j3">
+        <dc:Bounds x="595" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="584" y="1462" width="72" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0lhixbb" bpmnElement="DataStoreReference_08ohljz">
+        <dc:Bounds x="980" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="969" y="1462" width="72" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Save_valuation-Publish_ValuationCalculated-forward" bpmnElement="Flow_rel-Save_valuation-Publish_ValuationCalculated-forward">
+        <di:waypoint x="1079" y="1329" />
+        <di:waypoint x="1131" y="1329" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Calculate_damage_cost-Save_valuation-forward" bpmnElement="Flow_rel-Calculate_damage_cost-Save_valuation-forward">
+        <di:waypoint x="879" y="1329" />
+        <di:waypoint x="941" y="1329" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Read_DB_Valuations-Calculate_damage_cost-forward" bpmnElement="Flow_rel-Read_DB_Valuations-Calculate_damage_cost-forward">
+        <di:waypoint x="689" y="1329" />
+        <di:waypoint x="741" y="1329" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04hwusg_di" bpmnElement="Flow_04hwusg">
+        <di:waypoint x="398" y="1329" />
+        <di:waypoint x="551" y="1329" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Decision_Service_di" bpmnElement="Participant_Decision_Service" isHorizontal="true">
+        <dc:Bounds x="300" y="1570" width="1245" height="370" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneShape_Decision_Service_Lane" bpmnElement="Lane_Decision_Service_Lane" isHorizontal="true">
+        <dc:Bounds x="330" y="1570" width="1215" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xxk7z5_di" bpmnElement="Event_1dl16d4">
+        <dc:Bounds x="387" y="1633" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="375" y="1676" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0lbzoj3" bpmnElement="Gateway_0tz4c0k" isMarkerVisible="true">
+        <dc:Bounds x="725" y="1626" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="712" y="1602" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1h3b1h3_di" bpmnElement="Activity_1h3b1h3">
+        <dc:Bounds x="510" y="1611" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Evaluate_payout" bpmnElement="Evaluate_payout">
+        <dc:Bounds x="841" y="1615" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Publish_PayoutApproved" bpmnElement="Publish_PayoutApproved">
+        <dc:Bounds x="1291" y="1615" width="138" height="72" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Save_decision" bpmnElement="Save_decision">
+        <dc:Bounds x="1091" y="1615" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_01bwm57" bpmnElement="Activity_09z0xqx">
+        <dc:Bounds x="1091" y="1814" width="138" height="72" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rcn61a_di" bpmnElement="Activity_1rcn61a">
+        <dc:Bounds x="1310" y="1810" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1b5m4v4" bpmnElement="DataStoreReference_0wc7yfv">
+        <dc:Bounds x="1135" y="1725" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1055" y="1743" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0p4deyn_di" bpmnElement="Flow_0p4deyn">
+        <di:waypoint x="423" y="1651" />
+        <di:waypoint x="510" y="1651" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0b9d60g_di" bpmnElement="Flow_0b9d60g">
+        <di:waypoint x="610" y="1651" />
+        <di:waypoint x="725" y="1651" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04okst4_di" bpmnElement="Flow_04okst4">
+        <di:waypoint x="775" y="1651" />
+        <di:waypoint x="841" y="1651" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="797" y="1633" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xekbye_di" bpmnElement="Flow_1xekbye">
+        <di:waypoint x="750" y="1676" />
+        <di:waypoint x="750" y="1850" />
+        <di:waypoint x="1091" y="1850" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="764" y="1764" width="32" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Evaluate_payout-Save_decision-forward" bpmnElement="Flow_rel-Evaluate_payout-Save_decision-forward">
+        <di:waypoint x="979" y="1651" />
+        <di:waypoint x="1091" y="1651" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Save_decision-Publish_PayoutApproved-forward" bpmnElement="Flow_rel-Save_decision-Publish_PayoutApproved-forward">
+        <di:waypoint x="1229" y="1651" />
+        <di:waypoint x="1291" y="1651" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kkd8tc_di" bpmnElement="Flow_0kkd8tc">
+        <di:waypoint x="1229" y="1850" />
+        <di:waypoint x="1310" y="1850" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0i2mm5k_di" bpmnElement="DataOutputAssociation_0i2mm5k">
+        <di:waypoint x="1060" y="727" />
+        <di:waypoint x="1060" y="675" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0dbarb6_di" bpmnElement="DataOutputAssociation_0dbarb6">
+        <di:waypoint x="570" y="2080" />
+        <di:waypoint x="820" y="2080" />
+        <di:waypoint x="820" y="2265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0qddg5h_di" bpmnElement="DataOutputAssociation_0qddg5h">
+        <di:waypoint x="690" y="2218" />
+        <di:waypoint x="795" y="2276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0w26zw0_di" bpmnElement="DataOutputAssociation_0w26zw0">
+        <di:waypoint x="690" y="2291" />
+        <di:waypoint x="795" y="2294" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1g18gdi_di" bpmnElement="DataOutputAssociation_1g18gdi">
+        <di:waypoint x="690" y="2361" />
+        <di:waypoint x="795" y="2301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0h25dfe_di" bpmnElement="DataOutputAssociation_0h25dfe">
+        <di:waypoint x="610" y="2500" />
+        <di:waypoint x="815" y="2500" />
+        <di:waypoint x="815" y="2315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0q88o5e_di" bpmnElement="DataOutputAssociation_0q88o5e">
+        <di:waypoint x="495" y="1027" />
+        <di:waypoint x="495" y="1095" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1wk043s_di" bpmnElement="DataOutputAssociation_1wk043s">
+        <di:waypoint x="1010" y="1365" />
+        <di:waypoint x="1010" y="1405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1lr98ow_di" bpmnElement="DataOutputAssociation_1lr98ow">
+        <di:waypoint x="620" y="1365" />
+        <di:waypoint x="620" y="1405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_07xj8hf_di" bpmnElement="DataOutputAssociation_07xj8hf">
+        <di:waypoint x="1160" y="1687" />
+        <di:waypoint x="1160" y="1725" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0qiij9n_di" bpmnElement="DataOutputAssociation_0qiij9n">
+        <di:waypoint x="1160" y="1814" />
+        <di:waypoint x="1160" y="1775" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Flow_rel-Publish_ValuationCalculated-Read_DB_Decisions-forward_dashed-ValuationCalculated" bpmnElement="Flow_rel-Publish_ValuationCalculated-Read_DB_Decisions-forward_dashed-ValuationCalculated">
+        <di:waypoint x="1200" y="1365" />
+        <di:waypoint x="1200" y="1550" />
+        <di:waypoint x="405" y="1550" />
+        <di:waypoint x="405" y="1633" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="760" y="1525" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jasgey_di" bpmnElement="Flow_0jasgey">
+        <di:waypoint x="410" y="540" />
+        <di:waypoint x="410" y="745" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="421" y="640" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mi653l_di" bpmnElement="Flow_1mi653l">
+        <di:waypoint x="1290" y="799" />
+        <di:waypoint x="1290" y="886" />
+        <di:waypoint x="365" y="886" />
+        <di:waypoint x="365" y="973" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="789" y="868" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gubi6a_di" bpmnElement="Flow_1gubi6a">
+        <di:waypoint x="1234" y="991" />
+        <di:waypoint x="1270" y="991" />
+        <di:waypoint x="1270" y="1220" />
+        <di:waypoint x="380" y="1220" />
+        <di:waypoint x="380" y="1311" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="792" y="1202" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cjc445_di" bpmnElement="Flow_1cjc445">
+        <di:waypoint x="1359" y="763" />
+        <di:waypoint x="1520" y="763" />
+        <di:waypoint x="1520" y="2560" />
+        <di:waypoint x="380" y="2560" />
+        <di:waypoint x="380" y="2308" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03eri51_di" bpmnElement="Flow_03eri51">
+        <di:waypoint x="1165" y="955" />
+        <di:waypoint x="1165" y="930" />
+        <di:waypoint x="1510" y="930" />
+        <di:waypoint x="1510" y="2570" />
+        <di:waypoint x="380" y="2570" />
+        <di:waypoint x="380" y="2308" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18cf5xx_di" bpmnElement="Flow_18cf5xx">
+        <di:waypoint x="1165" y="1084" />
+        <di:waypoint x="1165" y="1040" />
+        <di:waypoint x="1510" y="1040" />
+        <di:waypoint x="1510" y="2570" />
+        <di:waypoint x="380" y="2570" />
+        <di:waypoint x="380" y="2308" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1sxh30y_di" bpmnElement="Flow_1sxh30y">
+        <di:waypoint x="1429" y="1651" />
+        <di:waypoint x="1490" y="1651" />
+        <di:waypoint x="1490" y="2560" />
+        <di:waypoint x="380" y="2560" />
+        <di:waypoint x="380" y="2308" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14lda2x_di" bpmnElement="Flow_14lda2x">
+        <di:waypoint x="1410" y="1850" />
+        <di:waypoint x="1470" y="1850" />
+        <di:waypoint x="1470" y="2570" />
+        <di:waypoint x="380" y="2570" />
+        <di:waypoint x="380" y="2308" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c1385o_di" bpmnElement="Flow_1c1385o">
+        <di:waypoint x="590" y="2270" />
+        <di:waypoint x="260" y="2270" />
+        <di:waypoint x="260" y="180" />
+        <di:waypoint x="740" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g8zalr_di" bpmnElement="Flow_1g8zalr">
+        <di:waypoint x="510" y="2500" />
+        <di:waypoint x="230" y="2500" />
+        <di:waypoint x="230" y="280" />
+        <di:waypoint x="811" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05vj6o7_di" bpmnElement="Flow_05vj6o7">
+        <di:waypoint x="590" y="2390" />
+        <di:waypoint x="160" y="2390" />
+        <di:waypoint x="160" y="350" />
+        <di:waypoint x="890" y="350" />
+        <di:waypoint x="890" y="394" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

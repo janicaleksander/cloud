@@ -1,0 +1,36 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go build
+*.out
+
+# Dependency directories (if not using Go modules)
+vendor/
+
+# Go workspace file (optional, depending on your setup)
+go.work
+go.work.sum
+
+# IDE: GoLand / IntelliJ
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# Coverage reports
+coverage.out
