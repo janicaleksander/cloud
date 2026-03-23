@@ -29,3 +29,39 @@
     - **Action:** Listens to all key events from the broker (`ClaimSubmitted`, `PolicyVerified`, `PolicyDenied`,`PayoutApproved`,`PayoutRejected`).
     - **Database:** Saves a history of all sent messages into its own database (`DB_Notifications`).
     - **Output:** Simulates sending information (e.g., to the user's email) by writing the message content to the application logger.
+
+
+
+
+==========================
+Na podstawie BPMN — zestawienie mikroserwisów i ich eventów:
+
+---
+
+**Claim Service**
+- publikuje: `ClaimSubmitted`
+- subskrybuje: `PolicyVerified`, `PolicyDenied`, `PayoutApproved`, `PayoutRejected` (zmiana statusu w DB_Claims)
+
+---
+
+**Policy Verification Service**
+- subskrybuje: `ClaimSubmitted`
+- publikuje: `PolicyVerified`, `PolicyDenied`
+
+---
+
+**Valuation Service**
+- subskrybuje: `PolicyVerified`
+- publikuje: `ValuationCalculated`
+
+---
+
+**Decision Service**
+- subskrybuje: `ValuationCalculated`
+- publikuje: `PayoutApproved`, `PayoutRejected`
+
+---
+
+**Notification Service**
+- subskrybuje: `ClaimSubmitted`, `PolicyVerified`, `PolicyDenied`, `PayoutApproved`, `PayoutRejected`
+- nie publikuje nic
