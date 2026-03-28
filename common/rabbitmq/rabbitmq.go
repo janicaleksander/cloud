@@ -1,4 +1,4 @@
-package infrastructure
+package rabbitmq
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/janicaleksander/cloud/decisionservice/infrastructure/utils"
+	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
