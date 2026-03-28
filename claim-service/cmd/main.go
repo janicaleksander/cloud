@@ -7,9 +7,11 @@ import (
 
 	"github.com/janicaleksander/cloud/claimservice/application"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure"
+	"github.com/janicaleksander/cloud/claimservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/claimservice/persistance"
 	"github.com/janicaleksander/cloud/claimservice/presentation"
 	"github.com/janicaleksander/cloud/claimservice/presentation/api/router"
+	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/joho/godotenv"
 )
 
@@ -29,11 +31,22 @@ func main() {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
 	}
+	rabbit, err := rabbitmq.NewRabbitMQ()
+	if err != nil {
+		panic(err)
+	}
+	publisher := rabbitmq.NewPublisher(rabbit)
+
 	claimService := application.NewClaimService(
 		persistance.NewClaimRepository(db),
+		publisher,
 	)
 	claimController := presentation.NewClaimController(claimService)
+	claimEventHandler := messaging.NewClaimEventHandler(claimService)
+	claimEventHandler.Run(rabbit)
+
 	r := router.NewRouter(claimController)
+
 	log.Println("serving on 8080")
 	err = http.ListenAndServe("localhost:8080", r)
 	if err != nil {

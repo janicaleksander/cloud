@@ -11,23 +11,48 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func NewRabbitMQ() (*amqp.Connection, error) {
+type Publisher struct {
+	rabbit *RabbitMQ
+}
+
+type RabbitMQ struct {
+	conn *amqp.Connection
+}
+
+type MsgChan <-chan amqp.Delivery
+
+func NewPublisher(r *RabbitMQ) *Publisher {
+	return &Publisher{
+		rabbit: r,
+	}
+}
+
+func NewRabbitMQ() (*RabbitMQ, error) {
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
 		slog.Error("Can't connect to amqp")
 		return nil, err
 	}
-	return conn, nil
+	return &RabbitMQ{conn: conn}, nil
 }
 
-func Publish(conn *amqp.Connection, exchange string, msg interface{}) error {
+func (p *Publisher) Publish(exchange string, msg interface{}) error {
 	routeKey := utils.NameOfType(msg)
 
-	ch, err := conn.Channel()
+	ch, err := p.rabbit.conn.Channel()
 	if err != nil {
 		return err
 	}
 	defer ch.Close()
+	err = ch.ExchangeDeclare(
+		exchange,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	b, err := json.Marshal(msg)
@@ -48,14 +73,23 @@ func Publish(conn *amqp.Connection, exchange string, msg interface{}) error {
 	return err
 }
 
-func Subscribe[T any](conn *amqp.Connection, exchange string) (<-chan amqp.Delivery, error) {
+func Subscribe[T any](rabbitmq *RabbitMQ, exchange string) (<-chan amqp.Delivery, error) {
 	var x T
 	routeKey := utils.NameOfType(x)
 
-	ch, err := conn.Channel()
+	ch, err := rabbitmq.conn.Channel()
 	if err != nil {
 		return nil, err
 	}
+	err = ch.ExchangeDeclare(
+		exchange,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
 	q, err := ch.QueueDeclare(
 		routeKey,
 		false,

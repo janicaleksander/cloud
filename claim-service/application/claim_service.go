@@ -5,22 +5,29 @@ import (
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/claimservice/persistance"
+	"github.com/janicaleksander/cloud/common/event"
 )
 
 type ClaimService struct {
-	claimRepository *persistance.ClaimRepository
-	//probably to rabbit
+	claimRepository domain.ClaimerRepository
+	publisher       ClaimEventPublisher //under the hood there is ref do persistance
 }
 
-func NewClaimService(claimRepo *persistance.ClaimRepository) *ClaimService {
-	return &ClaimService{claimRepository: claimRepo}
+type ClaimEventPublisher interface {
+	Publish(exchange string, msg interface{}) error
+}
+
+func NewClaimService(claimRepo *persistance.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
+	return &ClaimService{
+		claimRepository: claimRepo,
+		publisher:       publisher,
+	}
 }
 
 //http methods
 
 func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	claim.Status = domain.NEW
-	//todo add file saving
 	return c.claimRepository.Save(context.Background(), claim)
 }
 func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
@@ -39,10 +46,11 @@ func (c *ClaimService) UpdateClaim(d *domain.Claim) error {
 
 //rabbit events methods
 
-func (c *ClaimService) ReceiveClaimEvent() {
-	//receive
-	//save to db
-	//publish event
+func (c *ClaimService) PushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) {
+	err := c.publisher.Publish("events", *e)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (c *ClaimService) ChangeClaimStatus() {}
