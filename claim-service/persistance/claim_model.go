@@ -14,5 +14,6 @@ type FileModel struct {
 	gorm.Model
 	FileName     string `gorm:"not null"`
 	FileExt      string `gorm:"not null"`
+	StorageURL   string `gorm:"not null"`
 	ClaimModelID uint   `gorm:"not null"`
 }

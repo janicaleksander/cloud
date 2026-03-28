@@ -44,11 +44,12 @@ type Claim struct {
 }
 
 type File struct {
-	ID        uint
-	FileName  string
-	FileExt   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         uint
+	FileName   string
+	FileExt    string
+	StorageURL string //added
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type Claimer interface {

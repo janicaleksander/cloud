@@ -24,6 +24,7 @@ func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
 func (c *ClaimService) GetClaims() {}
 func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	claim.Status = domain.NEW
+	//todo add file saving
 	return c.claimRepository.Save(context.Background(), claim)
 }
 func (c *ClaimService) DeleteClaim() {}

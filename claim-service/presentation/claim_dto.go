@@ -5,12 +5,13 @@ import "time"
 type CreateClaimRequestDTO struct {
 	UserID uint            `json:"user_id"`
 	CarID  uint            `json:"car_id"`
-	Files  []CreateFileDTO `json:"files"`
+	Files  []CreateFileDTO `json:"files"` //remove files
 }
 
 type CreateFileDTO struct {
-	FileName string `json:"file_name"`
-	FileExt  string `json:"file_ext"`
+	FileName   string `json:"file_name"`
+	FileExt    string `json:"file_ext"`
+	StorageURL string `json:"storage_url"`
 }
 
 type GetClaimResponseDTO struct {
@@ -23,7 +24,8 @@ type GetClaimResponseDTO struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 type FileResponseDTO struct {
-	ID       uint   `json:"id"`
-	FileName string `json:"file_name"`
-	FileExt  string `json:"file_ext"`
+	ID         uint   `json:"id"`
+	FileName   string `json:"file_name"`
+	FileExt    string `json:"file_ext"`
+	StorageURL string `json:"storage_url"`
 }

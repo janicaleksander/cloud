@@ -9,11 +9,12 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 	domainFiles := make([]*domain.File, 0, len(c.Files))
 	for idx := range c.Files {
 		domainFiles = append(domainFiles, &domain.File{
-			ID:        c.Files[idx].ID,
-			FileName:  c.Files[idx].FileName,
-			FileExt:   c.Files[idx].FileExt,
-			CreatedAt: c.Files[idx].CreatedAt,
-			UpdatedAt: c.Files[idx].UpdatedAt,
+			ID:         c.Files[idx].ID,
+			FileName:   c.Files[idx].FileName,
+			FileExt:    c.Files[idx].FileExt,
+			StorageURL: c.Files[idx].StorageURL,
+			CreatedAt:  c.Files[idx].CreatedAt,
+			UpdatedAt:  c.Files[idx].UpdatedAt,
 		},
 		)
 	}
@@ -44,6 +45,7 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 				UpdatedAt: c.Files[idx].UpdatedAt},
 			FileName:     c.Files[idx].FileName,
 			FileExt:      c.Files[idx].FileExt,
+			StorageURL:   c.Files[idx].StorageURL,
 			ClaimModelID: c.ID,
 		})
 	}
