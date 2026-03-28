@@ -11,8 +11,12 @@ type ClaimRepository struct {
 	gorm *gorm.DB
 }
 
+func NewClaimRepository(g *gorm.DB) *ClaimRepository {
+	return &ClaimRepository{gorm: g}
+}
+
 func (r *ClaimRepository) Save(ctx context.Context, c *domain.Claim) error {
-	claimModel, err := ToModel(c)
+	claimModel, err := ClaimDomainToModel(c)
 	if err != nil {
 		return err
 	}
@@ -27,7 +31,7 @@ func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
 	}
 	claimDomains := make([]*domain.Claim, 0, 32)
 	for idx := range claimModels {
-		domainClaim, err := ToDomain(&claimModels[idx])
+		domainClaim, err := ClaimModelToDomain(&claimModels[idx])
 		if err != nil {
 			return nil, err
 		}
@@ -37,11 +41,11 @@ func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
 }
 
 func (r *ClaimRepository) GetById(ctx context.Context, id uint) (*domain.Claim, error) {
-	claimModel, err := gorm.G[ClaimModel](r.gorm).Where("id = ?", id).First(ctx)
+	claimModel, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
 	}
-	claimDomain, err := ToDomain(&claimModel)
+	claimDomain, err := ClaimModelToDomain(&claimModel)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +54,7 @@ func (r *ClaimRepository) GetById(ctx context.Context, id uint) (*domain.Claim, 
 }
 
 func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) error {
-	claimModel, err := ToModel(c)
+	claimModel, err := ClaimDomainToModel(c)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ToDomain(c *ClaimModel) (*domain.Claim, error) {
+func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 	domainFiles := make([]*domain.File, 0, len(c.Files))
 	for idx := range c.Files {
 		domainFiles = append(domainFiles, &domain.File{
@@ -34,7 +34,7 @@ func ToDomain(c *ClaimModel) (*domain.Claim, error) {
 
 }
 
-func ToModel(c *domain.Claim) (*ClaimModel, error) {
+func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	modelFiles := make([]FileModel, 0, len(c.Files))
 	for idx := range c.Files {
 		modelFiles = append(modelFiles, FileModel{
