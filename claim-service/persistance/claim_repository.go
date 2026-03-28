@@ -25,7 +25,7 @@ func (r *ClaimRepository) Save(ctx context.Context, c *domain.Claim) error {
 }
 
 func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
-	claimModels, err := gorm.G[ClaimModel](r.gorm).Find(ctx)
+	claimModels, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,11 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) error {
 	if err != nil {
 		return err
 	}
-	_, err = gorm.G[ClaimModel](r.gorm).Where("id = ?", claimModel.ID).Updates(ctx, *claimModel)
+	_, err = gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", claimModel.ID).Updates(ctx, *claimModel)
 	return err
 }
 
 func (r *ClaimRepository) DeleteById(ctx context.Context, id uint) error {
-	_, err := gorm.G[ClaimModel](r.gorm).Where("id = ?", id).Delete(ctx)
+	_, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).Delete(ctx)
 	return err
 }

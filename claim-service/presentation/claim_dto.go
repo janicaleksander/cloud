@@ -29,3 +29,8 @@ type FileResponseDTO struct {
 	FileExt    string `json:"file_ext"`
 	StorageURL string `json:"storage_url"`
 }
+
+type UpdateClaimRequestDTO struct {
+	UserID uint `json:"user_id,omitempty"`
+	CarID  uint `json:"car_id,omitempty"`
+}

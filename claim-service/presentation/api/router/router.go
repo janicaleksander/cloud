@@ -17,10 +17,10 @@ func NewRouter(claimHandler *presentation.ClaimController) http.Handler {
 }
 func setupPaths(r *chi.Mux, handler *presentation.ClaimController) {
 	r.Route("/claim", func(router chi.Router) {
-		router.Get("/", nil)                         // all claims /claim
-		router.Get("/{id}", handler.GetClaimHandler) //claim /claim/id
-		router.Post("/", handler.CreateClaimHandler) //add claim
-		router.Delete("/{id}", nil)                  //delete claim /claim/id
-		router.Put("/{id}", nil)                     //delete claim /claim/id
+		router.Get("/", handler.GetClaimsHandler)          // all claims /claim
+		router.Get("/{id}", handler.GetClaimHandler)       //claim /claim/id
+		router.Post("/", handler.CreateClaimHandler)       //add claim
+		router.Delete("/{id}", handler.DeleteClaimHandler) //delete claim /claim/id
+		router.Patch("/{id}", handler.UpdateClaimHandler)  //delete claim /claim/id
 	})
 }

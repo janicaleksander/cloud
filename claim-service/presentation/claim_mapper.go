@@ -19,7 +19,7 @@ func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
 	}
 }
 
-func GetClaimDomainToRequest(claim *domain.Claim) *GetClaimResponseDTO {
+func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 	files := make([]FileResponseDTO, 0, len(claim.Files))
 	for _, f := range claim.Files {
 		files = append(files, FileResponseDTO{

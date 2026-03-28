@@ -18,17 +18,24 @@ func NewClaimService(claimRepo *persistance.ClaimRepository) *ClaimService {
 
 //http methods
 
-func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
-	return c.claimRepository.GetById(context.Background(), id)
-}
-func (c *ClaimService) GetClaims() {}
 func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	claim.Status = domain.NEW
 	//todo add file saving
 	return c.claimRepository.Save(context.Background(), claim)
 }
-func (c *ClaimService) DeleteClaim() {}
-func (c *ClaimService) UpdateClim()  {}
+func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
+	return c.claimRepository.GetById(context.Background(), id)
+}
+func (c *ClaimService) GetClaims() ([]*domain.Claim, error) {
+	return c.claimRepository.GetAll(context.Background())
+}
+
+func (c *ClaimService) DeleteClaim(id uint) error {
+	return c.claimRepository.DeleteById(context.Background(), id)
+}
+func (c *ClaimService) UpdateClaim(d *domain.Claim) error {
+	return c.claimRepository.Update(context.Background(), d)
+}
 
 //rabbit events methods
 
