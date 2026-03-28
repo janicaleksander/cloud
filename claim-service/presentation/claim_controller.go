@@ -2,11 +2,15 @@ package presentation
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/janicaleksander/cloud/claimservice/application"
+	"github.com/janicaleksander/cloud/claimservice/domain"
 )
 
 type ClaimController struct {
@@ -18,23 +22,76 @@ func NewClaimController(claimService *application.ClaimService) *ClaimController
 		claimService: claimService,
 	}
 }
+
+func parseFile(r *http.Request) ([]*domain.File, error) {
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		return nil, err
+	}
+
+	files := r.MultipartForm.File["claim_files"]
+	if len(files) == 0 {
+		return nil, errors.New("no files provided")
+	}
+
+	domainFiles := make([]*domain.File, 0, len(files))
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		domainFiles = append(domainFiles, &domain.File{
+			FileName: fileHeader.Filename,
+			FileExt:  filepath.Ext(fileHeader.Filename),
+		})
+
+		file.Close() // close immediately
+	}
+	return domainFiles, nil
+}
 func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	var createClaimRequest CreateClaimRequestDTO
-	err := json.NewDecoder(r.Body).Decode(&createClaimRequest)
+
+	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		http.Error(w, "Error", 408)
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	dataField := r.FormValue("json_req_body")
+	if dataField == "" {
+		http.Error(w, "Missing data field", http.StatusBadRequest)
+		return
+	}
+
+	var createClaimRequest CreateClaimRequestDTO
+	err = json.NewDecoder(strings.NewReader(dataField)).Decode(&createClaimRequest)
+	if err != nil {
+		http.Error(w, "Invalid JSON in data field", http.StatusBadRequest)
+		return
+	}
+
+	domainFiles, err := parseFile(r)
+	if err != nil {
+		http.Error(w, "parsing file error", http.StatusInternalServerError)
 		return
 	}
 
 	claimDomain := CreateClaimRequestToDomain(&createClaimRequest)
+	for idx := range domainFiles {
+		domainFiles[idx].StorageURL = "https://storage.example.com/" + domainFiles[idx].FileName
+	}
+	if len(domainFiles) != 0 {
+		claimDomain.Files = domainFiles
+	}
 
 	err = c.claimService.CreateClaim(claimDomain)
 	if err != nil {
-		http.Error(w, "saving Error", 408)
+		http.Error(w, "saving Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -42,9 +99,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 	}
-
 }
-
 func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

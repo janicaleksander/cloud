@@ -11,6 +11,7 @@ import (
 func NewRouter(claimHandler *presentation.ClaimController) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.RequestSize(10 << 20))
 
 	setupPaths(r, claimHandler)
 	return r

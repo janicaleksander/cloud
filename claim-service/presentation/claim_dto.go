@@ -3,15 +3,8 @@ package presentation
 import "time"
 
 type CreateClaimRequestDTO struct {
-	UserID uint            `json:"user_id"`
-	CarID  uint            `json:"car_id"`
-	Files  []CreateFileDTO `json:"files"` //remove files
-}
-
-type CreateFileDTO struct {
-	FileName   string `json:"file_name"`
-	FileExt    string `json:"file_ext"`
-	StorageURL string `json:"storage_url"`
+	UserID uint `json:"user_id"`
+	CarID  uint `json:"car_id"`
 }
 
 type GetClaimResponseDTO struct {
