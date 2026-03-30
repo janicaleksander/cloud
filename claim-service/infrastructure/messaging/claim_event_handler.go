@@ -69,7 +69,7 @@ func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 func (h *ClaimEventHandler) handlePayoutRejectedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		log.Printf("HandlePayoutRejectedEvent: %+v", msg)
-		//h.claimService.UpdateClaim()
+		//h.claimService.UpdateClaim()//TODO
 
 	}
 }

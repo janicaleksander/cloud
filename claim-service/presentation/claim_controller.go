@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/janicaleksander/cloud/claimservice/application"
 	"github.com/janicaleksander/cloud/claimservice/domain"
-	"github.com/janicaleksander/cloud/common/event"
 )
 
 type ClaimController struct {
@@ -89,6 +88,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	if len(domainFiles) != 0 {
 		claimDomain.Files = domainFiles
 	}
+	claimDomain.Status = domain.NEW
 
 	err = c.claimService.CreateClaim(claimDomain)
 	if err != nil {
@@ -100,15 +100,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 	}
-	urls := make([]string, 0, len(claimDomain.Files))
-	for idx := range claimDomain.Files {
-		urls = append(urls, claimDomain.Files[idx].StorageURL)
-	}
-	c.claimService.PushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
-		UserID:     claimDomain.UserID,
-		ClaimID:    claimDomain.ID,
-		StorageURL: urls,
-	})
+
 }
 func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

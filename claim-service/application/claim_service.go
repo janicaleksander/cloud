@@ -27,8 +27,23 @@ func NewClaimService(claimRepo *persistance.ClaimRepository, publisher ClaimEven
 //http methods
 
 func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
-	claim.Status = domain.NEW
-	return c.claimRepository.Save(context.Background(), claim)
+	urls := make([]string, 0, len(claim.Files))
+	for idx := range claim.Files {
+		urls = append(urls, claim.Files[idx].StorageURL)
+	}
+	err := c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
+		UserID:     claim.UserID,
+		ClaimID:    claim.ID,
+		StorageURL: urls,
+	})
+	if err != nil {
+		return err
+	}
+	err = c.claimRepository.Save(context.Background(), claim)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
 	return c.claimRepository.GetById(context.Background(), id)
@@ -46,11 +61,8 @@ func (c *ClaimService) UpdateClaim(d *domain.Claim) error {
 
 //rabbit events methods
 
-func (c *ClaimService) PushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) {
-	err := c.publisher.Publish("events", *e)
-	if err != nil {
-		panic(err)
-	}
+func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
+	return c.publisher.Publish("events", *e)
 }
 
 func (c *ClaimService) ChangeClaimStatus() {}
