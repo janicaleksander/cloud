@@ -5,6 +5,7 @@ import (
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ClaimRepository struct {
@@ -64,11 +65,19 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 	if err != nil {
 		return nil, err
 	}
-	_, err = gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", claimModel.ID).Updates(ctx, *claimModel)
+	var updated ClaimModel
+
+	err = r.gorm.
+		Model(&ClaimModel{}).
+		Where("id = ?", claimModel.ID).
+		Clauses(clause.Returning{}).
+		Updates(claimModel).
+		Scan(&updated).Error
+
 	if err != nil {
 		return nil, err
 	}
-	claimDomain, err := ClaimModelToDomain(claimModel)
+	claimDomain, err := ClaimModelToDomain(&updated)
 	if err != nil {
 		return nil, err
 	}

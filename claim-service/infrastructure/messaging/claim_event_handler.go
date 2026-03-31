@@ -47,7 +47,7 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 
 func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		log.Printf("HandlePolicyVerifiedEvent: %+v", msg)
+		log.Println("HandlePolicyVerifiedEvent")
 		var e event.PolicyVerifiedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
@@ -64,7 +64,7 @@ func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msgs rabbitmq.MsgChan) {
 
 func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		log.Printf("HandlePolicyDeniedEvent: %+v", msg)
+		log.Printf("HandlePolicyDeniedEvent: ")
 		var e event.PolicyDeniedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
@@ -82,7 +82,7 @@ func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
 
 func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		log.Printf("HandlePayoutApprovedEvent: %+v", msg)
+		log.Printf("HandlePayoutApprovedEvent: ")
 		var e event.PayoutApprovedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
@@ -100,7 +100,7 @@ func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 
 func (h *ClaimEventHandler) handlePayoutRejectedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		log.Printf("HandlePayoutRejectedEvent: %+v", msg)
+		log.Printf("HandlePayoutRejectedEvent: ")
 		var e event.PayoutRejectedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
