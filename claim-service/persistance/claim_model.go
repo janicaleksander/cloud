@@ -1,13 +1,18 @@
 package persistance
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type ClaimModel struct {
 	gorm.Model
-	UserID uint   `gorm:"not null"`
-	CarID  uint   `gorm:"not null"`
-	Status string `gorm:"not null"`
-	Files  []FileModel
+	UserID       uint      `gorm:"not null"`
+	CarID        uint      `gorm:"not null"`
+	AccidentDate time.Time `gorm:"not null"`
+	Status       string    `gorm:"not null"`
+	Files        []FileModel
 }
 
 type FileModel struct {

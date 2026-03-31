@@ -4,8 +4,9 @@ import "github.com/janicaleksander/cloud/claimservice/domain"
 
 func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
 	return &domain.Claim{
-		UserID: dto.UserID,
-		CarID:  dto.CarID,
+		UserID:       dto.UserID,
+		CarID:        dto.CarID,
+		AccidentDate: dto.AccidentDate,
 	}
 }
 
@@ -20,13 +21,14 @@ func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 		})
 	}
 	return &GetClaimResponseDTO{
-		ID:        claim.ID,
-		UserID:    claim.UserID,
-		CarID:     claim.CarID,
-		Status:    string(claim.Status),
-		Files:     files,
-		CreatedAt: claim.CreatedAt,
-		UpdatedAt: claim.UpdatedAt,
+		ID:           claim.ID,
+		UserID:       claim.UserID,
+		CarID:        claim.CarID,
+		AccidentDate: claim.AccidentDate,
+		Status:       string(claim.Status),
+		Files:        files,
+		CreatedAt:    claim.CreatedAt,
+		UpdatedAt:    claim.UpdatedAt,
 	}
 
 }

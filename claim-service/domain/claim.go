@@ -34,13 +34,14 @@ func StringToStatus(s string) (Status, error) {
 }
 
 type Claim struct {
-	ID        uint
-	UserID    uint
-	CarID     uint
-	Status    Status
-	Files     []*File
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           uint
+	UserID       uint
+	CarID        uint
+	AccidentDate time.Time
+	Status       Status
+	Files        []*File
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type File struct {

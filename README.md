@@ -15,7 +15,7 @@
 - **Valuation Service**
     - **Role:** Calculates the amount of money the insurance company has to pay for the reported damages.
     - **Action:** Reacts to the `PolicyVerified` event.
-    - **Database:** Reads pricing data from its own database (`DB_Valuations` - e.g., price lists for specific car parts) and saves the generated valuation record.
+    - **Database:** -  saves the generated valuation record.
     - **Broker:** Publishes a `ValuationCalculated` event containing the calculated amount.
 
 - **Decision Service**

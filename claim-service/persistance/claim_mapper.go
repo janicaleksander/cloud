@@ -23,13 +23,14 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 		return nil, err
 	}
 	claimDomain := &domain.Claim{
-		ID:        c.ID,
-		UserID:    c.UserID,
-		CarID:     c.CarID,
-		Status:    status,
-		Files:     domainFiles,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
+		ID:           c.ID,
+		UserID:       c.UserID,
+		CarID:        c.CarID,
+		AccidentDate: c.AccidentDate,
+		Status:       status,
+		Files:        domainFiles,
+		CreatedAt:    c.CreatedAt,
+		UpdatedAt:    c.UpdatedAt,
 	}
 	return claimDomain, nil
 
@@ -55,10 +56,11 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 			CreatedAt: c.CreatedAt,
 			UpdatedAt: c.UpdatedAt,
 		},
-		UserID: c.UserID,
-		CarID:  c.CarID,
-		Status: string(c.Status),
-		Files:  modelFiles,
+		UserID:       c.UserID,
+		CarID:        c.CarID,
+		AccidentDate: c.AccidentDate,
+		Status:       string(c.Status),
+		Files:        modelFiles,
 	}
 	return claimModel, nil
 

@@ -3,18 +3,20 @@ package presentation
 import "time"
 
 type CreateClaimRequestDTO struct {
-	UserID uint `json:"user_id"`
-	CarID  uint `json:"car_id"`
+	UserID       uint      `json:"user_id"`
+	CarID        uint      `json:"car_id"`
+	AccidentDate time.Time `json:"accident_date"`
 }
 
 type GetClaimResponseDTO struct {
-	ID        uint              `json:"id"`
-	UserID    uint              `json:"user_id"`
-	CarID     uint              `json:"car_id"`
-	Status    string            `json:"status"`
-	Files     []FileResponseDTO `json:"files"`
-	CreatedAt time.Time         `json:"created_at"`
-	UpdatedAt time.Time         `json:"updated_at"`
+	ID           uint              `json:"id"`
+	UserID       uint              `json:"user_id"`
+	CarID        uint              `json:"car_id"`
+	AccidentDate time.Time         `json:"accident_date"`
+	Status       string            `json:"status"`
+	Files        []FileResponseDTO `json:"files"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
 }
 type FileResponseDTO struct {
 	ID         uint   `json:"id"`
