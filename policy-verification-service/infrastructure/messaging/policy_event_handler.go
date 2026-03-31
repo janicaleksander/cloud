@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/janicaleksander/cloud/common/event"
@@ -44,6 +45,7 @@ func (p *PolicyEventHandler) registerHandlers() {
 }
 func (p *PolicyEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
+		fmt.Println(msg.RoutingKey)
 		if handler, ok := p.handlers[msg.RoutingKey]; ok {
 			handler(&msg)
 		} else {
