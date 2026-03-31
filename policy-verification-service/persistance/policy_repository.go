@@ -2,6 +2,7 @@ package persistance
 
 import (
 	"context"
+	"log"
 
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
 	"gorm.io/gorm"
@@ -73,6 +74,7 @@ func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uint, vi
 		Where("user_id = ? AND vin = ?", userID, vin).
 		First(ctx)
 
+	log.Printf("IfUserHasPolicy: userID=%d vin=%s err=%v p=%+v", userID, vin, err, p)
 	if err != nil {
 		return false, nil
 	}

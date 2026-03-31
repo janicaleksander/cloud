@@ -22,6 +22,7 @@ type RabbitMQ struct {
 }
 
 type MsgChan <-chan amqp.Delivery
+type Delivery *amqp.Delivery
 
 func NewPublisher(r *RabbitMQ) *Publisher {
 	return &Publisher{
@@ -39,7 +40,7 @@ func NewRabbitMQ() (*RabbitMQ, error) {
 }
 
 func (p *Publisher) Publish(exchange string, msg interface{}) error {
-	routeKey := routeKeyToTopicNotation(utils.NameOfType(msg))
+	routeKey := RouteKeyToTopicNotation(utils.NameOfType(msg))
 	ch, err := p.rabbit.conn.Channel()
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func (p *Publisher) Publish(exchange string, msg interface{}) error {
 	return err
 }
 
-func routeKeyToTopicNotation(routeKey string) string {
+func RouteKeyToTopicNotation(routeKey string) string {
 	if strings.HasSuffix(routeKey, "Event") {
 		routeKey = routeKey[:len(routeKey)-5]
 	}
@@ -92,7 +93,7 @@ func routeKeyToTopicNotation(routeKey string) string {
 }
 func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan amqp.Delivery, error) {
 	var x T
-	routeKey := routeKeyToTopicNotation(utils.NameOfType(x))
+	routeKey := RouteKeyToTopicNotation(utils.NameOfType(x))
 
 	ch, err := rabbitmq.conn.Channel()
 	if err != nil {
@@ -142,4 +143,57 @@ func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan
 		return nil, err
 	}
 	return deliveryChan, nil
+}
+
+func SubscribeRaw(rabbitmq *RabbitMQ, exchange string, qName string) (<-chan amqp.Delivery, error) {
+	ch, err := rabbitmq.conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ch.ExchangeDeclare(
+		exchange,
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	q, err := ch.QueueDeclare(
+		qName,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ch.QueueBind(
+		q.Name,
+		"#", // wildcard
+		exchange,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ch.Consume(
+		q.Name,
+		"",
+		true, // ❗ manual ack
+		false,
+		false,
+		false,
+		nil,
+	)
 }

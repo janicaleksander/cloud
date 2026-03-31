@@ -36,7 +36,6 @@ func StringToStatus(s string) (Status, error) {
 type Claim struct {
 	ID           uint
 	UserID       uint
-	CarID        uint
 	VIN          string
 	AccidentDate time.Time
 	Status       Status

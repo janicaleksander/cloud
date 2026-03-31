@@ -53,31 +53,36 @@ func (s *PolicyService) DeletePolicy(policyID uint) error {
 }
 
 func (s *PolicyService) CheckUserPolicy(claimID uint, userID uint, vin string, accidentDate time.Time, urls []string) {
-	// if user has a policy
 	hasPolicy, policy := s.policyRepository.IfUserHasPolicy(context.Background(), userID, vin)
-	// if policy is not expired
-	ok := hasPolicy && policy.IsValid(accidentDate)
-	if ok {
+
+	if !hasPolicy {
+		err := s.publisher.Publish("events", event.PolicyDeniedEvent{
+			ClaimID: claimID,
+			Reason:  string(domain.PolicyNotFound),
+		})
+		if err != nil {
+			log.Printf("Failed to publish PolicyDeniedEvent for claimID %d: %v", claimID, err)
+		}
+		return
+	}
+
+	valid, reason := policy.IsValid(accidentDate)
+
+	if valid {
 		err := s.publisher.Publish("events", event.PolicyVerifiedEvent{
 			ClaimID:    claimID,
 			StorageURL: urls,
-		}) //??? TODO
-
+		})
 		if err != nil {
 			log.Printf("Failed to publish PolicyVerifiedEvent for claimID %d: %v", claimID, err)
-			//TODO log
 		}
-
 	} else {
 		err := s.publisher.Publish("events", event.PolicyDeniedEvent{
 			ClaimID: claimID,
-			Reason:  "some reason", // TODO
-		}) //??? TODO
-
+			Reason:  string(reason),
+		})
 		if err != nil {
-			log.Println("Failed to publish PolicyDeniedEvent for claimID %d: %v", claimID, err)
-			//TODO log
+			log.Printf("Failed to publish PolicyDeniedEvent for claimID %d: %v", claimID, err)
 		}
-
 	}
 }

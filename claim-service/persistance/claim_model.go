@@ -9,7 +9,6 @@ import (
 type ClaimModel struct {
 	gorm.Model
 	UserID       uint      `gorm:"not null"`
-	CarID        uint      `gorm:"not null"`
 	VIN          string    `gorm:"not  null"`
 	AccidentDate time.Time `gorm:"not null"`
 	Status       string    `gorm:"not null"`

@@ -8,110 +8,122 @@ import (
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
+	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 )
 
+type HandlerFunc func(msgs rabbitmq.Delivery)
 type ClaimEventHandler struct {
 	claimService *application.ClaimService
+	handlers     map[string]HandlerFunc
 }
 
 func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHandler {
-	return &ClaimEventHandler{claimService: claimService}
+	h := &ClaimEventHandler{
+		claimService: claimService,
+		handlers:     make(map[string]HandlerFunc),
+	}
+	h.registerHandlers()
+	return h
+}
+
+func (h *ClaimEventHandler) registerHandlers() {
+	h.handlers[rabbitmq.RouteKeyToTopicNotation(
+		utils.NameOfType(event.PolicyVerifiedEvent{}),
+	)] = h.handlePolicyVerifiedEvent
+
+	h.handlers[rabbitmq.RouteKeyToTopicNotation(
+		utils.NameOfType(event.PolicyDeniedEvent{}),
+	)] = h.handlePolicyDeniedEvent
+
+	h.handlers[rabbitmq.RouteKeyToTopicNotation(
+		utils.NameOfType(event.PayoutApprovedEvent{}),
+	)] = h.handlePayoutApprovedEvent
+
+	h.handlers[rabbitmq.RouteKeyToTopicNotation(
+		utils.NameOfType(event.PayoutRejectedEvent{}),
+	)] = h.handlePayoutRejectedEvent
 }
 
 func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
-	policyVerifiedChan, err := rabbitmq.Subscribe[event.PolicyVerifiedEvent](rabbit, "events", "claim-service")
+	msgs, err := rabbitmq.SubscribeRaw(rabbit, "events", "claim-service")
 	if err != nil {
-		log.Printf("failed to subscribe to policy_verified: %v", err)
+		log.Fatal(err)
 	}
 
-	policyDeniedChan, err := rabbitmq.Subscribe[event.PolicyDeniedEvent](rabbit, "events", "claim-service")
-	if err != nil {
-		log.Printf("failed to subscribe to policy_denied: %v", err)
-	}
-
-	payoutApprovedChan, err := rabbitmq.Subscribe[event.PayoutApprovedEvent](rabbit, "events", "claim-service")
-	if err != nil {
-		log.Printf("failed to subscribe to payout_approved: %v", err)
-	}
-
-	payoutRejectedChan, err := rabbitmq.Subscribe[event.PayoutRejectedEvent](rabbit, "events", "claim-service")
-	if err != nil {
-		log.Printf("failed to subscribe to payout_rejected: %v", err)
-	}
-
-	go h.handlePolicyVerifiedEvent(policyVerifiedChan)
-	go h.handlePolicyDeniedEvent(policyDeniedChan)
-	go h.handlePayoutApprovedEvent(payoutApprovedChan)
-	go h.handlePayoutRejectedEvent(payoutRejectedChan)
+	go h.dispatch(msgs)
 }
-
-func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msgs rabbitmq.MsgChan) {
+func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		log.Println("HandlePolicyVerifiedEvent")
-		var e event.PolicyVerifiedEvent
-		err := json.Unmarshal(msg.Body, &e)
-		if err != nil {
-			log.Printf("failed to unmarshal policy_verified event: %v", err)
-			//TODO log this
-		}
-		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
-		if err != nil {
-			log.Printf("failed to change claim status to VERIFIED: %v", err)
-			//TODO log
+		if handler, ok := h.handlers[msg.RoutingKey]; ok {
+			handler(&msg)
+		} else {
+			log.Println("err")
 		}
 	}
 }
 
-func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
-	for msg := range msgs {
-		log.Printf("HandlePolicyDeniedEvent: ")
-		var e event.PolicyDeniedEvent
-		err := json.Unmarshal(msg.Body, &e)
-		if err != nil {
-			log.Printf("failed to unmarshal policy_denied event: %v", err)
-			//TODO log this
-		}
-		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
-		if err != nil {
-			log.Printf("failed to change claim status to DENIED: %v", err)
-			//TODO log
-		}
-
+func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery) {
+	log.Println("HandlePolicyVerifiedEvent")
+	var e event.PolicyVerifiedEvent
+	err := json.Unmarshal(msg.Body, &e)
+	if err != nil {
+		log.Printf("failed to unmarshal policy_verified event: %v", err)
+		//TODO log this
+		return
+	}
+	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
+	if err != nil {
+		log.Printf("failed to change claim status to VERIFIED: %v", err)
+		//TODO log
 	}
 }
 
-func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
-	for msg := range msgs {
-		log.Printf("HandlePayoutApprovedEvent: ")
-		var e event.PayoutApprovedEvent
-		err := json.Unmarshal(msg.Body, &e)
-		if err != nil {
-			log.Printf("failed to unmarshal payout_approved event: %v", err)
-			//TODO log this
-		}
-		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
-		if err != nil {
-			log.Printf("failed to change claim status to APPROVED: %v", err)
-			//TODO log
-		}
+func (h *ClaimEventHandler) handlePolicyDeniedEvent(msg rabbitmq.Delivery) {
+	log.Printf("HandlePolicyDeniedEvent: ")
+	var e event.PolicyDeniedEvent
+	err := json.Unmarshal(msg.Body, &e)
+	if err != nil {
+		log.Printf("failed to unmarshal policy_denied event: %v", err)
+		//TODO log this
+		return
+	}
+	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
+	if err != nil {
+		log.Printf("failed to change claim status to DENIED: %v", err)
+		//TODO log
+	}
 
+}
+
+func (h *ClaimEventHandler) handlePayoutApprovedEvent(msg rabbitmq.Delivery) {
+	log.Printf("HandlePayoutApprovedEvent: ")
+	var e event.PayoutApprovedEvent
+	err := json.Unmarshal(msg.Body, &e)
+	if err != nil {
+		log.Printf("failed to unmarshal payout_approved event: %v", err)
+		//TODO log this
+		return
+	}
+	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
+	if err != nil {
+		log.Printf("failed to change claim status to APPROVED: %v", err)
+		//TODO log
 	}
 }
 
-func (h *ClaimEventHandler) handlePayoutRejectedEvent(msgs rabbitmq.MsgChan) {
-	for msg := range msgs {
-		log.Printf("HandlePayoutRejectedEvent: ")
-		var e event.PayoutRejectedEvent
-		err := json.Unmarshal(msg.Body, &e)
-		if err != nil {
-			log.Printf("failed to unmarshal payout_rejected event: %v", err)
-			//TODO log this
-		}
-		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
-		if err != nil {
-			log.Printf("failed to change claim status to REJECTED: %v", err)
-			//TODO log
-		}
-
+func (h *ClaimEventHandler) handlePayoutRejectedEvent(msg rabbitmq.Delivery) {
+	log.Printf("HandlePayoutRejectedEvent: ")
+	var e event.PayoutRejectedEvent
+	err := json.Unmarshal(msg.Body, &e)
+	if err != nil {
+		log.Printf("failed to unmarshal payout_rejected event: %v", err)
+		//TODO log this
+		return
 	}
+	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
+	if err != nil {
+		log.Printf("failed to change claim status to REJECTED: %v", err)
+		//TODO log
+	}
+
 }

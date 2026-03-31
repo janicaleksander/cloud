@@ -25,7 +25,6 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 	claimDomain := &domain.Claim{
 		ID:           c.ID,
 		UserID:       c.UserID,
-		CarID:        c.CarID,
 		VIN:          c.VIN,
 		AccidentDate: c.AccidentDate,
 		Status:       status,
@@ -58,7 +57,6 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 			UpdatedAt: c.UpdatedAt,
 		},
 		UserID:       c.UserID,
-		CarID:        c.CarID,
 		VIN:          c.VIN,
 		AccidentDate: c.AccidentDate,
 		Status:       string(c.Status),

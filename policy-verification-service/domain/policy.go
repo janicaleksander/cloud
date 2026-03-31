@@ -24,11 +24,14 @@ type Policy struct {
 	UpdatedAt time.Time
 }
 
-func (p Policy) IsValid(accidentDate time.Time) bool {
-	if p.From.Compare(accidentDate) == -1 && accidentDate.Compare(p.To) == -1 {
-		return true
+func (p Policy) IsValid(accidentDate time.Time) (bool, RejectionReason) {
+	if accidentDate.Before(p.From) {
+		return false, AccidentDateBeforePolicy
 	}
-	return false
+	if accidentDate.After(p.To) {
+		return false, PolicyExpired
+	}
+	return true, ""
 }
 
 //TODO This repo
