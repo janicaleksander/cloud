@@ -5,6 +5,7 @@ import "time"
 type ClaimSubmittedEvent struct {
 	ClaimID      uint      `json:"claim_id"`
 	UserID       uint      `json:"user_id"`
+	VIN          string    `json:"vin"`
 	AccidentDate time.Time `json:"accident_date"`
 	StorageURL   []string  `json:"storage_url"`
 }
