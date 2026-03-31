@@ -27,8 +27,8 @@ type ValuationCalculatedEvent struct {
 }
 
 type PayoutApprovedEvent struct {
-	ClaimID      uint    `json:"claim_id"`
-	PayoutAmount float64 `json:"payout_amount"`
+	ClaimID              uint    `json:"claim_id"`
+	AcceptedPayoutAmount float64 `json:"payout_amount"`
 }
 
 type PayoutRejectedEvent struct {
