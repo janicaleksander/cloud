@@ -1,9 +1,11 @@
 package messaging
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/janicaleksander/cloud/claimservice/application"
+	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 )
@@ -46,14 +48,30 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		log.Printf("HandlePolicyVerifiedEvent: %+v", msg)
-		//h.claimService.UpdateClaim()
+		var e event.PolicyVerifiedEvent
+		err := json.Unmarshal(msg.Body, &e)
+		if err != nil {
+			//TODO log this
+		}
+		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
+		if err != nil {
+			//TODO log
+		}
 	}
 }
 
 func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		log.Printf("HandlePolicyDeniedEvent: %+v", msg)
-		//h.claimService.UpdateClaim()
+		var e event.PolicyDeniedEvent
+		err := json.Unmarshal(msg.Body, &e)
+		if err != nil {
+			//TODO log this
+		}
+		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
+		if err != nil {
+			//TODO log
+		}
 
 	}
 }
@@ -61,7 +79,15 @@ func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
 func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		log.Printf("HandlePayoutApprovedEvent: %+v", msg)
-		//h.claimService.UpdateClaim()
+		var e event.PayoutApprovedEvent
+		err := json.Unmarshal(msg.Body, &e)
+		if err != nil {
+			//TODO log this
+		}
+		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
+		if err != nil {
+			//TODO log
+		}
 
 	}
 }
@@ -69,7 +95,15 @@ func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 func (h *ClaimEventHandler) handlePayoutRejectedEvent(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		log.Printf("HandlePayoutRejectedEvent: %+v", msg)
-		//h.claimService.UpdateClaim()//TODO
+		var e event.PayoutRejectedEvent
+		err := json.Unmarshal(msg.Body, &e)
+		if err != nil {
+			//TODO log this
+		}
+		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
+		if err != nil {
+			//TODO log
+		}
 
 	}
 }

@@ -45,6 +45,10 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	}
 	return nil
 }
+func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
+	return c.publisher.Publish("events", *e)
+}
+
 func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
 	return c.claimRepository.GetById(context.Background(), id)
 }
@@ -61,8 +65,11 @@ func (c *ClaimService) UpdateClaim(d *domain.Claim) error {
 
 //rabbit events methods
 
-func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
-	return c.publisher.Publish("events", *e)
+func (c *ClaimService) ChangeClaimStatus(claimID uint, newStatus domain.Status) error {
+	claim, err := c.GetClaim(claimID)
+	if err != nil {
+		return err
+	}
+	claim.Status = newStatus
+	return c.UpdateClaim(claim)
 }
-
-func (c *ClaimService) ChangeClaimStatus() {}
