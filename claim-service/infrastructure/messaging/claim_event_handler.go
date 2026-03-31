@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/janicaleksander/cloud/claimservice/application"
@@ -11,16 +12,15 @@ import (
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 )
 
-type HandlerFunc func(msgs rabbitmq.Delivery)
 type ClaimEventHandler struct {
 	claimService *application.ClaimService
-	handlers     map[string]HandlerFunc
+	handlers     map[string]rabbitmq.HandlerFunc
 }
 
 func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHandler {
 	h := &ClaimEventHandler{
 		claimService: claimService,
-		handlers:     make(map[string]HandlerFunc),
+		handlers:     make(map[string]rabbitmq.HandlerFunc),
 	}
 	h.registerHandlers()
 	return h
@@ -45,7 +45,12 @@ func (h *ClaimEventHandler) registerHandlers() {
 }
 
 func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
-	msgs, err := rabbitmq.SubscribeRaw(rabbit, "events", "claim-service")
+	bindingKeys := make([]string, 0, len(h.handlers))
+	for key := range h.handlers {
+		bindingKeys = append(bindingKeys, key)
+	}
+
+	msgs, err := rabbitmq.SubscribeRaw(rabbit, "events", "claim-service", bindingKeys...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,6 +59,7 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 }
 func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
+		fmt.Println(msg.RoutingKey)
 		if handler, ok := h.handlers[msg.RoutingKey]; ok {
 			handler(&msg)
 		} else {

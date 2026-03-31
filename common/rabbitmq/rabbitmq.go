@@ -20,6 +20,7 @@ type Publisher struct {
 type RabbitMQ struct {
 	conn *amqp.Connection
 }
+type HandlerFunc func(msgs Delivery)
 
 type MsgChan <-chan amqp.Delivery
 type Delivery *amqp.Delivery
@@ -145,55 +146,32 @@ func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan
 	return deliveryChan, nil
 }
 
-func SubscribeRaw(rabbitmq *RabbitMQ, exchange string, qName string) (<-chan amqp.Delivery, error) {
+func SubscribeRaw(rabbitmq *RabbitMQ, exchange string, qName string, bindingKeys ...string) (<-chan amqp.Delivery, error) {
 	ch, err := rabbitmq.conn.Channel()
 	if err != nil {
 		return nil, err
 	}
 
-	err = ch.ExchangeDeclare(
-		exchange,
-		"topic",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
+	err = ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	q, err := ch.QueueDeclare(
-		qName,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
+	q, err := ch.QueueDeclare(qName, false, false, false, false, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ch.QueueBind(
-		q.Name,
-		"#", // wildcard
-		exchange,
-		false,
-		nil,
-	)
-	if err != nil {
-		return nil, err
+	if len(bindingKeys) == 0 {
+		bindingKeys = []string{"#"}
 	}
 
-	return ch.Consume(
-		q.Name,
-		"",
-		true, // ❗ manual ack
-		false,
-		false,
-		false,
-		nil,
-	)
+	for _, key := range bindingKeys {
+		err = ch.QueueBind(q.Name, key, exchange, false, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return ch.Consume(q.Name, "", true, false, false, false, nil)
 }
