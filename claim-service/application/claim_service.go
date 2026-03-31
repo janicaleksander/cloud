@@ -9,7 +9,7 @@ import (
 )
 
 type ClaimService struct {
-	claimRepository domain.ClaimerRepository
+	claimRepository domain.ClaimRepository
 	publisher       ClaimEventPublisher //under the hood there is ref do persistance
 }
 
@@ -27,14 +27,17 @@ func NewClaimService(claimRepo *persistance.ClaimRepository, publisher ClaimEven
 //http methods
 
 func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
+	claim.Status = domain.NEW
+
 	urls := make([]string, 0, len(claim.Files))
 	for idx := range claim.Files {
 		urls = append(urls, claim.Files[idx].StorageURL)
 	}
 	err := c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
-		UserID:     claim.UserID,
-		ClaimID:    claim.ID,
-		StorageURL: urls,
+		UserID:       claim.UserID,
+		ClaimID:      claim.ID,
+		AccidentDate: claim.AccidentDate,
+		StorageURL:   urls,
 	})
 	if err != nil {
 		return err

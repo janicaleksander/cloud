@@ -88,7 +88,6 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	if len(domainFiles) != 0 {
 		claimDomain.Files = domainFiles
 	}
-	claimDomain.Status = domain.NEW
 
 	err = c.claimService.CreateClaim(claimDomain)
 	if err != nil {

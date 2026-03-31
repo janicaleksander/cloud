@@ -53,7 +53,7 @@ type File struct {
 	UpdatedAt  time.Time
 }
 
-type ClaimerRepository interface {
+type ClaimRepository interface {
 	GetAll(context.Context) ([]*Claim, error)
 	GetById(context.Context, uint) (*Claim, error)
 	Save(context.Context, *Claim) error
