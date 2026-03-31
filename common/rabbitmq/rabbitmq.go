@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -37,8 +39,7 @@ func NewRabbitMQ() (*RabbitMQ, error) {
 }
 
 func (p *Publisher) Publish(exchange string, msg interface{}) error {
-	routeKey := utils.NameOfType(msg)
-
+	routeKey := routeKeyToTopicNotation(utils.NameOfType(msg))
 	ch, err := p.rabbit.conn.Channel()
 	if err != nil {
 		return err
@@ -46,7 +47,7 @@ func (p *Publisher) Publish(exchange string, msg interface{}) error {
 	defer ch.Close()
 	err = ch.ExchangeDeclare(
 		exchange,
-		"direct",
+		"topic",
 		true,
 		false,
 		false,
@@ -73,9 +74,25 @@ func (p *Publisher) Publish(exchange string, msg interface{}) error {
 	return err
 }
 
-func Subscribe[T any](rabbitmq *RabbitMQ, exchange string) (<-chan amqp.Delivery, error) {
+func routeKeyToTopicNotation(routeKey string) string {
+	if strings.HasSuffix(routeKey, "Event") {
+		routeKey = routeKey[:len(routeKey)-5]
+	}
+
+	var result []rune
+	for i, r := range routeKey {
+		if i > 0 && unicode.IsUpper(r) &&
+			(i+1 < len(routeKey) && unicode.IsLower(rune(routeKey[i+1]))) {
+			result = append(result, '.')
+		}
+		result = append(result, unicode.ToLower(r))
+	}
+
+	return string(result)
+}
+func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan amqp.Delivery, error) {
 	var x T
-	routeKey := utils.NameOfType(x)
+	routeKey := routeKeyToTopicNotation(utils.NameOfType(x))
 
 	ch, err := rabbitmq.conn.Channel()
 	if err != nil {
@@ -83,7 +100,7 @@ func Subscribe[T any](rabbitmq *RabbitMQ, exchange string) (<-chan amqp.Delivery
 	}
 	err = ch.ExchangeDeclare(
 		exchange,
-		"direct",
+		"topic",
 		true,
 		false,
 		false,
@@ -91,7 +108,7 @@ func Subscribe[T any](rabbitmq *RabbitMQ, exchange string) (<-chan amqp.Delivery
 		nil,
 	)
 	q, err := ch.QueueDeclare(
-		routeKey,
+		qName,
 		false,
 		false,
 		false,

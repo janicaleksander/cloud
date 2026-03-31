@@ -18,7 +18,7 @@ func NewPolicyEventHandler(pS *application.PolicyService) *PolicyEventHandler {
 }
 
 func (p *PolicyEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
-	claimSubmittedChan, err := rabbitmq.Subscribe[event.ClaimSubmittedEvent](rabbit, "events")
+	claimSubmittedChan, err := rabbitmq.Subscribe[event.ClaimSubmittedEvent](rabbit, "events", "policy-verification-service")
 	if err != nil {
 		//TODO logs
 	}

@@ -19,22 +19,22 @@ func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHan
 }
 
 func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
-	policyVerifiedChan, err := rabbitmq.Subscribe[event.PolicyVerifiedEvent](rabbit, "events")
+	policyVerifiedChan, err := rabbitmq.Subscribe[event.PolicyVerifiedEvent](rabbit, "events", "claim-service")
 	if err != nil {
 		log.Printf("failed to subscribe to policy_verified: %v", err)
 	}
 
-	policyDeniedChan, err := rabbitmq.Subscribe[event.PolicyDeniedEvent](rabbit, "events")
+	policyDeniedChan, err := rabbitmq.Subscribe[event.PolicyDeniedEvent](rabbit, "events", "claim-service")
 	if err != nil {
 		log.Printf("failed to subscribe to policy_denied: %v", err)
 	}
 
-	payoutApprovedChan, err := rabbitmq.Subscribe[event.PayoutApprovedEvent](rabbit, "events")
+	payoutApprovedChan, err := rabbitmq.Subscribe[event.PayoutApprovedEvent](rabbit, "events", "claim-service")
 	if err != nil {
 		log.Printf("failed to subscribe to payout_approved: %v", err)
 	}
 
-	payoutRejectedChan, err := rabbitmq.Subscribe[event.PayoutRejectedEvent](rabbit, "events")
+	payoutRejectedChan, err := rabbitmq.Subscribe[event.PayoutRejectedEvent](rabbit, "events", "claim-service")
 	if err != nil {
 		log.Printf("failed to subscribe to payout_rejected: %v", err)
 	}
