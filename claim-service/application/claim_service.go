@@ -33,16 +33,17 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	for idx := range claim.Files {
 		urls = append(urls, claim.Files[idx].StorageURL)
 	}
-	err := c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
-		UserID:       claim.UserID,
-		ClaimID:      claim.ID,
-		AccidentDate: claim.AccidentDate,
-		StorageURL:   urls,
-	})
+	savedClaim, err := c.claimRepository.Save(context.Background(), claim)
 	if err != nil {
 		return err
 	}
-	err = c.claimRepository.Save(context.Background(), claim)
+	err = c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
+		UserID:       savedClaim.UserID,
+		ClaimID:      savedClaim.ID,
+		VIN:          savedClaim.VIN,
+		AccidentDate: savedClaim.AccidentDate,
+		StorageURL:   urls,
+	})
 	if err != nil {
 		return err
 	}
@@ -62,8 +63,16 @@ func (c *ClaimService) GetClaims() ([]*domain.Claim, error) {
 func (c *ClaimService) DeleteClaim(id uint) error {
 	return c.claimRepository.DeleteById(context.Background(), id)
 }
-func (c *ClaimService) UpdateClaim(d *domain.Claim) error {
-	return c.claimRepository.Update(context.Background(), d)
+
+func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserID uint) error {
+	if newUserID != oldClaimDomain.UserID && newUserID != 0 {
+		oldClaimDomain.UserID = newUserID
+	}
+	_, err := c.claimRepository.Update(context.Background(), oldClaimDomain)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //rabbit events methods
@@ -74,5 +83,9 @@ func (c *ClaimService) ChangeClaimStatus(claimID uint, newStatus domain.Status) 
 		return err
 	}
 	claim.Status = newStatus
-	return c.UpdateClaim(claim)
+	_, err = c.claimRepository.Update(context.Background(), claim)
+	if err != nil {
+		return err
+	}
+	return nil
 }

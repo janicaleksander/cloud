@@ -37,6 +37,7 @@ type Claim struct {
 	ID           uint
 	UserID       uint
 	CarID        uint
+	VIN          string
 	AccidentDate time.Time
 	Status       Status
 	Files        []*File
@@ -56,8 +57,8 @@ type File struct {
 type ClaimRepository interface {
 	GetAll(context.Context) ([]*Claim, error)
 	GetById(context.Context, uint) (*Claim, error)
-	Save(context.Context, *Claim) error
-	Update(context.Context, *Claim) error
+	Save(context.Context, *Claim) (*Claim, error)
+	Update(context.Context, *Claim) (*Claim, error)
 	DeleteById(context.Context, uint) error
 }
 

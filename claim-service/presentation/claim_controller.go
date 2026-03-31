@@ -194,13 +194,8 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		http.Error(w, err.Error(), 404)
 		return
 	}
-	if updateClaimRequestDTO.UserID != claim.UserID && updateClaimRequestDTO.UserID != 0 {
-		claim.UserID = updateClaimRequestDTO.UserID
-	}
-	if updateClaimRequestDTO.CarID != claim.CarID && updateClaimRequestDTO.CarID != 0 {
-		claim.CarID = updateClaimRequestDTO.CarID
-	}
-	err = c.claimService.UpdateClaim(claim)
+
+	err = c.claimService.UpdateClaim(claim, updateClaimRequestDTO.UserID)
 	if err != nil {
 		http.Error(w, err.Error(), 403)
 		return

@@ -51,10 +51,12 @@ func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msgs rabbitmq.MsgChan) {
 		var e event.PolicyVerifiedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
+			log.Printf("failed to unmarshal policy_verified event: %v", err)
 			//TODO log this
 		}
 		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
 		if err != nil {
+			log.Printf("failed to change claim status to VERIFIED: %v", err)
 			//TODO log
 		}
 	}
@@ -66,10 +68,12 @@ func (h *ClaimEventHandler) handlePolicyDeniedEvent(msgs rabbitmq.MsgChan) {
 		var e event.PolicyDeniedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
+			log.Printf("failed to unmarshal policy_denied event: %v", err)
 			//TODO log this
 		}
 		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
 		if err != nil {
+			log.Printf("failed to change claim status to DENIED: %v", err)
 			//TODO log
 		}
 
@@ -82,10 +86,12 @@ func (h *ClaimEventHandler) handlePayoutApprovedEvent(msgs rabbitmq.MsgChan) {
 		var e event.PayoutApprovedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
+			log.Printf("failed to unmarshal payout_approved event: %v", err)
 			//TODO log this
 		}
 		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
 		if err != nil {
+			log.Printf("failed to change claim status to APPROVED: %v", err)
 			//TODO log
 		}
 
@@ -98,10 +104,12 @@ func (h *ClaimEventHandler) handlePayoutRejectedEvent(msgs rabbitmq.MsgChan) {
 		var e event.PayoutRejectedEvent
 		err := json.Unmarshal(msg.Body, &e)
 		if err != nil {
+			log.Printf("failed to unmarshal payout_rejected event: %v", err)
 			//TODO log this
 		}
 		err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
 		if err != nil {
+			log.Printf("failed to change claim status to REJECTED: %v", err)
 			//TODO log
 		}
 
