@@ -40,13 +40,15 @@ func (s *PolicyService) GetPolicies() ([]*domain.Policy, error) {
 }
 
 func (s *PolicyService) UpdatePolicy(newPolicy *domain.Policy, newFrom, newTo time.Time) error {
+	updated := *newPolicy
+
 	if newFrom != (time.Time{}) {
-		newPolicy.From = newFrom
+		updated.From = newFrom
 	}
 	if newTo != (time.Time{}) {
-		newPolicy.To = newTo
+		updated.To = newTo
 	}
-	_, err := s.policyRepository.Update(context.Background(), newPolicy)
+	_, err := s.policyRepository.Update(context.Background(), &updated)
 	return err
 }
 func (s *PolicyService) DeletePolicy(policyID uint) error {

@@ -2,6 +2,7 @@ package persistance
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"gorm.io/gorm"
@@ -87,4 +88,19 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 func (r *ClaimRepository) DeleteById(ctx context.Context, id uint) error {
 	_, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).Delete(ctx)
 	return err
+}
+
+func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uint, newStatus domain.Status) error {
+	result := r.gorm.WithContext(ctx).
+		Model(&ClaimModel{}).
+		Where("id = ?", claimID).
+		Update("status", string(newStatus))
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("claim %d not found", claimID)
+	}
+	return nil
 }

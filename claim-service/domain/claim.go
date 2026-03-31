@@ -58,6 +58,7 @@ type ClaimRepository interface {
 	GetById(context.Context, uint) (*Claim, error)
 	Save(context.Context, *Claim) (*Claim, error)
 	Update(context.Context, *Claim) (*Claim, error)
+	UpdateStatus(context.Context, uint, Status) error
 	DeleteById(context.Context, uint) error
 }
 

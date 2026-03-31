@@ -50,3 +50,10 @@ func main() {
 	}
 
 }
+
+//TODO sprawdzic czy importy sa z dobrych paczke i zamiana teogb api na presentation
+
+//Idempotentność
+//
+//Co się stanie jeśli ten sam event zostanie przetworzony dwa razy? Np. przy Nack + requeue handler dostanie wiadomość ponownie.
+//Czy CheckUserPolicy, ChangeClaimStatus itp. są bezpieczne przy wielokrotnym wywołaniu z tymi samymi danymi?

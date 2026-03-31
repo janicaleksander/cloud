@@ -78,14 +78,5 @@ func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserID uint)
 //rabbit events methods
 
 func (c *ClaimService) ChangeClaimStatus(claimID uint, newStatus domain.Status) error {
-	claim, err := c.GetClaim(claimID)
-	if err != nil {
-		return err
-	}
-	claim.Status = newStatus
-	_, err = c.claimRepository.Update(context.Background(), claim)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.claimRepository.UpdateStatus(context.Background(), claimID, newStatus)
 }

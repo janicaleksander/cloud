@@ -41,10 +41,11 @@ func (vs *ValuationService) GetValuation(claimID uint) (*domain.Valuation, error
 }
 
 func (vs *ValuationService) UpdateValuation(oldValuation *domain.Valuation, amount float64) (*domain.Valuation, error) {
-	if oldValuation.Amount != amount && amount != 0 {
-		oldValuation.Amount = amount
+	updated := *oldValuation
+	if updated.Amount != amount && amount != 0 {
+		updated.Amount = amount
 	}
-	return vs.valuationRepository.Update(context.Background(), oldValuation)
+	return vs.valuationRepository.Update(context.Background(), &updated)
 }
 
 func (vs *ValuationService) DeleteValuation(valuationID uint) error {
@@ -52,7 +53,10 @@ func (vs *ValuationService) DeleteValuation(valuationID uint) error {
 }
 
 func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) {
-
+	existing, err := vs.valuationRepository.GetById(context.Background(), claimID)
+	if err == nil && existing != nil {
+		return
+	}
 	// Mock valuation: random amount between 500 and 10000
 	amount := rand.Float64()*(10000-500) + 500
 
@@ -62,7 +66,7 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) {
 	for i := range randomParts {
 		randomParts[i] = parts[rand.Intn(len(parts))]
 	}
-	_, err := vs.CreateValuation(claimID, amount)
+	_, err = vs.CreateValuation(claimID, amount)
 	if err != nil {
 		//TODO logs
 	}
