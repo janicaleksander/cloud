@@ -91,7 +91,7 @@ func (n *NotificationEventHandler) handlePayoutApproved(msg rabbitmq.Delivery) {
 		log.Println("Error unmarshalling PayoutApprovedEvent:", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Payout Approved - ClaimID: %d, Amount: $%.2f\n", e.ClaimID, e.AcceptedPayoutAmount)
+	log.Printf("[NOTIFICATION] Payout Approved - ClaimID: %d, Approved Amount: %.2f by EMP: %d", e.ClaimID, e.AcceptedPayoutAmount, e.ByEmployeeID)
 }
 
 func (n *NotificationEventHandler) handlePayoutRejected(msg rabbitmq.Delivery) {
@@ -101,5 +101,5 @@ func (n *NotificationEventHandler) handlePayoutRejected(msg rabbitmq.Delivery) {
 		log.Println("Error unmarshalling PayoutRejectedEvent:", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Payout Rejected - ClaimID: %d, Reason: %s\n", e.ClaimID, e.Reason)
+	log.Printf("[NOTIFICATION] Payout Rejected - ClaimID: %d, Reason: %s\n, BY : %d", e.ClaimID, e.Reason, e.ByEmployeeID)
 }

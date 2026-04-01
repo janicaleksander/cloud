@@ -31,6 +31,7 @@ func (ds *DecisionService) makeDecision(newDecision *domain.Decision, reason str
 		err := ds.publisher.Publish("events", event.PayoutApprovedEvent{
 			ClaimID:              newDecision.ClaimID,
 			AcceptedPayoutAmount: newDecision.Payout,
+			ByEmployeeID:         *newDecision.EmployeeID,
 		})
 		fmt.Println("wyslalem na publish")
 
@@ -40,8 +41,9 @@ func (ds *DecisionService) makeDecision(newDecision *domain.Decision, reason str
 	}
 	if newDecision.Result == domain.REJECTED {
 		err := ds.publisher.Publish("events", event.PayoutRejectedEvent{
-			ClaimID: newDecision.ClaimID,
-			Reason:  reason,
+			ClaimID:      newDecision.ClaimID,
+			Reason:       reason,
+			ByEmployeeID: *newDecision.EmployeeID,
 		})
 		fmt.Println("wyslalem na rjeected")
 
