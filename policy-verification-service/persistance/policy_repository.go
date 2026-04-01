@@ -6,7 +6,6 @@ import (
 
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type PolicyRepository struct {
@@ -49,21 +48,13 @@ func (pr *PolicyRepository) Save(ctx context.Context, p *domain.Policy) (*domain
 
 func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*domain.Policy, error) {
 	policyModel := PolicyDomainToModel(p)
-	var updated PolicyModel
-	err := pr.gorm.
-		Model(&PolicyModel{}).
-		Where("id = ?", p.ID).
-		Clauses(clause.Returning{}).
-		Updates(policyModel).
-		Scan(&updated).Error
 
-	if err != nil {
+	if err := pr.gorm.WithContext(ctx).Save(policyModel).Error; err != nil {
 		return nil, err
 	}
 
-	return PolicyModelToDomain(&updated), nil
+	return PolicyModelToDomain(policyModel), nil
 }
-
 func (pr *PolicyRepository) DeleteById(ctx context.Context, id uint) error {
 	_, err := gorm.G[PolicyModel](pr.gorm).Where("id = ?", id).Delete(ctx)
 	return err
