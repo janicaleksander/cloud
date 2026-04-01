@@ -48,8 +48,7 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	}
 	var claimModel = &ClaimModel{
 		Model: gorm.Model{
-			ID:        c.ID,
-			UpdatedAt: c.UpdatedAt,
+			ID: c.ID,
 		},
 		UserID:       c.UserID,
 		VIN:          c.VIN,

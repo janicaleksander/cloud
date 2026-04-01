@@ -6,7 +6,6 @@ import (
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type ClaimRepository struct {
@@ -66,25 +65,41 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 	if err != nil {
 		return nil, err
 	}
+
+	err = r.gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(claimModel).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("claim_model_id = ?", claimModel.ID).
+			Delete(&FileModel{}).Error; err != nil {
+			return err
+		}
+
+		for i := range claimModel.Files {
+			claimModel.Files[i].ID = 0
+			claimModel.Files[i].ClaimModelID = claimModel.ID
+		}
+
+		if len(claimModel.Files) == 0 {
+			return nil
+		}
+		return tx.Create(&claimModel.Files).Error
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	var updated ClaimModel
-
-	err = r.gorm.
-		Model(&ClaimModel{}).
-		Where("id = ?", claimModel.ID).
-		Clauses(clause.Returning{}).
-		Updates(claimModel).
-		Scan(&updated).Error
-
-	if err != nil {
+	if err := r.gorm.WithContext(ctx).
+		Preload("Files").
+		First(&updated, claimModel.ID).Error; err != nil {
 		return nil, err
 	}
-	claimDomain, err := ClaimModelToDomain(&updated)
-	if err != nil {
-		return nil, err
-	}
-	return claimDomain, nil
+
+	return ClaimModelToDomain(&updated)
 }
-
 func (r *ClaimRepository) DeleteById(ctx context.Context, id uint) error {
 	_, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).Delete(ctx)
 	return err

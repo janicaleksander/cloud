@@ -5,7 +5,6 @@ import (
 
 	"github.com/janicaleksander/cloud/valuationservice/domain"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type ValuationRepository struct {
@@ -17,7 +16,7 @@ func NewValuationRepository(gorm *gorm.DB) *ValuationRepository {
 }
 
 func (v *ValuationRepository) GetAll(ctx context.Context) ([]*domain.Valuation, error) {
-	valuationModels, err := gorm.G[ValuationModel](v.gorm).Find(ctx)
+	valuationModels, err := gorm.G[ValuationModel](v.gorm).Preload("Parts", nil).Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +28,7 @@ func (v *ValuationRepository) GetAll(ctx context.Context) ([]*domain.Valuation, 
 	return valuationDomains, nil
 }
 func (v *ValuationRepository) GetById(ctx context.Context, id uint) (*domain.Valuation, error) {
-	valuationModel, err := gorm.G[ValuationModel](v.gorm).Where("id = ?", id).First(ctx)
+	valuationModel, err := gorm.G[ValuationModel](v.gorm).Preload("Parts", nil).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,20 +46,37 @@ func (v *ValuationRepository) Save(ctx context.Context, domainValuation *domain.
 }
 func (v *ValuationRepository) Update(ctx context.Context, valuationDomain *domain.Valuation) (*domain.Valuation, error) {
 	valuationModel := ValuationDomainToModel(valuationDomain)
-	var updated ValuationModel
 
-	err := v.gorm.
-		Model(&ValuationModel{}).
-		Where("id = ?", valuationModel.ID).
-		Clauses(clause.Returning{}).
-		Updates(valuationModel).
-		Scan(&updated).Error
+	err := v.gorm.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(valuationModel).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("valuation_id = ?", valuationModel.ID).
+			Delete(&PartModel{}).Error; err != nil {
+			return err
+		}
+
+		for i := range valuationModel.Parts {
+			valuationModel.Parts[i].ID = 0
+			valuationModel.Parts[i].ValuationID = valuationModel.ID
+		}
+
+		return tx.Create(&valuationModel.Parts).Error
+	})
 
 	if err != nil {
 		return nil, err
 	}
-	valuationDomainn := ValuationModelToDomain(&updated)
-	return valuationDomainn, nil
+
+	var updated ValuationModel
+	if err := v.gorm.WithContext(ctx).
+		Preload("Parts").
+		First(&updated, valuationModel.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return ValuationModelToDomain(&updated), nil
 }
 func (v *ValuationRepository) DeleteById(ctx context.Context, id uint) error {
 	_, err := gorm.G[ValuationModel](v.gorm).Where("id = ?", id).Delete(ctx)

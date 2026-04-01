@@ -4,13 +4,14 @@ import "gorm.io/gorm"
 
 type ValuationModel struct {
 	gorm.Model
-	ClaimID uint        `gorm:"not null"`
+	ClaimID uint        `gorm:"not null;index"`
 	Amount  float64     `gorm:"not null"`
-	Parts   []PartModel `gorm:"many2many:valuation_parts;"`
+	Parts   []PartModel `gorm:"foreignKey:ValuationID"`
 }
 
 type PartModel struct {
 	gorm.Model
-	Name string  `gorm:"not null"`
-	Cost float64 `gorm:"not null"`
+	ValuationID uint    `gorm:"not null;index"`
+	Name        string  `gorm:"not null;size:255"`
+	Cost        float64 `gorm:"not null"`
 }
