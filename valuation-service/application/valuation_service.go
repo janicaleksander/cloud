@@ -57,14 +57,14 @@ func (vs *ValuationService) DeleteValuation(valuationID uint) error {
 	return vs.valuationRepository.DeleteById(context.Background(), valuationID)
 }
 
-func (vs *ValuationService) CalculateValuation(ctx context.Context, urls []string, claimID uint) error {
+func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) error {
 
-	existing, err := vs.valuationRepository.GetById(ctx, claimID)
+	existing, err := vs.valuationRepository.GetById(context.Background(), claimID)
 	if err == nil && existing != nil {
 		return nil
 	}
 
-	damages, err := vs.damageDetector.Analyze(ctx, urls)
+	damages, err := vs.damageDetector.Analyze(context.Background(), urls)
 	if err != nil {
 		return err
 	}
