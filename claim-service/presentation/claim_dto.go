@@ -4,6 +4,7 @@ import "time"
 
 type CreateClaimRequestDTO struct {
 	UserID       uint      `json:"user_id"`
+	Email        string    `json:"email"`
 	AccidentDate time.Time `json:"accident_date"`
 	VIN          string    `json:"vin"`
 }
@@ -11,6 +12,7 @@ type CreateClaimRequestDTO struct {
 type GetClaimResponseDTO struct {
 	ID           uint              `json:"id"`
 	UserID       uint              `json:"user_id"`
+	Email        string            `json:"email"`
 	VIN          string            `json:"vin"`
 	AccidentDate time.Time         `json:"accident_date"`
 	Status       string            `json:"status"`
@@ -25,5 +27,5 @@ type FileResponseDTO struct {
 }
 
 type UpdateClaimRequestDTO struct {
-	UserID uint `json:"user_id,omitempty"`
+	Email string `json:"email,omitempty"`
 }

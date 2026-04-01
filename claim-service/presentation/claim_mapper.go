@@ -6,6 +6,7 @@ func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
 	return &domain.Claim{
 		UserID:       dto.UserID,
 		AccidentDate: dto.AccidentDate,
+		Email:        dto.Email,
 		VIN:          dto.VIN,
 	}
 }
@@ -25,6 +26,7 @@ func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 		UserID:       claim.UserID,
 		AccidentDate: claim.AccidentDate,
 		VIN:          claim.VIN,
+		Email:        claim.Email,
 		Status:       string(claim.Status),
 		Files:        files,
 		UpdatedAt:    claim.UpdatedAt,

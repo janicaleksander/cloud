@@ -195,7 +195,7 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = c.claimService.UpdateClaim(claim, updateClaimRequestDTO.UserID)
+	err = c.claimService.UpdateClaim(claim, updateClaimRequestDTO.Email)
 	if err != nil {
 		http.Error(w, err.Error(), 403)
 		return

@@ -2,6 +2,14 @@ package event
 
 import "time"
 
+type RegisterUserForNotificationEvent struct {
+	ClaimID uint   `json:"claim_id"`
+	Email   string `json:"email"`
+}
+type ChangeEmailForNotification struct {
+	ClaimID uint   `json:"claim_id"`
+	Email   string `json:"email"`
+}
 type ClaimSubmittedEvent struct {
 	ClaimID      uint      `json:"claim_id"`
 	UserID       uint      `json:"user_id"`

@@ -47,6 +47,13 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	if err != nil {
 		return err
 	}
+	err = c.publisher.Publish("events", event.RegisterUserForNotificationEvent{
+		ClaimID: savedClaim.UserID,
+		Email:   savedClaim.Email,
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
@@ -64,11 +71,19 @@ func (c *ClaimService) DeleteClaim(id uint) error {
 	return c.claimRepository.DeleteById(context.Background(), id)
 }
 
-func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserID uint) error {
-	if newUserID != oldClaimDomain.UserID && newUserID != 0 {
-		oldClaimDomain.UserID = newUserID
-	}
+func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail string) error {
+	if newUserEmail != oldClaimDomain.Email && newUserEmail != "" {
+		oldClaimDomain.Email = newUserEmail
+	} //todo publish msg to change email in notification service
+
 	_, err := c.claimRepository.Update(context.Background(), oldClaimDomain)
+	if err != nil {
+		return err
+	}
+	err = c.publisher.Publish("events", event.ChangeEmailForNotification{
+		ClaimID: oldClaimDomain.ID,
+		Email:   newUserEmail,
+	})
 	if err != nil {
 		return err
 	}
