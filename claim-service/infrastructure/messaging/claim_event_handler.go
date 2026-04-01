@@ -47,6 +47,7 @@ func (h *ClaimEventHandler) registerHandlers() {
 func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 	bindingKeys := make([]string, 0, len(h.handlers))
 	for key := range h.handlers {
+		fmt.Println("registered key:", key)
 		bindingKeys = append(bindingKeys, key)
 	}
 

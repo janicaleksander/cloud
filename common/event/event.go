@@ -21,9 +21,8 @@ type PolicyDeniedEvent struct {
 }
 
 type ValuationCalculatedEvent struct {
-	ClaimID      uint     `json:"claim_id"`
-	PayoutAmount float64  `json:"payout_amount"`
-	DamageItems  []string `json:"damage_items"`
+	ClaimID      uint    `json:"claim_id"`
+	PayoutAmount float64 `json:"payout_amount"`
 }
 
 type PayoutApprovedEvent struct {

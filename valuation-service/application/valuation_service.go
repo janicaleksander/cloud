@@ -68,11 +68,14 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 	for i, damage := range damages {
 		parts[i] = &domain.Part{
 			Name: damage,
-			Cost: 1000, //this is mock
+			Cost: float64(len(damages)) * 1000, //this is mock
 		}
 	}
 	//this is mock
-	amount := float64(len(damages)) * 1000
+	amount := 0.0
+	for _, part := range parts {
+		amount += part.Cost
+	}
 	_, err = vs.CreateValuation(&domain.Valuation{
 		ClaimID: claimID,
 		Amount:  amount,
@@ -85,7 +88,6 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 	return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
 		ClaimID:      claimID,
 		PayoutAmount: amount,
-		DamageItems:  damages,
 	})
 }
 
