@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/valuationservice/domain"
@@ -54,12 +55,13 @@ func (vs *ValuationService) DeleteValuation(valuationID uint) error {
 }
 
 func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) error {
-
 	existing, err := vs.valuationRepository.GetById(context.Background(), claimID)
 	if err == nil && existing != nil {
-		return nil
+		return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
+			ClaimID:      existing.ClaimID,
+			PayoutAmount: existing.Amount,
+		})
 	}
-
 	damages, err := vs.damageDetector.Analyze(context.Background(), urls)
 	if err != nil {
 		return err
@@ -84,7 +86,7 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("wysłano event o wycenie")
 	return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
 		ClaimID:      claimID,
 		PayoutAmount: amount,

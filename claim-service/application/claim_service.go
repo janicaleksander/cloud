@@ -37,6 +37,14 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	if err != nil {
 		return err
 	}
+	err = c.publisher.Publish("events", event.RegisterUserForNotificationEvent{
+		ClaimID: savedClaim.ID,
+		Email:   savedClaim.Email,
+	})
+	if err != nil {
+		return err
+	}
+
 	err = c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
 		UserID:       savedClaim.UserID,
 		ClaimID:      savedClaim.ID,
@@ -44,13 +52,7 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 		AccidentDate: savedClaim.AccidentDate,
 		StorageURL:   urls,
 	})
-	if err != nil {
-		return err
-	}
-	err = c.publisher.Publish("events", event.RegisterUserForNotificationEvent{
-		ClaimID: savedClaim.UserID,
-		Email:   savedClaim.Email,
-	})
+
 	if err != nil {
 		return err
 	}

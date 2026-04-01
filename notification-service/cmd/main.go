@@ -40,9 +40,9 @@ func main() {
 	// Initialize repositories and services
 	notificationRepository := persistance.NewNotificationRepository(db)
 	emailService := application.NewEmailService("notifications@insurance.com")
-	_ = application.NewNotificationService(notificationRepository)
+	notificationService := application.NewNotificationService(notificationRepository)
 
-	notificationEventHandler := messaging.NewNotificationHandler(emailService)
+	notificationEventHandler := messaging.NewNotificationHandler(notificationService, emailService)
 	err = notificationEventHandler.Run(rabbit)
 	if err != nil {
 		slog.Error("Error running notification event handler", "error", err)

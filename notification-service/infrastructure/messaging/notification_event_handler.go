@@ -18,10 +18,11 @@ type NotificationEventHandler struct {
 	handlers            map[string]rabbitmq.HandlerFunc
 }
 
-func NewNotificationHandler(emailService *application.EmailService) *NotificationEventHandler {
+func NewNotificationHandler(notificationService *application.NotificationService, emailService *application.EmailService) *NotificationEventHandler {
 	h := &NotificationEventHandler{
-		emailService: emailService,
-		handlers:     make(map[string]rabbitmq.HandlerFunc),
+		notificationService: notificationService,
+		emailService:        emailService,
+		handlers:            make(map[string]rabbitmq.HandlerFunc),
 	}
 	h.registerHandlers()
 	return h

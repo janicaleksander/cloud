@@ -31,6 +31,7 @@ func (dH *DecisionEventHandler) registerHandlers() {
 }
 
 func (dH *DecisionEventHandler) Run(rabbit *rabbitmq.RabbitMQ) error {
+	fmt.Println("Running DecisionEventHandler")
 	bindingKeys := make([]string, 0, len(dH.handlers))
 	for k, _ := range dH.handlers {
 		bindingKeys = append(bindingKeys, k)
