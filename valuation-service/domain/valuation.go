@@ -2,17 +2,20 @@ package domain
 
 import (
 	"context"
-	"time"
 )
 
 type Valuation struct {
-	ID        uint
-	ClaimID   uint
-	Amount    float64
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID      uint
+	ClaimID uint
+	Amount  float64
+	Parts   []*Part
 }
 
+type Part struct {
+	ID   uint
+	Name string
+	Cost float64
+}
 type ValuationRepository interface {
 	GetAll(context.Context) ([]*Valuation, error)
 	GetById(context.Context, uint) (*Valuation, error)

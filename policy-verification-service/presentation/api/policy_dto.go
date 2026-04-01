@@ -10,13 +10,11 @@ type CreatePolicyRequestDTO struct {
 }
 
 type GetPolicyResponseDTO struct {
-	ID        uint      `json:"id"`
-	UserID    uint      `json:"user_id"`
-	VIN       string    `json:"vin"`
-	From      time.Time `json:"from"`
-	To        time.Time `json:"to"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID     uint      `json:"id"`
+	UserID uint      `json:"user_id"`
+	VIN    string    `json:"vin"`
+	From   time.Time `json:"from"`
+	To     time.Time `json:"to"`
 }
 
 type UpdatePolicyRequest struct {

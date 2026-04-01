@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"math/rand"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/valuationservice/domain"
@@ -12,16 +11,22 @@ import (
 type ValuationService struct {
 	valuationRepository domain.ValuationRepository
 	publisher           ValuationPublisher
+	damageDetector      DamageDetector
 }
 
 type ValuationPublisher interface {
 	Publish(exchange string, msg interface{}) error
 }
 
-func NewValuationService(valuationRepo *persistance.ValuationRepository, publisher ValuationPublisher) *ValuationService {
+type DamageDetector interface {
+	Analyze(ctx context.Context, urls []string) ([]string, error)
+}
+
+func NewValuationService(valuationRepo *persistance.ValuationRepository, publisher ValuationPublisher, damageDetector DamageDetector) *ValuationService {
 	return &ValuationService{
 		valuationRepository: valuationRepo,
 		publisher:           publisher,
+		damageDetector:      damageDetector,
 	}
 }
 func (vs *ValuationService) CreateValuation(claimID uint, amount float64) (*domain.Valuation, error) {
@@ -52,31 +57,46 @@ func (vs *ValuationService) DeleteValuation(valuationID uint) error {
 	return vs.valuationRepository.DeleteById(context.Background(), valuationID)
 }
 
-func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) {
-	existing, err := vs.valuationRepository.GetById(context.Background(), claimID)
-	if err == nil && existing != nil {
-		return
-	}
-	// Mock valuation: random amount between 500 and 10000
-	amount := rand.Float64()*(10000-500) + 500
+func (vs *ValuationService) CalculateValuation(ctx context.Context, urls []string, claimID uint) error {
 
-	// Generate random parts for the valuation
-	parts := []string{"bumper", "hood", "door", "fender", "headlight"}
-	randomParts := make([]string, rand.Intn(3)+1) // 1 to 3 random parts
-	for i := range randomParts {
-		randomParts[i] = parts[rand.Intn(len(parts))]
+	existing, err := vs.valuationRepository.GetById(ctx, claimID)
+	if err == nil && existing != nil {
+		return nil
 	}
+
+	damages, err := vs.damageDetector.Analyze(ctx, urls)
+	if err != nil {
+		return err
+	}
+	//this is mock
+	amount := float64(len(damages)) * 1000
 	_, err = vs.CreateValuation(claimID, amount)
 	if err != nil {
-		//TODO logs
-	}
-	err = vs.publisher.Publish("events", event.ValuationCalculatedEvent{
-		ClaimID:      claimID,
-		PayoutAmount: amount,
-		DamageItems:  parts,
-	})
-	if err != nil {
-		//toodlogs
+		return err
 	}
 
+	return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
+		ClaimID:      claimID,
+		PayoutAmount: amount,
+		DamageItems:  damages,
+	})
 }
+
+/*
+TODO 📌 Inny problem architektoniczny
+func NewValuationService(valuationRepo *persistance.ValuationRepository, ...)
+
+
+❌ zależysz od konkretnej implementacji
+
+Powinno być:
+
+func NewValuationService(valuationRepo domain.ValuationRepository, ...)
+
+
+👉 bo:
+
+application → zależy od interfejsów
+infrastructure → implementuje
+
+*/

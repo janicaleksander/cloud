@@ -15,7 +15,6 @@ type GetClaimResponseDTO struct {
 	AccidentDate time.Time         `json:"accident_date"`
 	Status       string            `json:"status"`
 	Files        []FileResponseDTO `json:"files"`
-	CreatedAt    time.Time         `json:"created_at"`
 	UpdatedAt    time.Time         `json:"updated_at"`
 }
 type FileResponseDTO struct {

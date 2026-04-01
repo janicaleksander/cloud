@@ -9,13 +9,11 @@ import (
 
 func PolicyModelToDomain(pm *PolicyModel) *domain.Policy {
 	return &domain.Policy{
-		ID:        pm.ID,
-		UserID:    pm.UserID,
-		VIN:       pm.VIN,
-		From:      pm.From,
-		To:        pm.To,
-		CreatedAt: pm.CreatedAt,
-		UpdatedAt: pm.UpdatedAt,
+		ID:     pm.ID,
+		UserID: pm.UserID,
+		VIN:    pm.VIN,
+		From:   pm.From,
+		To:     pm.To,
 	}
 }
 
@@ -24,9 +22,7 @@ func PolicyModelToDomain(pm *PolicyModel) *domain.Policy {
 func PolicyDomainToModel(pd *domain.Policy) *PolicyModel {
 	return &PolicyModel{
 		Model: gorm.Model{
-			ID:        pd.ID,
-			CreatedAt: pd.CreatedAt,
-			UpdatedAt: pd.UpdatedAt,
+			ID: pd.ID,
 		},
 		UserID: pd.UserID,
 		VIN:    pd.VIN,

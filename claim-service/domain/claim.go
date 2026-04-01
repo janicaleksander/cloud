@@ -40,7 +40,6 @@ type Claim struct {
 	AccidentDate time.Time
 	Status       Status
 	Files        []*File
-	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
 
@@ -49,8 +48,6 @@ type File struct {
 	FileName   string
 	FileExt    string
 	StorageURL string //added
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
 }
 
 type ClaimRepository interface {

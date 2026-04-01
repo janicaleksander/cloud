@@ -27,7 +27,6 @@ func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 		VIN:          claim.VIN,
 		Status:       string(claim.Status),
 		Files:        files,
-		CreatedAt:    claim.CreatedAt,
 		UpdatedAt:    claim.UpdatedAt,
 	}
 

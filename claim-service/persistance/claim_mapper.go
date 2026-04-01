@@ -13,8 +13,6 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 			FileName:   c.Files[idx].FileName,
 			FileExt:    c.Files[idx].FileExt,
 			StorageURL: c.Files[idx].StorageURL,
-			CreatedAt:  c.Files[idx].CreatedAt,
-			UpdatedAt:  c.Files[idx].UpdatedAt,
 		},
 		)
 	}
@@ -29,7 +27,6 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 		AccidentDate: c.AccidentDate,
 		Status:       status,
 		Files:        domainFiles,
-		CreatedAt:    c.CreatedAt,
 		UpdatedAt:    c.UpdatedAt,
 	}
 	return claimDomain, nil
@@ -41,9 +38,8 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	for idx := range c.Files {
 		modelFiles = append(modelFiles, FileModel{
 			Model: gorm.Model{
-				ID:        c.Files[idx].ID,
-				CreatedAt: c.Files[idx].CreatedAt,
-				UpdatedAt: c.Files[idx].UpdatedAt},
+				ID: c.Files[idx].ID,
+			},
 			FileName:     c.Files[idx].FileName,
 			FileExt:      c.Files[idx].FileExt,
 			StorageURL:   c.Files[idx].StorageURL,
@@ -53,7 +49,6 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	var claimModel = &ClaimModel{
 		Model: gorm.Model{
 			ID:        c.ID,
-			CreatedAt: c.CreatedAt,
 			UpdatedAt: c.UpdatedAt,
 		},
 		UserID:       c.UserID,

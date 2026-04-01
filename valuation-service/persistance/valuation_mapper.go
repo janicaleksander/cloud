@@ -6,23 +6,40 @@ import (
 )
 
 func ValuationModelToDomain(m *ValuationModel) *domain.Valuation {
+	parts := make([]*domain.Part, 0)
+	for _, part := range m.Parts {
+		parts = append(parts, &domain.Part{
+			ID:   part.ID,
+			Name: part.Name,
+			Cost: part.Cost,
+		})
+	}
 	return &domain.Valuation{
-		ID:        m.ID,
-		ClaimID:   m.ClaimID,
-		Amount:    m.Amount,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:      m.ID,
+		ClaimID: m.ClaimID,
+		Amount:  m.Amount,
+		Parts:   parts,
 	}
 }
 
 func ValuationDomainToModel(d *domain.Valuation) *ValuationModel {
+	parts := make([]PartModel, 0)
+	for _, part := range d.Parts {
+		parts = append(parts, PartModel{
+			Model: gorm.Model{
+				ID: part.ID,
+			},
+			Name: part.Name,
+			Cost: part.Cost,
+		})
+
+	}
 	return &ValuationModel{
 		Model: gorm.Model{
-			ID:        d.ID,
-			CreatedAt: d.CreatedAt,
-			UpdatedAt: d.UpdatedAt,
+			ID: d.ID,
 		},
 		ClaimID: d.ClaimID,
 		Amount:  d.Amount,
+		Parts:   parts,
 	}
 }

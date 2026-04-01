@@ -15,13 +15,11 @@ const (
 )
 
 type Policy struct {
-	ID        uint
-	UserID    uint
-	VIN       string
-	From      time.Time
-	To        time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID     uint
+	UserID uint
+	VIN    string
+	From   time.Time
+	To     time.Time
 }
 
 func (p Policy) IsValid(accidentDate time.Time) (bool, RejectionReason) {

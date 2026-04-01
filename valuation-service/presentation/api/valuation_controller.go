@@ -66,36 +66,37 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 	json.NewEncoder(w).Encode(valuationDTO)
 }
 
-func (v *ValuationController) UpdateValuationHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPatch {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+/*
+	func (v *ValuationController) UpdateValuationHandler(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Error(w, "Invalid valuation ID", http.StatusBadRequest)
+			return
+		}
+		var d UpdateValuationRequestDTO
+		err = json.NewDecoder(r.Body).Decode(&d)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		oldValuation, err := v.valuationService.GetValuation(uint(valuationID))
+		if err != nil {
+			http.Error(w, "Failed to get valuation", http.StatusInternalServerError)
+			return
+		}
+		_, err = v.valuationService.UpdateValuation(oldValuation, d.Amount)
+		if err != nil {
+			http.Error(w, "Failed to update valuation", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(d)
 	}
-	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		http.Error(w, "Invalid valuation ID", http.StatusBadRequest)
-		return
-	}
-	var d UpdateValuationRequestDTO
-	err = json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	oldValuation, err := v.valuationService.GetValuation(uint(valuationID))
-	if err != nil {
-		http.Error(w, "Failed to get valuation", http.StatusInternalServerError)
-		return
-	}
-	_, err = v.valuationService.UpdateValuation(oldValuation, d.Amount)
-	if err != nil {
-		http.Error(w, "Failed to update valuation", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(d)
-}
-
+*/
 func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -19,12 +19,10 @@ func CreatePolicyRequestToDomain(r *CreatePolicyRequestDTO) *domain.Policy {
 
 func GetPolicyDomainToResponse(p *domain.Policy) *GetPolicyResponseDTO {
 	return &GetPolicyResponseDTO{
-		ID:        p.ID,
-		UserID:    p.UserID,
-		VIN:       p.VIN,
-		From:      p.From,
-		To:        p.To,
-		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
+		ID:     p.ID,
+		UserID: p.UserID,
+		VIN:    p.VIN,
+		From:   p.From,
+		To:     p.To,
 	}
 }

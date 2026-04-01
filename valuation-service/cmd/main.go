@@ -8,6 +8,7 @@ import (
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/valuationservice/application"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure"
+	"github.com/janicaleksander/cloud/valuationservice/infrastructure/ai"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/valuationservice/persistance"
 	presentation "github.com/janicaleksander/cloud/valuationservice/presentation/api"
@@ -31,12 +32,12 @@ func main() {
 
 	rabbit, err := rabbitmq.NewRabbitMQ()
 	publisher := rabbitmq.NewPublisher(rabbit)
-
+	newMockDamageDetectro := ai.NewMockDamageDetector()
 	if err != nil {
 		panic(err)
 	}
 	valuationRepository := persistance.NewValuationRepository(db)
-	valuationService := application.NewValuationService(valuationRepository, publisher)
+	valuationService := application.NewValuationService(valuationRepository, publisher, newMockDamageDetectro)
 	valuationController := presentation.NewValuationController(valuationService)
 	valuationHandler := messaging.NewValuationEventHandler(valuationService)
 	valuationHandler.Run(rabbit)

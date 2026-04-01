@@ -19,7 +19,7 @@
     - **Broker:** Publishes a `ValuationCalculated` event containing the calculated amount.
 
 - **Decision Service**
-    - **Role:** Makes the final (e.g.automated) decision regarding the payment for the damage.
+    - **Role:** Makes the final  decision regarding the payment for the damage.
     - **Action:** Reacts to the `ValuationCalculated` event. Checks if the amount is within acceptable limits.
     - **Database:** Saves the final decision and payout details into its own database (`DB_Decisions`).
     - **Broker:** Publishes a `PayoutApproved` or `PayoutRejected` event.
