@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
@@ -49,10 +50,13 @@ func (v *ValuationEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery)
 		//TODO logs
 		return
 	}
-	v.valuationService.CalculateValuation(
+	err = v.valuationService.CalculateValuation(
 		policyVerifiedEvent.StorageURL,
 		policyVerifiedEvent.ClaimID,
 	)
+	if err != nil {
+		log.Println(err.Error())
+	}
 
 }
 

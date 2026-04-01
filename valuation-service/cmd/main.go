@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(&persistance.ValuationModel{})
+	err = db.AutoMigrate(&persistance.ValuationModel{}, &persistance.PartModel{})
 	if err != nil {
 		panic(err)
 	}

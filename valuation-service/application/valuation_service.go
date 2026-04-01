@@ -29,12 +29,8 @@ func NewValuationService(valuationRepo *persistance.ValuationRepository, publish
 		damageDetector:      damageDetector,
 	}
 }
-func (vs *ValuationService) CreateValuation(claimID uint, amount float64) (*domain.Valuation, error) {
-	valuation := &domain.Valuation{
-		ClaimID: claimID,
-		Amount:  amount,
-	}
-	return vs.valuationRepository.Save(context.Background(), valuation)
+func (vs *ValuationService) CreateValuation(dV *domain.Valuation) (*domain.Valuation, error) {
+	return vs.valuationRepository.Save(context.Background(), dV)
 }
 
 func (vs *ValuationService) GetValuations() ([]*domain.Valuation, error) {
@@ -68,9 +64,20 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 	if err != nil {
 		return err
 	}
+	parts := make([]*domain.Part, len(damages))
+	for i, damage := range damages {
+		parts[i] = &domain.Part{
+			Name: damage,
+			Cost: 1000, //this is mock
+		}
+	}
 	//this is mock
 	amount := float64(len(damages)) * 1000
-	_, err = vs.CreateValuation(claimID, amount)
+	_, err = vs.CreateValuation(&domain.Valuation{
+		ClaimID: claimID,
+		Amount:  amount,
+		Parts:   parts,
+	})
 	if err != nil {
 		return err
 	}
