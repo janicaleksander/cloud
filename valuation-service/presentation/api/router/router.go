@@ -19,7 +19,7 @@ func setupPaths(r *chi.Mux, handler *presentation.ValuationController) {
 	r.Route("/valuation", func(router chi.Router) {
 		router.Get("/", handler.GetValuationsHandler) //get all valuations
 		router.Get("/{id}", handler.GetValuationHandler)
-		router.Patch("/{id}", handler.UpdateValuationHandler)  //update the calcualations
+		//router.Patch("/{id}", handler.UpdateValuationHandler)  //update the calcualations
 		router.Delete("/{id}", handler.DeleteValuationHandler) //update the calcualations
 	})
 
