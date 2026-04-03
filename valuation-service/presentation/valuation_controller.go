@@ -18,52 +18,62 @@ func NewValuationController(vS *application.ValuationService) *ValuationControll
 		valuationService: vS,
 	}
 }
+func success(w http.ResponseWriter, msg any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(msg)
+}
+
+func failure(w http.ResponseWriter, statusCode int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
 func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	var d GetValuationResponseDTO
 
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 	domainValuation, err := v.valuationService.GetValuations()
 	if err != nil {
-		http.Error(w, "Failed to get valuations", http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Failed to get valuations")
 		return
 	}
 	valuationDTO := make([]*GetValuationResponseDTO, 0, len(domainValuation))
 	for _, valu := range domainValuation {
 		valuationDTO = append(valuationDTO, GetValuationDomainToResponse(valu))
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(valuationDTO)
+	success(w, map[string]any{"valuations": valuationDTO})
 
 }
 
 func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	var d GetValuationResponseDTO
 
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 	domainValuation, err := v.valuationService.GetValuation(d.ClaimID)
 	if err != nil {
-		http.Error(w, "Failed to get valuation", http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Failed to get valuation")
 		return
 	}
 	valuationDTO := GetValuationDomainToResponse(domainValuation)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(valuationDTO)
+	success(w, map[string]any{"valuation": valuationDTO})
 }
 
 /*
@@ -99,19 +109,19 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 */
 func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Invalid valuation ID", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid valuation ID")
 		return
 	}
 	err = v.valuationService.DeleteValuation(uint(valuationID))
 	if err != nil {
-		http.Error(w, "Failed to delete valuation", http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Failed to delete valuation")
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	success(w, map[string]any{"message": "Valuation deleted successfully"})
 
 }
