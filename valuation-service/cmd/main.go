@@ -11,8 +11,8 @@ import (
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/ai"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/valuationservice/persistance"
-	presentation "github.com/janicaleksander/cloud/valuationservice/presentation/api"
-	"github.com/janicaleksander/cloud/valuationservice/presentation/api/router"
+	"github.com/janicaleksander/cloud/valuationservice/presentation"
+	"github.com/janicaleksander/cloud/valuationservice/presentation/router"
 	"github.com/joho/godotenv"
 )
 

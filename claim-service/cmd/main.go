@@ -8,9 +8,9 @@ import (
 	"github.com/janicaleksander/cloud/claimservice/application"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure/messaging"
-	"github.com/janicaleksander/cloud/claimservice/persistance"
+	"github.com/janicaleksander/cloud/claimservice/persistence"
 	"github.com/janicaleksander/cloud/claimservice/presentation"
-	"github.com/janicaleksander/cloud/claimservice/presentation/api/router"
+	"github.com/janicaleksander/cloud/claimservice/presentation/router"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/joho/godotenv"
 )
@@ -26,7 +26,7 @@ func main() {
 		slog.Error("Error connecting to database", "error", err)
 		panic(err)
 	}
-	err = db.AutoMigrate(&persistance.ClaimModel{}, &persistance.FileModel{})
+	err = db.AutoMigrate(&persistence.ClaimModel{}, &persistence.FileModel{})
 	if err != nil {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
@@ -38,7 +38,7 @@ func main() {
 	publisher := rabbitmq.NewPublisher(rabbit)
 
 	claimService := application.NewClaimService(
-		persistance.NewClaimRepository(db),
+		persistence.NewClaimRepository(db),
 		publisher,
 	)
 	claimController := presentation.NewClaimController(claimService)

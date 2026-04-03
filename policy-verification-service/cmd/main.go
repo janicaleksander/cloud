@@ -10,8 +10,8 @@ import (
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
-	"github.com/janicaleksander/cloud/policyverificationservice/presentation/api"
-	"github.com/janicaleksander/cloud/policyverificationservice/presentation/api/router"
+	"github.com/janicaleksander/cloud/policyverificationservice/presentation"
+	"github.com/janicaleksander/cloud/policyverificationservice/presentation/router"
 	"github.com/joho/godotenv"
 )
 
@@ -36,7 +36,7 @@ func main() {
 
 	policyRepository := persistance.NewPolicyRepository(db)
 	policyService := application.NewPolicyService(policyRepository, publisher)
-	policyController := api.NewPolicyController(policyService)
+	policyController := presentation.NewPolicyController(policyService)
 
 	policyEventHandler := messaging.NewPolicyEventHandler(policyService)
 	policyEventHandler.Run(rabbit)

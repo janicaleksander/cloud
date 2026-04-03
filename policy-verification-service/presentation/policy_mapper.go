@@ -1,4 +1,4 @@
-package api
+package presentation
 
 import (
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"

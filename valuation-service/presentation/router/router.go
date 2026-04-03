@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/janicaleksander/cloud/valuationservice/presentation/api"
+	"github.com/janicaleksander/cloud/valuationservice/presentation"
 )
 
-func NewRouter(handler *presentation.ValuationController) http.Handler {
+func NewRouter(handler *presentation.presentation) http.Handler {
 	r := chi.NewMux()
 	r.Use(middleware.Logger)
 	setupPaths(r, handler)

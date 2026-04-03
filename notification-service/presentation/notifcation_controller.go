@@ -26,10 +26,11 @@ func success(w http.ResponseWriter, msg any) {
 
 func failure(w http.ResponseWriter, statusCode int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
-	http.Error(w, msg, statusCode)
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-func (nc *NotificationController) GetNotifications(w http.ResponseWriter, r *http.Request) {
+func (nc *NotificationController) GetNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
@@ -46,7 +47,7 @@ func (nc *NotificationController) GetNotifications(w http.ResponseWriter, r *htt
 	success(w, map[string]any{"notifications": notificationsDTO})
 
 }
-func (nc *NotificationController) GetNotification(w http.ResponseWriter, r *http.Request) {
+func (nc *NotificationController) GetNotificationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
@@ -65,7 +66,7 @@ func (nc *NotificationController) GetNotification(w http.ResponseWriter, r *http
 	success(w, map[string]any{"notification": notificationDTO})
 
 }
-func (nc *NotificationController) GetNotificationsForClaimID(w http.ResponseWriter, r *http.Request) {
+func (nc *NotificationController) GetNotificationsForClaimIDHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
@@ -87,7 +88,7 @@ func (nc *NotificationController) GetNotificationsForClaimID(w http.ResponseWrit
 	success(w, map[string]any{"notifications": notificationDTO})
 
 }
-func (nc *NotificationController) DeleteNotification(w http.ResponseWriter, r *http.Request) {
+func (nc *NotificationController) DeleteNotificationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return

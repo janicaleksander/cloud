@@ -23,6 +23,18 @@ func NewClaimController(claimService *application.ClaimService) *ClaimController
 	}
 }
 
+func success(w http.ResponseWriter, msg any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(msg)
+}
+
+func failure(w http.ResponseWriter, statusCode int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
 func parseFile(r *http.Request) ([]*domain.File, error) {
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
@@ -52,32 +64,32 @@ func parseFile(r *http.Request) ([]*domain.File, error) {
 }
 func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid multipart form data")
 		return
 	}
 
 	dataField := r.FormValue("json_req_body")
 	if dataField == "" {
-		http.Error(w, "Missing data field", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Missing json_req_body field")
 		return
 	}
 
 	var createClaimRequest CreateClaimRequestDTO
 	err = json.NewDecoder(strings.NewReader(dataField)).Decode(&createClaimRequest)
 	if err != nil {
-		http.Error(w, "Invalid JSON in data field", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid JSON in json_req_body")
 		return
 	}
 
 	domainFiles, err := parseFile(r)
 	if err != nil {
-		http.Error(w, "parsing file error", http.StatusInternalServerError)
+		failure(w, http.StatusBadRequest, "Error processing files: "+err.Error())
 		return
 	}
 
@@ -89,51 +101,44 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		claimDomain.Files = domainFiles
 	}
 
-	err = c.claimService.CreateClaim(claimDomain)
+	createdClaim, err := c.claimService.CreateClaim(claimDomain)
 	if err != nil {
-		http.Error(w, "saving Error", http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Error creating claim: "+err.Error())
 		return
 	}
-
-	err = json.NewEncoder(w).Encode(createClaimRequest)
-	if err != nil {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
-	}
-
+	dto := GetClaimDomainToResponse(createdClaim)
+	success(w, dto)
 }
+
 func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Internal", 500)
+		failure(w, http.StatusBadRequest, "Invalid claim ID")
 		return
 	}
 	claim, err := c.claimService.GetClaim(uint(claimID))
 	if err != nil {
-		http.Error(w, "no such claim", 404)
+		failure(w, http.StatusNotFound, "No such claim")
 		return
 	}
 
 	claimDTO := GetClaimDomainToResponse(claim)
 
-	err = json.NewEncoder(w).Encode(&claimDTO)
-	if err != nil {
-		http.Error(w, "Internal", 500)
-		return
-	}
+	success(w, claimDTO)
 }
 
 func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	claims, err := c.claimService.GetClaims()
 	if err != nil {
-		http.Error(w, "no such claim", 404)
+		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
 		return
 	}
 	claimsDTO := make([]*GetClaimResponseDTO, 0, len(claims))
@@ -142,26 +147,22 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		claimsDTO = append(claimsDTO, claimDTO)
 	}
 
-	err = json.NewEncoder(w).Encode(claimsDTO)
-	if err != nil {
-		http.Error(w, "Internal", 500)
-		return
-	}
+	success(w, claimsDTO)
 }
 
 func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Internal", 500)
+		failure(w, http.StatusBadRequest, "Invalid claim ID")
 		return
 	}
 	err = c.claimService.DeleteClaim(uint(claimID))
 	if err != nil {
-		http.Error(w, "no such claim", 404)
+		failure(w, http.StatusInternalServerError, "Error deleting claim: "+err.Error())
 		return
 	}
 
@@ -174,36 +175,32 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 
 func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Internal", 500)
+		failure(w, http.StatusBadRequest, "Invalid claim ID")
 		return
 	}
 	var updateClaimRequestDTO UpdateClaimRequestDTO
 	err = json.NewDecoder(r.Body).Decode(&updateClaimRequestDTO)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		failure(w, http.StatusBadRequest, "Invalid JSON in request body")
 		return
 	}
 
 	claim, err := c.claimService.GetClaim(uint(claimID))
 	if err != nil {
-		http.Error(w, err.Error(), 404)
+		failure(w, http.StatusNotFound, "No such claim")
 		return
 	}
 
-	err = c.claimService.UpdateClaim(claim, updateClaimRequestDTO.Email)
+	updatedClaim, err := c.claimService.UpdateClaim(claim, updateClaimRequestDTO.Email)
 	if err != nil {
-		http.Error(w, err.Error(), 403)
+		failure(w, http.StatusForbidden, "Error updating claim: "+err.Error())
 		return
 	}
-	claimResponse := GetClaimDomainToResponse(claim)
-	err = json.NewEncoder(w).Encode(&claimResponse)
-	if err != nil {
-		http.Error(w, err.Error(), 403)
-		return
-	}
+	claimResponse := GetClaimDomainToResponse(updatedClaim)
+	success(w, claimResponse)
 }

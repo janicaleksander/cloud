@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
-	"github.com/janicaleksander/cloud/claimservice/persistance"
+	"github.com/janicaleksander/cloud/claimservice/persistence"
 	"github.com/janicaleksander/cloud/common/event"
 )
 
@@ -17,7 +17,7 @@ type ClaimEventPublisher interface {
 	Publish(exchange string, msg interface{}) error
 }
 
-func NewClaimService(claimRepo *persistance.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
+func NewClaimService(claimRepo *persistence.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
 	return &ClaimService{
 		claimRepository: claimRepo,
 		publisher:       publisher,
@@ -26,7 +26,7 @@ func NewClaimService(claimRepo *persistance.ClaimRepository, publisher ClaimEven
 
 //http methods
 
-func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
+func (c *ClaimService) CreateClaim(claim *domain.Claim) (*domain.Claim, error) {
 	claim.Status = domain.NEW
 
 	urls := make([]string, 0, len(claim.Files))
@@ -35,14 +35,14 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	}
 	savedClaim, err := c.claimRepository.Save(context.Background(), claim)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = c.publisher.Publish("events", event.RegisterUserForNotificationEvent{
 		ClaimID: savedClaim.ID,
 		Email:   savedClaim.Email,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = c.pushClaimSubmittedEvent(&event.ClaimSubmittedEvent{
@@ -54,9 +54,9 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) error {
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return savedClaim, nil
 }
 func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
 	return c.publisher.Publish("events", *e)
@@ -73,23 +73,23 @@ func (c *ClaimService) DeleteClaim(id uint) error {
 	return c.claimRepository.DeleteById(context.Background(), id)
 }
 
-func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail string) error {
+func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail string) (*domain.Claim, error) {
 	if newUserEmail != oldClaimDomain.Email && newUserEmail != "" {
 		oldClaimDomain.Email = newUserEmail
-	} //todo publish msg to change email in notification service
+	}
 
-	_, err := c.claimRepository.Update(context.Background(), oldClaimDomain)
+	updatedClaim, err := c.claimRepository.Update(context.Background(), oldClaimDomain)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = c.publisher.Publish("events", event.ChangeEmailForNotification{
 		ClaimID: oldClaimDomain.ID,
 		Email:   newUserEmail,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return updatedClaim, nil
 }
 
 //rabbit events methods

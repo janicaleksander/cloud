@@ -9,7 +9,7 @@ import (
 	"github.com/janicaleksander/cloud/decisionservice/application"
 	"github.com/janicaleksander/cloud/decisionservice/infrastructure"
 	"github.com/janicaleksander/cloud/decisionservice/infrastructure/messaging"
-	"github.com/janicaleksander/cloud/decisionservice/persistance"
+	"github.com/janicaleksander/cloud/decisionservice/persistence"
 	"github.com/janicaleksander/cloud/decisionservice/presentation"
 	"github.com/janicaleksander/cloud/decisionservice/presentation/router"
 	"github.com/joho/godotenv"
@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(&persistance.DecisionModel{})
+	err = db.AutoMigrate(&persistence.DecisionModel{})
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +34,7 @@ func main() {
 		panic(err)
 	}
 	publisher := rabbitmq.NewPublisher(rabbit)
-	decisionRepository := persistance.NewDecisionRepository(db)
+	decisionRepository := persistence.NewDecisionRepository(db)
 	decisionService := application.NewDecisionService(decisionRepository, publisher)
 	decisionController := presentation.NewDecisionController(decisionService)
 	decisionEventHandler := messaging.NewDecisionEventHandler(decisionService)
