@@ -8,7 +8,7 @@ import (
 	"github.com/janicaleksander/cloud/valuationservice/presentation"
 )
 
-func NewRouter(handler *presentation.presentation) http.Handler {
+func NewRouter(handler *presentation.ValuationController) http.Handler {
 	r := chi.NewMux()
 	r.Use(middleware.Logger)
 	setupPaths(r, handler)

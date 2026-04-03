@@ -35,13 +35,6 @@ func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
-	var d GetValuationResponseDTO
-
-	err := json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
 	domainValuation, err := v.valuationService.GetValuations()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuations")
@@ -60,14 +53,12 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
-	var d GetValuationResponseDTO
-
-	err := json.NewDecoder(r.Body).Decode(&d)
+	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid request body")
+		failure(w, http.StatusBadRequest, "Invalid valuation ID")
 		return
 	}
-	domainValuation, err := v.valuationService.GetValuation(d.ClaimID)
+	domainValuation, err := v.valuationService.GetValuation(uint(valuationID))
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuation")
 		return

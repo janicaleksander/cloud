@@ -165,12 +165,7 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusInternalServerError, "Error deleting claim: "+err.Error())
 		return
 	}
-
-	err = json.NewEncoder(w).Encode(map[string]string{"message": "claim deleted" + strconv.Itoa(claimID)})
-	if err != nil {
-		http.Error(w, "Internal", 500)
-		return
-	}
+	success(w, map[string]any{"message": "Claim deleted successfully +: " + strconv.Itoa(claimID)})
 }
 
 func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Request) {
