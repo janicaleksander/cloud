@@ -26,9 +26,9 @@ func NewPolicyService(policyRepository *persistance.PolicyRepository, publisher 
 	}
 }
 
-func (s *PolicyService) CreatePolicy(policy *domain.Policy) error {
-	_, err := s.policyRepository.Save(context.Background(), policy)
-	return err
+func (s *PolicyService) CreatePolicy(policy *domain.Policy) (*domain.Policy, error) {
+	savedPolicy, err := s.policyRepository.Save(context.Background(), policy)
+	return savedPolicy, err
 }
 
 func (s *PolicyService) GetPolicy(policyId uint) (*domain.Policy, error) {
@@ -39,7 +39,7 @@ func (s *PolicyService) GetPolicies() ([]*domain.Policy, error) {
 	return s.policyRepository.GetAll(context.Background())
 }
 
-func (s *PolicyService) UpdatePolicy(newPolicy *domain.Policy, newFrom, newTo time.Time) error {
+func (s *PolicyService) UpdatePolicy(newPolicy *domain.Policy, newFrom, newTo time.Time) (*domain.Policy, error) {
 	updated := *newPolicy
 
 	if newFrom != (time.Time{}) {
@@ -48,8 +48,8 @@ func (s *PolicyService) UpdatePolicy(newPolicy *domain.Policy, newFrom, newTo ti
 	if newTo != (time.Time{}) {
 		updated.To = newTo
 	}
-	_, err := s.policyRepository.Update(context.Background(), &updated)
-	return err
+	updatedPolicy, err := s.policyRepository.Update(context.Background(), &updated)
+	return updatedPolicy, err
 }
 func (s *PolicyService) DeletePolicy(policyID uint) error {
 	return s.policyRepository.DeleteById(context.Background(), policyID)

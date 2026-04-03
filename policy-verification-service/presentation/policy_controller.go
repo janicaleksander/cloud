@@ -17,116 +17,122 @@ func NewPolicyController(policyService *application.PolicyService) *PolicyContro
 	return &PolicyController{policyService: policyService}
 }
 
-// TODO throw event when i check if user has policy
+func success(w http.ResponseWriter, msg any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(msg)
+}
+
+func failure(w http.ResponseWriter, statusCode int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
 func (p *PolicyController) CreatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	var d CreatePolicyRequestDTO
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 	policyDomain := CreatePolicyRequestToDomain(&d)
-	err = p.policyService.CreatePolicy(policyDomain)
+	createdPolicy, err := p.policyService.CreatePolicy(policyDomain)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		failure(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	success(w, map[string]any{"policy": GetPolicyDomainToResponse(createdPolicy)})
 
 }
 
 func (p *PolicyController) GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Invalid policy ID", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
 		return
 
 	}
 	domainPolicy, err := p.policyService.GetPolicy(uint(policyId))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		failure(w, http.StatusBadRequest, "no such policy ID")
 		return
 	}
 	d := GetPolicyDomainToResponse(domainPolicy)
-	err = json.NewEncoder(w).Encode(d)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	success(w, map[string]any{"policy": d})
 
 }
 
 func (p *PolicyController) GetPoliciesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	domainPolicies, err := p.policyService.GetPolicies()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Error fetching policies: "+err.Error())
 		return
 	}
 	responseDTOs := make([]*GetPolicyResponseDTO, 0, len(domainPolicies))
 	for idx := range domainPolicies {
 		responseDTOs = append(responseDTOs, GetPolicyDomainToResponse(domainPolicies[idx]))
 	}
-	err = json.NewEncoder(w).Encode(responseDTOs)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	success(w, map[string]any{"policies": responseDTOs})
 }
 
 func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Invalid policy ID", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
 		return
 	}
 	var d UpdatePolicyRequest
 	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 	policyDomain, err := p.policyService.GetPolicy(uint(policyId))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "no such policy ID")
 		return
 	}
 
-	err = p.policyService.UpdatePolicy(policyDomain, d.From, d.To)
+	updatedPolicy, err := p.policyService.UpdatePolicy(policyDomain, d.From, d.To)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		failure(w, http.StatusInternalServerError, "Error updating policy: "+err.Error())
 		return
 	}
+	success(w, map[string]any{"policy": GetPolicyDomainToResponse(updatedPolicy)})
 }
 
 func (p *PolicyController) DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "Invalid policy ID", http.StatusBadRequest)
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
 		return
 	}
 	err = p.policyService.DeletePolicy(uint(policyId))
 	if err != nil {
-		http.Error(w, "no such policy ID", http.StatusBadRequest)
+		failure(w, http.StatusInternalServerError, "Error deleting policy: "+err.Error())
 		return
 	}
+	success(w, map[string]any{"message": "policy deleted" + strconv.Itoa(policyId)})
 }
