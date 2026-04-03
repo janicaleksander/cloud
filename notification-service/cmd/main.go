@@ -3,12 +3,15 @@ package main
 import (
 	"log"
 	"log/slog"
+	"net/http"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/notificationservice/application"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/notificationservice/persistance"
+	"github.com/janicaleksander/cloud/notificationservice/presentation"
+	"github.com/janicaleksander/cloud/notificationservice/presentation/router"
 	"github.com/joho/godotenv"
 )
 
@@ -42,13 +45,21 @@ func main() {
 	emailService := application.NewEmailService("notifications@insurance.com")
 	notificationService := application.NewNotificationService(notificationRepository)
 
+	notificationController := presentation.NewNotificationController(notificationService)
 	notificationEventHandler := messaging.NewNotificationHandler(notificationService, emailService)
 	err = notificationEventHandler.Run(rabbit)
 	if err != nil {
 		slog.Error("Error running notification event handler", "error", err)
 		panic(err)
 	}
-
+	r := router.NewRouter(notificationController)
 	log.Println("Notification service is running...")
-	select {}
+
+	err = http.ListenAndServe(":8085", r)
+
+	if err != nil {
+		slog.Error("Error starting HTTP server", "error", err)
+		panic(err)
+	}
+
 }

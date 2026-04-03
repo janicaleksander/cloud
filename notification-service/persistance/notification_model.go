@@ -1,10 +1,17 @@
 package persistance
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type NotificationModel struct {
 	gorm.Model
-	//todo add
+	ClaimID uint      `gorm:"not null"`
+	Body    string    `gorm:"not null"`
+	SentTo  string    `gorm:"not null"`
+	Time    time.Time `gorm:"not null"`
 }
 
 type NotificationReceiverModel struct {

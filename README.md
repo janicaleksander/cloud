@@ -39,7 +39,7 @@ Na podstawie BPMN — zestawienie mikroserwisów i ich eventów:
 ---
 
 **Claim Service**
-- publikuje: `ClaimSubmitted`
+- publikuje: `ClaimSubmitted`, dodanie usera do powiadomiein, zmiana jego emailu
 - subskrybuje: `PolicyVerified`, `PolicyDenied`, `PayoutApproved`, `PayoutRejected` (zmiana statusu w DB_Claims)
 
 ---
@@ -63,5 +63,5 @@ Na podstawie BPMN — zestawienie mikroserwisów i ich eventów:
 ---
 
 **Notification Service**
-- subskrybuje: `ClaimSubmitted`, `PolicyVerified`, `PolicyDenied`, `PayoutApproved`, `PayoutRejected`
+- subskrybuje: `ClaimSubmitted`, `PolicyVerified`, `PolicyDenied`, `PayoutApproved`, `PayoutRejected`,dodanie email, update email
 - nie publikuje nic
