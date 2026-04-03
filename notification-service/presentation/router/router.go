@@ -17,10 +17,10 @@ func NewRouter(handler *presentation.NotificationController) http.Handler {
 
 func setupPaths(r *chi.Mux, handler *presentation.NotificationController) {
 	r.Route("/notification", func(router chi.Router) {
-		router.Get("/", handler.GetNotifications)                       // all notifications
-		router.Get("/{id}", handler.GetNotification)                    //notifications for id
-		router.Delete("/{id}", handler.DeleteNotification)              //delete by notID
-		router.Get("/claimID/{id}", handler.GetNotificationsForClaimID) //notifications for claimID
+		router.Get("/", handler.GetNotificationsHandler)                       // all notifications
+		router.Get("/{id}", handler.GetNotificationHandler)                    //notifications for id
+		router.Delete("/{id}", handler.DeleteNotificationHandler)              //delete by notID
+		router.Get("/claimID/{id}", handler.GetNotificationsForClaimIDHandler) //notifications for claimID
 	})
 
 }
