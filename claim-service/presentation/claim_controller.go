@@ -128,7 +128,7 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 
 	claimDTO := GetClaimDomainToResponse(claim)
 
-	success(w, claimDTO)
+	success(w, map[string]any{"claim": claimDTO})
 }
 
 func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +147,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		claimsDTO = append(claimsDTO, claimDTO)
 	}
 
-	success(w, claimsDTO)
+	success(w, map[string]any{"claims": claimsDTO})
 }
 
 func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Request) {
@@ -202,5 +202,5 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	claimResponse := GetClaimDomainToResponse(updatedClaim)
-	success(w, claimResponse)
+	success(w, map[string]any{"claim": claimResponse})
 }

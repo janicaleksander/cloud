@@ -45,7 +45,7 @@ func (d *DecisionController) GetDecisionsHandler(w http.ResponseWriter, r *http.
 	for _, decision := range domainDecisions {
 		dto = append(dto, GetDecisionDomainToResponse(decision))
 	}
-	success(w, dto)
+	success(w, map[string]any{"decisions": dto})
 }
 
 func (d *DecisionController) GetDecisionHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +64,7 @@ func (d *DecisionController) GetDecisionHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 	dto := GetDecisionDomainToResponse(domainDecision)
-	success(w, dto)
+	success(w, map[string]any{"decision": dto})
 }
 
 func (d *DecisionController) GetWaitingDecisionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func (d *DecisionController) GetWaitingDecisionsHandler(w http.ResponseWriter, r
 	for _, decision := range domainDecisions {
 		dto = append(dto, GetDecisionDomainToResponse(decision))
 	}
-	success(w, dto)
+	success(w, map[string]any{"decisions": dto})
 
 }
 
@@ -111,7 +111,7 @@ func (d *DecisionController) UpdateDecisionHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	success(w, GetDecisionDomainToResponse(updatedDecision))
+	success(w, map[string]any{"decision": GetDecisionDomainToResponse(updatedDecision)})
 
 }
 
@@ -130,5 +130,5 @@ func (d *DecisionController) DeleteDecisionHandler(w http.ResponseWriter, r *htt
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-	success(w, map[string]string{"message": "Decision deleted successfully"})
+	success(w, map[string]string{"message": "Decision deleted successfully + id: " + strconv.Itoa(decisionID)})
 }
