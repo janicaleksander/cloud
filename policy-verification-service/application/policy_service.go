@@ -27,7 +27,7 @@ func NewPolicyService(policyRepository domain.PolicyRepository, publisher Policy
 }
 
 func (s *PolicyService) CreatePolicy(policy *domain.Policy) (*domain.Policy, error) {
-	slog.Info("Created policy with ID: ", "policyID", policy.ID)
+	slog.Info("Created policy with UserID: ", "userID", policy.UserID, "vin", policy.VIN)
 	savedPolicy, err := s.policyRepository.Save(context.Background(), policy)
 	return savedPolicy, err
 }

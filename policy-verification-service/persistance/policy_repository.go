@@ -41,7 +41,7 @@ func (pr *PolicyRepository) GetById(ctx context.Context, id uint) (*domain.Polic
 }
 
 func (pr *PolicyRepository) Save(ctx context.Context, p *domain.Policy) (*domain.Policy, error) {
-	slog.Info("Saving policy to the database", "policy", p)
+	slog.Info("Saving policy to the database")
 	policyModel := PolicyDomainToModel(p)
 	err := gorm.G[PolicyModel](pr.gorm).Create(ctx, policyModel)
 	if err != nil {

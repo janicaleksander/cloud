@@ -18,7 +18,7 @@ func NewDecisionRepository(gorm *gorm.DB) *DecisionRepository {
 }
 
 func (d *DecisionRepository) Save(decision *domain.Decision) (*domain.Decision, error) {
-	slog.Info("Saving decision to database", "decisionID", decision.ID)
+	slog.Info("Saving decision to database")
 	decisionModel := DomainToDecisionModel(decision)
 	err := gorm.G[DecisionModel](d.gorm).Create(context.Background(), decisionModel)
 	return DecisionModelToDomain(decisionModel), err

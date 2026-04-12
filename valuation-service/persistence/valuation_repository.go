@@ -40,7 +40,7 @@ func (v *ValuationRepository) GetById(ctx context.Context, id uint) (*domain.Val
 	return domainValuation, nil
 }
 func (v *ValuationRepository) Save(ctx context.Context, domainValuation *domain.Valuation) (*domain.Valuation, error) {
-	slog.Info("Saving valuation to the database", "valuationID", domainValuation.ID)
+	slog.Info("Saving valuation to the database")
 	domainModel := ValuationDomainToModel(domainValuation)
 	err := gorm.G[ValuationModel](v.gorm).Create(ctx, domainModel)
 	if err != nil {

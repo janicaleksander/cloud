@@ -31,7 +31,7 @@ func NewValuationService(valuationRepo domain.ValuationRepository, publisher Val
 	}
 }
 func (vs *ValuationService) CreateValuation(dV *domain.Valuation) (*domain.Valuation, error) {
-	slog.Info("Creating valuation with ID", "claimID", dV.ClaimID)
+	slog.Info("Creating valuation for claimID", "claimID", dV.ClaimID)
 	return vs.valuationRepository.Save(context.Background(), dV)
 }
 

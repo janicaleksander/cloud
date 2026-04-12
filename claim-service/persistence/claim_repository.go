@@ -19,7 +19,7 @@ func NewClaimRepository(g *gorm.DB) *ClaimRepository {
 }
 
 func (r *ClaimRepository) Save(ctx context.Context, c *domain.Claim) (*domain.Claim, error) {
-	slog.Info("Saving claim to database", "claimID", c.ID)
+	slog.Info("Saving claim to database")
 	claimModel, err := ClaimDomainToModel(c)
 	if err != nil {
 		return nil, err

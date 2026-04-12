@@ -28,7 +28,7 @@ func NewClaimService(claimRepo domain.ClaimRepository, publisher ClaimEventPubli
 //http methods
 
 func (c *ClaimService) CreateClaim(claim *domain.Claim, domainFiles []*domain.File) (*domain.Claim, error) {
-	slog.Info("Creating claim with ID: ", "claimID", claim.ID)
+	slog.Info("Creating claim for user: ", "userID", claim.UserID, "vin", claim.VIN, "accidentDate", claim.AccidentDate)
 	claim.Status = domain.NEW
 	for idx := range domainFiles {
 		domainFiles[idx].StorageURL = "https://storage.example.com/" + domainFiles[idx].FileName
