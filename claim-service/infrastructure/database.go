@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func NewDB() (*gorm.DB, error) {
+	slog.Info("Connecting to database for claim service")
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=prefer",
 		os.Getenv("POSTGRES_HOST"),

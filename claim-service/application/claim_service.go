@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/claimservice/persistence"
@@ -9,8 +10,8 @@ import (
 )
 
 type ClaimService struct {
-	claimRepository domain.ClaimRepository
-	publisher       ClaimEventPublisher //under the hood there is ref do persistance
+	claimRepository domain.ClaimRepository // //under the hood there is ref do persistance
+	publisher       ClaimEventPublisher
 }
 
 type ClaimEventPublisher interface {
@@ -18,6 +19,7 @@ type ClaimEventPublisher interface {
 }
 
 func NewClaimService(claimRepo *persistence.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
+	slog.Info("Creating ClaimService")
 	return &ClaimService{
 		claimRepository: claimRepo,
 		publisher:       publisher,
@@ -26,8 +28,15 @@ func NewClaimService(claimRepo *persistence.ClaimRepository, publisher ClaimEven
 
 //http methods
 
-func (c *ClaimService) CreateClaim(claim *domain.Claim) (*domain.Claim, error) {
+func (c *ClaimService) CreateClaim(claim *domain.Claim, domainFiles []*domain.File) (*domain.Claim, error) {
+	slog.Info("Creating claim with ID: ", "claimID", claim.ID)
 	claim.Status = domain.NEW
+	for idx := range domainFiles {
+		domainFiles[idx].StorageURL = "https://storage.example.com/" + domainFiles[idx].FileName
+	}
+	if len(domainFiles) != 0 {
+		claim.Files = domainFiles
+	}
 
 	urls := make([]string, 0, len(claim.Files))
 	for idx := range claim.Files {
@@ -59,21 +68,26 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim) (*domain.Claim, error) {
 	return savedClaim, nil
 }
 func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
+	slog.Info("Publishing ClaimSubmittedEvent for ClaimID: ", "claimID", e.ClaimID)
 	return c.publisher.Publish("events", *e)
 }
 
 func (c *ClaimService) GetClaim(id uint) (*domain.Claim, error) {
+	slog.Info("Getting claim with ID: ", "claimID", id)
 	return c.claimRepository.GetById(context.Background(), id)
 }
 func (c *ClaimService) GetClaims() ([]*domain.Claim, error) {
+	slog.Info("Getting all claims")
 	return c.claimRepository.GetAll(context.Background())
 }
 
 func (c *ClaimService) DeleteClaim(id uint) error {
+	slog.Info("Deleting claim with ID: ", "claimID", id)
 	return c.claimRepository.DeleteById(context.Background(), id)
 }
 
 func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail string) (*domain.Claim, error) {
+	slog.Info("Updating claim with ID: ", "claimID", oldClaimDomain.ID)
 	if newUserEmail != oldClaimDomain.Email && newUserEmail != "" {
 		oldClaimDomain.Email = newUserEmail
 	}
@@ -95,5 +109,6 @@ func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail st
 //rabbit events methods
 
 func (c *ClaimService) ChangeClaimStatus(claimID uint, newStatus domain.Status) error {
+	slog.Info("Changing claim status for ClaimID: ", "claimID", claimID, "newStatus", newStatus)
 	return c.claimRepository.UpdateStatus(context.Background(), claimID, newStatus)
 }

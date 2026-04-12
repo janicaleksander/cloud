@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"gorm.io/gorm"
@@ -13,10 +14,12 @@ type ClaimRepository struct {
 }
 
 func NewClaimRepository(g *gorm.DB) *ClaimRepository {
+	slog.Info("Initializing ClaimRepository")
 	return &ClaimRepository{gorm: g}
 }
 
 func (r *ClaimRepository) Save(ctx context.Context, c *domain.Claim) (*domain.Claim, error) {
+	slog.Info("Saving claim to database", "claimID", c.ID)
 	claimModel, err := ClaimDomainToModel(c)
 	if err != nil {
 		return nil, err
@@ -33,6 +36,7 @@ func (r *ClaimRepository) Save(ctx context.Context, c *domain.Claim) (*domain.Cl
 }
 
 func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
+	slog.Info("Getting all claims from database")
 	claimModels, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Find(ctx)
 	if err != nil {
 		return nil, err
@@ -49,6 +53,7 @@ func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
 }
 
 func (r *ClaimRepository) GetById(ctx context.Context, id uint) (*domain.Claim, error) {
+	slog.Info("Getting claim by ID from database", "claimID", id)
 	claimModel, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
@@ -61,6 +66,7 @@ func (r *ClaimRepository) GetById(ctx context.Context, id uint) (*domain.Claim, 
 }
 
 func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.Claim, error) {
+	slog.Info("Updating claim in database", "claimID", c.ID)
 	claimModel, err := ClaimDomainToModel(c)
 	if err != nil {
 		return nil, err
@@ -101,11 +107,13 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 	return ClaimModelToDomain(&updated)
 }
 func (r *ClaimRepository) DeleteById(ctx context.Context, id uint) error {
+	slog.Info("Deleting claim by ID from database", "claimID", id)
 	_, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).Delete(ctx)
 	return err
 }
 
 func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uint, newStatus domain.Status) error {
+	slog.Info("Updating claim status in database", "claimID", claimID, "newStatus", newStatus)
 	result := r.gorm.WithContext(ctx).
 		Model(&ClaimModel{}).
 		Where("id = ?", claimID).

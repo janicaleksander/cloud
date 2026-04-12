@@ -3,6 +3,7 @@ package presentation
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,7 @@ type ClaimController struct {
 }
 
 func NewClaimController(claimService *application.ClaimService) *ClaimController {
+	slog.Info("Creating ClaimController")
 	return &ClaimController{
 		claimService: claimService,
 	}
@@ -36,6 +38,7 @@ func failure(w http.ResponseWriter, statusCode int, msg string) {
 }
 
 func parseFile(r *http.Request) ([]*domain.File, error) {
+	slog.Info("Parsing multipart form data for files")
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		return nil, err
@@ -67,6 +70,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP CreateClaimHandler called")
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
@@ -88,20 +92,16 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	domainFiles, err := parseFile(r)
+	for idx := range domainFiles {
+		slog.Info("Parsed file: "+domainFiles[idx].FileName, "ext", domainFiles[idx].FileExt)
+	}
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Error processing files: "+err.Error())
 		return
 	}
 
 	claimDomain := CreateClaimRequestToDomain(&createClaimRequest)
-	for idx := range domainFiles {
-		domainFiles[idx].StorageURL = "https://storage.example.com/" + domainFiles[idx].FileName
-	}
-	if len(domainFiles) != 0 {
-		claimDomain.Files = domainFiles
-	}
-
-	createdClaim, err := c.claimService.CreateClaim(claimDomain)
+	createdClaim, err := c.claimService.CreateClaim(claimDomain, domainFiles)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error creating claim: "+err.Error())
 		return
@@ -115,6 +115,7 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetClaimHandler called")
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid claim ID")
@@ -136,6 +137,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetClaimsHandler called")
 	claims, err := c.claimService.GetClaims()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
@@ -155,6 +157,7 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP DeleteClaimHandler called")
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid claim ID")
@@ -173,6 +176,7 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP UpdateClaimHandler called")
 	claimID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid claim ID")

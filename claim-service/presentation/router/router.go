@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,7 @@ import (
 )
 
 func NewRouter(claimHandler *presentation.ClaimController) http.Handler {
+	slog.Info("Setting up router for claim service")
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.RequestSize(10 << 20))

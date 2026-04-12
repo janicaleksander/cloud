@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/janicaleksander/cloud/claimservice/application"
 	"github.com/janicaleksander/cloud/claimservice/domain"
@@ -18,6 +19,7 @@ type ClaimEventHandler struct {
 }
 
 func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHandler {
+	slog.Info("Creating ClaimEventHandler")
 	h := &ClaimEventHandler{
 		claimService: claimService,
 		handlers:     make(map[string]rabbitmq.HandlerFunc),
@@ -27,6 +29,7 @@ func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHan
 }
 
 func (h *ClaimEventHandler) registerHandlers() {
+	slog.Info("Registering event handlers for ClaimEventHandler")
 	h.handlers[rabbitmq.RouteKeyToTopicNotation(
 		utils.NameOfType(event.PolicyVerifiedEvent{}),
 	)] = h.handlePolicyVerifiedEvent
@@ -45,9 +48,9 @@ func (h *ClaimEventHandler) registerHandlers() {
 }
 
 func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
+	slog.Info("Running ClaimEventHandler")
 	bindingKeys := make([]string, 0, len(h.handlers))
 	for key := range h.handlers {
-		fmt.Println("registered key:", key)
 		bindingKeys = append(bindingKeys, key)
 	}
 
@@ -70,67 +73,59 @@ func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 }
 
 func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery) {
-	log.Println("HandlePolicyVerifiedEvent")
+	slog.Info("HandlePolicyVerifiedEvent: ", "routingKey", msg.RoutingKey)
 	var e event.PolicyVerifiedEvent
 	err := json.Unmarshal(msg.Body, &e)
 	if err != nil {
-		log.Printf("failed to unmarshal policy_verified event: %v", err)
-		//TODO log this
+		slog.Error("failed to unmarshal policy_verified event", "error", err)
 		return
 	}
 	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
 	if err != nil {
-		log.Printf("failed to change claim status to VERIFIED: %v", err)
-		//TODO log
+		slog.Error("failed to change claim status to VERIFIED", "error", err)
 	}
 }
 
 func (h *ClaimEventHandler) handlePolicyDeniedEvent(msg rabbitmq.Delivery) {
-	log.Printf("HandlePolicyDeniedEvent: ")
+	slog.Info("HandlePolicyDeniedEvent: ", "routingKey", msg.RoutingKey)
 	var e event.PolicyDeniedEvent
 	err := json.Unmarshal(msg.Body, &e)
 	if err != nil {
-		log.Printf("failed to unmarshal policy_denied event: %v", err)
-		//TODO log this
+		slog.Error("failed to unmarshal policy_denied event", "error", err)
 		return
 	}
 	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
 	if err != nil {
-		log.Printf("failed to change claim status to DENIED: %v", err)
-		//TODO log
+		slog.Error("failed to change claim status to DENIED", "error", err)
 	}
 
 }
 
 func (h *ClaimEventHandler) handlePayoutApprovedEvent(msg rabbitmq.Delivery) {
-	log.Printf("HandlePayoutApprovedEvent: ")
+	slog.Info("HandlePayoutApprovedEvent: ", "routingKey", msg.RoutingKey)
 	var e event.PayoutApprovedEvent
 	err := json.Unmarshal(msg.Body, &e)
 	if err != nil {
-		log.Printf("failed to unmarshal payout_approved event: %v", err)
-		//TODO log this
+		slog.Error("failed to unmarshal payout_approved event", "error", err)
 		return
 	}
 	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
 	if err != nil {
-		log.Printf("failed to change claim status to APPROVED: %v", err)
-		//TODO log
+		slog.Error("failed to change claim status to APPROVED", "error", err)
 	}
 }
 
 func (h *ClaimEventHandler) handlePayoutRejectedEvent(msg rabbitmq.Delivery) {
-	log.Printf("HandlePayoutRejectedEvent: ")
+	slog.Info("HandlePayoutRejectedEvent: ", "routingKey", msg.RoutingKey)
 	var e event.PayoutRejectedEvent
 	err := json.Unmarshal(msg.Body, &e)
 	if err != nil {
-		log.Printf("failed to unmarshal payout_rejected event: %v", err)
-		//TODO log this
+		slog.Error("failed to unmarshal payout_rejected event", "error", err)
 		return
 	}
 	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
 	if err != nil {
-		log.Printf("failed to change claim status to REJECTED: %v", err)
-		//TODO log
+		slog.Error("failed to change claim status to REJECTED", "error", err)
 	}
 
 }
