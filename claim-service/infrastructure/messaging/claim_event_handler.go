@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"log/slog"
 
@@ -66,7 +65,6 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 }
 func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
-		fmt.Println(msg.RoutingKey)
 		if handler, ok := h.handlers[msg.RoutingKey]; ok {
 			handler(&msg)
 		} else {
