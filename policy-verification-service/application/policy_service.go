@@ -7,7 +7,6 @@ import (
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
-	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
 )
 
 type PolicyService struct {
@@ -19,7 +18,7 @@ type PolicyEventPublisher interface {
 	Publish(exchange string, msg interface{}) error
 }
 
-func NewPolicyService(policyRepository *persistance.PolicyRepository, publisher PolicyEventPublisher) *PolicyService {
+func NewPolicyService(policyRepository domain.PolicyRepository, publisher PolicyEventPublisher) *PolicyService {
 	slog.Info("Creating PolicyService with provided PolicyRepository and PolicyEventPublisher")
 	return &PolicyService{
 		policyRepository: policyRepository,

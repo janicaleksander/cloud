@@ -2,6 +2,7 @@ package presentation
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -14,6 +15,7 @@ type ValuationController struct {
 }
 
 func NewValuationController(vS *application.ValuationService) *ValuationController {
+	slog.Info("Creating ValuationController")
 	return &ValuationController{
 		valuationService: vS,
 	}
@@ -35,6 +37,7 @@ func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetValuationsHandler called")
 	domainValuation, err := v.valuationService.GetValuations()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuations")
@@ -53,6 +56,7 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetValuationHandler called")
 	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid valuation ID")
@@ -103,6 +107,7 @@ func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *h
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP DeleteValuationHandler called")
 	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid valuation ID")

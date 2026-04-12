@@ -23,5 +23,3 @@ type ValuationRepository interface {
 	Update(context.Context, *Valuation) (*Valuation, error)
 	DeleteById(context.Context, uint) error
 }
-
-//tod oprealod parts

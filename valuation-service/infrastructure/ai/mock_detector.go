@@ -2,17 +2,19 @@ package ai
 
 import (
 	"context"
+	"log/slog"
 	"math/rand"
 )
 
 type MockDamageDetector struct{}
 
 func NewMockDamageDetector() *MockDamageDetector {
+	slog.Info("Initialized MockDamageDetector - this is a placeholder and does not perform real analysis.")
 	return &MockDamageDetector{}
 }
 
 func (m *MockDamageDetector) Analyze(ctx context.Context, urls []string) ([]string, error) {
-
+	slog.Info("MockDamageDetector Analyze called - returning random damage types based on image count.")
 	possible := []string{
 		"bumper",
 		"hood",

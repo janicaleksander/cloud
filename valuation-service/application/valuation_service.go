@@ -2,11 +2,10 @@ package application
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/valuationservice/domain"
-	"github.com/janicaleksander/cloud/valuationservice/persistance"
 )
 
 type ValuationService struct {
@@ -23,7 +22,8 @@ type DamageDetector interface {
 	Analyze(ctx context.Context, urls []string) ([]string, error)
 }
 
-func NewValuationService(valuationRepo *persistance.ValuationRepository, publisher ValuationPublisher, damageDetector DamageDetector) *ValuationService {
+func NewValuationService(valuationRepo domain.ValuationRepository, publisher ValuationPublisher, damageDetector DamageDetector) *ValuationService {
+	slog.Info("Creating ValuationService")
 	return &ValuationService{
 		valuationRepository: valuationRepo,
 		publisher:           publisher,
@@ -31,18 +31,22 @@ func NewValuationService(valuationRepo *persistance.ValuationRepository, publish
 	}
 }
 func (vs *ValuationService) CreateValuation(dV *domain.Valuation) (*domain.Valuation, error) {
+	slog.Info("Creating valuation with ID", "claimID", dV.ClaimID)
 	return vs.valuationRepository.Save(context.Background(), dV)
 }
 
 func (vs *ValuationService) GetValuations() ([]*domain.Valuation, error) {
+	slog.Info("Getting all valuations")
 	return vs.valuationRepository.GetAll(context.Background())
 }
 
 func (vs *ValuationService) GetValuation(claimID uint) (*domain.Valuation, error) {
+	slog.Info("Getting valuation for claimID", "claimID", claimID)
 	return vs.valuationRepository.GetById(context.Background(), claimID)
 }
 
 func (vs *ValuationService) UpdateValuation(oldValuation *domain.Valuation, amount float64) (*domain.Valuation, error) {
+	slog.Info("Updating valuation for claimID", "claimID")
 	updated := *oldValuation
 	if updated.Amount != amount && amount != 0 {
 		updated.Amount = amount
@@ -51,10 +55,12 @@ func (vs *ValuationService) UpdateValuation(oldValuation *domain.Valuation, amou
 }
 
 func (vs *ValuationService) DeleteValuation(valuationID uint) error {
+	slog.Info("Deleting valuation with ID", "claimID", valuationID)
 	return vs.valuationRepository.DeleteById(context.Background(), valuationID)
 }
 
 func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) error {
+	slog.Info("Calculating valuation for claimID", "claimID", claimID)
 	existing, err := vs.valuationRepository.GetById(context.Background(), claimID)
 	if err == nil && existing != nil {
 		return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
@@ -86,28 +92,8 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 	if err != nil {
 		return err
 	}
-	fmt.Println("wysłano event o wycenie")
 	return vs.publisher.Publish("events", event.ValuationCalculatedEvent{
 		ClaimID:      claimID,
 		PayoutAmount: amount,
 	})
 }
-
-/*
-TODO 📌 Inny problem architektoniczny
-func NewValuationService(valuationRepo *persistance.ValuationRepository, ...)
-
-
-❌ zależysz od konkretnej implementacji
-
-Powinno być:
-
-func NewValuationService(valuationRepo domain.ValuationRepository, ...)
-
-
-👉 bo:
-
-application → zależy od interfejsów
-infrastructure → implementuje
-
-*/

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/janicaleksander/cloud/claimservice/domain"
-	"github.com/janicaleksander/cloud/claimservice/persistence"
 	"github.com/janicaleksander/cloud/common/event"
 )
 
@@ -18,7 +17,7 @@ type ClaimEventPublisher interface {
 	Publish(exchange string, msg interface{}) error
 }
 
-func NewClaimService(claimRepo *persistence.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
+func NewClaimService(claimRepo domain.ClaimRepository, publisher ClaimEventPublisher) *ClaimService {
 	slog.Info("Creating ClaimService")
 	return &ClaimService{
 		claimRepository: claimRepo,
