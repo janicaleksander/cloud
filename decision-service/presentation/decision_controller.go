@@ -2,6 +2,7 @@ package presentation
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -14,6 +15,7 @@ type DecisionController struct {
 }
 
 func NewDecisionController(decisionService *application.DecisionService) *DecisionController {
+	slog.Info("Initializing DecisionController")
 	return &DecisionController{
 		decisionService: decisionService,
 	}
@@ -36,6 +38,7 @@ func (d *DecisionController) GetDecisionsHandler(w http.ResponseWriter, r *http.
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetDecisionsHandler called")
 	domainDecisions, err := d.decisionService.GetDecisions()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, err.Error())
@@ -53,6 +56,7 @@ func (d *DecisionController) GetDecisionHandler(w http.ResponseWriter, r *http.R
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetDecisionHandler called")
 	decisionID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid decision ID")
@@ -72,6 +76,7 @@ func (d *DecisionController) GetWaitingDecisionsHandler(w http.ResponseWriter, r
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP GetWaitingDecisionsHandler called")
 	domainDecisions, err := d.decisionService.GetWaitingDecisions()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, err.Error())
@@ -90,6 +95,7 @@ func (d *DecisionController) UpdateDecisionHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP UpdateDecisionHandler called")
 	decisionID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid decision ID")
@@ -120,6 +126,7 @@ func (d *DecisionController) DeleteDecisionHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP DeleteDecisionHandler called")
 	decisionID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid decision ID")
