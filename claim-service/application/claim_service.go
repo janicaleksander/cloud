@@ -67,7 +67,6 @@ func (c *ClaimService) CreateClaim(claim *domain.Claim, domainFiles []*domain.Fi
 	return savedClaim, nil
 }
 func (c *ClaimService) pushClaimSubmittedEvent(e *event.ClaimSubmittedEvent) error {
-	slog.Info("Publishing ClaimSubmittedEvent for ClaimID: ", "claimID", e.ClaimID)
 	return c.publisher.Publish("events", *e)
 }
 
