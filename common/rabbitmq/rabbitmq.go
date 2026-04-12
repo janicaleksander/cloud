@@ -26,12 +26,14 @@ type MsgChan <-chan amqp.Delivery
 type Delivery *amqp.Delivery
 
 func NewPublisher(r *RabbitMQ) *Publisher {
+	slog.Info("Creating RabbitMQ publisher")
 	return &Publisher{
 		rabbit: r,
 	}
 }
 
 func NewRabbitMQ() (*RabbitMQ, error) {
+	slog.Info("Connecting to RabbitMQ")
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	if err != nil {
 		slog.Error("Can't connect to amqp")
@@ -41,6 +43,7 @@ func NewRabbitMQ() (*RabbitMQ, error) {
 }
 
 func (p *Publisher) Publish(exchange string, msg interface{}) error {
+	slog.Info("Publishing message to RabbitMQ", "exchange", exchange, "type", utils.NameOfType(msg))
 	routeKey := RouteKeyToTopicNotation(utils.NameOfType(msg))
 	ch, err := p.rabbit.conn.Channel()
 	if err != nil {
@@ -93,6 +96,7 @@ func RouteKeyToTopicNotation(routeKey string) string {
 	return string(result)
 }
 func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan amqp.Delivery, error) {
+	slog.Info("Subscribing to RabbitMQ", "exchange", exchange)
 	var x T
 	routeKey := RouteKeyToTopicNotation(utils.NameOfType(x))
 
@@ -147,6 +151,7 @@ func Subscribe[T any](rabbitmq *RabbitMQ, exchange string, qName string) (<-chan
 }
 
 func SubscribeRaw(rabbitmq *RabbitMQ, exchange string, qName string, bindingKeys ...string) (<-chan amqp.Delivery, error) {
+	slog.Info("Subscribing to RabbitMQ", "exchange", exchange)
 	ch, err := rabbitmq.conn.Channel()
 	if err != nil {
 		return nil, err

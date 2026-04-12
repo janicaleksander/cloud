@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,7 @@ import (
 )
 
 func NewRouter(policyHandler *presentation.PolicyController) http.Handler {
+	slog.Info("Setting up router")
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	setupPaths(r, policyHandler)

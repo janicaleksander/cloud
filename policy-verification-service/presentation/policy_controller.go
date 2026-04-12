@@ -2,6 +2,7 @@ package presentation
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -14,6 +15,7 @@ type PolicyController struct {
 }
 
 func NewPolicyController(policyService *application.PolicyService) *PolicyController {
+	slog.Info("Creating PolicyController")
 	return &PolicyController{policyService: policyService}
 }
 
@@ -34,6 +36,7 @@ func (p *PolicyController) CreatePolicyHandler(w http.ResponseWriter, r *http.Re
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP CreatePolicyHandler called")
 	var d CreatePolicyRequestDTO
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
@@ -55,7 +58,7 @@ func (p *PolicyController) GetPolicyHandler(w http.ResponseWriter, r *http.Reque
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
-
+	slog.Info("HTTP GetPolicyHandler called")
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid policy ID")
@@ -77,6 +80,8 @@ func (p *PolicyController) GetPoliciesHandler(w http.ResponseWriter, r *http.Req
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+
+	slog.Info("HTTP GetPoliciesHandler called")
 	domainPolicies, err := p.policyService.GetPolicies()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching policies: "+err.Error())
@@ -94,6 +99,7 @@ func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Re
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP UpdatePolicyHandler called")
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid policy ID")
@@ -124,6 +130,7 @@ func (p *PolicyController) DeletePolicyHandler(w http.ResponseWriter, r *http.Re
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
+	slog.Info("HTTP DeletePolicyHandler called")
 	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid policy ID")

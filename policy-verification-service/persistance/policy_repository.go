@@ -2,7 +2,7 @@ package persistance
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
 	"gorm.io/gorm"
@@ -13,10 +13,12 @@ type PolicyRepository struct {
 }
 
 func NewPolicyRepository(gorm *gorm.DB) *PolicyRepository {
+	slog.Info("Initializing PolicyRepository")
 	return &PolicyRepository{gorm: gorm}
 }
 
 func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error) {
+	slog.Info("Getting all policies from the database")
 	policiesModel, err := gorm.G[PolicyModel](pr.gorm).Find(ctx)
 	if err != nil {
 		return nil, err
@@ -30,6 +32,7 @@ func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error
 }
 
 func (pr *PolicyRepository) GetById(ctx context.Context, id uint) (*domain.Policy, error) {
+	slog.Info("Getting policy by ID from the database", "id", id)
 	policyModel, err := gorm.G[PolicyModel](pr.gorm).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
@@ -38,6 +41,7 @@ func (pr *PolicyRepository) GetById(ctx context.Context, id uint) (*domain.Polic
 }
 
 func (pr *PolicyRepository) Save(ctx context.Context, p *domain.Policy) (*domain.Policy, error) {
+	slog.Info("Saving policy to the database", "policy", p)
 	policyModel := PolicyDomainToModel(p)
 	err := gorm.G[PolicyModel](pr.gorm).Create(ctx, policyModel)
 	if err != nil {
@@ -47,6 +51,7 @@ func (pr *PolicyRepository) Save(ctx context.Context, p *domain.Policy) (*domain
 }
 
 func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*domain.Policy, error) {
+	slog.Info("Updating policy in the database", "policy", p)
 	policyModel := PolicyDomainToModel(p)
 
 	if err := pr.gorm.WithContext(ctx).Save(policyModel).Error; err != nil {
@@ -56,16 +61,17 @@ func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*doma
 	return PolicyModelToDomain(policyModel), nil
 }
 func (pr *PolicyRepository) DeleteById(ctx context.Context, id uint) error {
+	slog.Info("Deleting policy by ID from the database", "id", id)
 	_, err := gorm.G[PolicyModel](pr.gorm).Where("id = ?", id).Delete(ctx)
 	return err
 
 }
 func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uint, vin string) (bool, *domain.Policy) {
+	slog.Info("Checking if user has policy for given VIN", "userID", userID, "vin", vin)
 	p, err := gorm.G[PolicyModel](pr.gorm).
 		Where("user_id = ? AND vin = ?", userID, vin).
 		First(ctx)
 
-	log.Printf("IfUserHasPolicy: userID=%d vin=%s err=%v p=%+v", userID, vin, err, p)
 	if err != nil {
 		return false, nil
 	}

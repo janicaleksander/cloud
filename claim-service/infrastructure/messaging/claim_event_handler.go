@@ -13,6 +13,9 @@ import (
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 )
 
+const exchangeName = "events"
+const queueName = "claim-service"
+
 type ClaimEventHandler struct {
 	claimService *application.ClaimService
 	handlers     map[string]rabbitmq.HandlerFunc
@@ -54,7 +57,7 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 		bindingKeys = append(bindingKeys, key)
 	}
 
-	msgs, err := rabbitmq.SubscribeRaw(rabbit, "events", "claim-service", bindingKeys...)
+	msgs, err := rabbitmq.SubscribeRaw(rabbit, exchangeName, queueName, bindingKeys...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +70,7 @@ func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 		if handler, ok := h.handlers[msg.RoutingKey]; ok {
 			handler(&msg)
 		} else {
-			log.Println("err")
+			slog.Error("no handler found for routing key", "routingKey", msg.RoutingKey)
 		}
 	}
 }
