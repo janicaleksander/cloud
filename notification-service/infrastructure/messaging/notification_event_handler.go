@@ -3,7 +3,7 @@ package messaging
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/janicaleksander/cloud/common/event"
@@ -13,6 +13,9 @@ import (
 	"github.com/janicaleksander/cloud/notificationservice/domain"
 )
 
+const exchangeName = "events"
+const queueName = "notification-service"
+
 type NotificationEventHandler struct {
 	notificationService *application.NotificationService
 	emailService        *application.EmailService
@@ -20,6 +23,7 @@ type NotificationEventHandler struct {
 }
 
 func NewNotificationHandler(notificationService *application.NotificationService, emailService *application.EmailService) *NotificationEventHandler {
+	slog.Info("Initializing NotificationEventHandler")
 	h := &NotificationEventHandler{
 		notificationService: notificationService,
 		emailService:        emailService,
@@ -30,11 +34,12 @@ func NewNotificationHandler(notificationService *application.NotificationService
 }
 
 func (n *NotificationEventHandler) Run(rabbit *rabbitmq.RabbitMQ) error {
+	slog.Info("Running NotificationEventHandler")
 	bindingKeys := make([]string, 0, len(n.handlers))
 	for k := range n.handlers {
 		bindingKeys = append(bindingKeys, k)
 	}
-	msgs, err := rabbitmq.SubscribeRaw(rabbit, "events", "notification-service", bindingKeys...)
+	msgs, err := rabbitmq.SubscribeRaw(rabbit, exchangeName, queueName, bindingKeys...)
 	if err != nil {
 		return err
 	}
@@ -43,6 +48,7 @@ func (n *NotificationEventHandler) Run(rabbit *rabbitmq.RabbitMQ) error {
 }
 
 func (n *NotificationEventHandler) registerHandlers() {
+	slog.Info("Registering handlers for NotificationEventHandler")
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.ClaimSubmittedEvent{}))] = n.handleClaimSubmitted
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PolicyVerifiedEvent{}))] = n.handlePolicyVerified
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PolicyDeniedEvent{}))] = n.handlePolicyDenied
@@ -57,15 +63,15 @@ func (n *NotificationEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 		if handler, ok := n.handlers[msg.RoutingKey]; ok {
 			handler(&msg)
 		} else {
-			log.Println("no handler for routing key: ", msg.RoutingKey)
+			slog.Info("Received message with no handler", "routingKey", msg.RoutingKey)
 		}
 	}
 }
 
-// sendAndSave wysyła email i zapisuje Notification do bazy.
 func (n *NotificationEventHandler) sendAndSave(claimID uint, emailMsg application.EmailMessage) {
+	slog.Info("Sending email and saving notification", "claimID", claimID, "to", emailMsg.To)
 	if err := n.emailService.Send(emailMsg); err != nil {
-		log.Printf("Error sending email for ClaimID %d: %v\n", claimID, err)
+		slog.Error("Error sending email", "claimID", claimID, "to", emailMsg.To, "error", err)
 		return
 	}
 	_, err := n.notificationService.CreateNotification(&domain.Notification{
@@ -75,22 +81,21 @@ func (n *NotificationEventHandler) sendAndSave(claimID uint, emailMsg applicatio
 		Time:    time.Now(),
 	})
 	if err != nil {
-		log.Printf("Error saving notification for ClaimID %d: %v\n", claimID, err)
+		slog.Error("Error saving notification", "claimID", claimID, "to", emailMsg.To, "error", err)
 	}
 }
 
 func (n *NotificationEventHandler) handleClaimSubmitted(msg rabbitmq.Delivery) {
 	var e event.ClaimSubmittedEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling ClaimSubmittedEvent:", err)
+		slog.Error("Error unmarshalling ClaimSubmittedEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Claim Submitted - ClaimID: %d, UserID: %d, VIN: %s, AccidentDate: %s, Evidence: %d files\n",
-		e.ClaimID, e.UserID, e.VIN, e.AccidentDate.Format("2006-01-02"), len(e.StorageURL))
+	slog.Info("Handling ClaimSubmittedEvent", "claimID", e.ClaimID, "userID", e.UserID, "vin", e.VIN)
 
 	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
 	if err != nil {
-		log.Printf("Error getting email for ClaimID %d: %v\n", e.ClaimID, err)
+		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
@@ -106,14 +111,14 @@ func (n *NotificationEventHandler) handleClaimSubmitted(msg rabbitmq.Delivery) {
 func (n *NotificationEventHandler) handlePolicyVerified(msg rabbitmq.Delivery) {
 	var e event.PolicyVerifiedEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling PolicyVerifiedEvent:", err)
+		slog.Error("Error unmarshalling PolicyVerifiedEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Policy Verified - ClaimID: %d\n", e.ClaimID)
+	slog.Info("Handling PolicyVerifiedEvent", "claimID", e.ClaimID)
 
 	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
 	if err != nil {
-		log.Printf("Error getting email for ClaimID %d: %v\n", e.ClaimID, err)
+		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
@@ -129,14 +134,13 @@ func (n *NotificationEventHandler) handlePolicyVerified(msg rabbitmq.Delivery) {
 func (n *NotificationEventHandler) handlePolicyDenied(msg rabbitmq.Delivery) {
 	var e event.PolicyDeniedEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling PolicyDeniedEvent:", err)
+		slog.Error("Error unmarshalling PolicyDeniedEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Policy Denied - ClaimID: %d, Reason: %s\n", e.ClaimID, e.Reason)
-
+	slog.Info("Handling PolicyDeniedEvent", "claimID", e.ClaimID, "reason", e.Reason)
 	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
 	if err != nil {
-		log.Printf("Error getting email for ClaimID %d: %v\n", e.ClaimID, err)
+		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
@@ -152,14 +156,13 @@ func (n *NotificationEventHandler) handlePolicyDenied(msg rabbitmq.Delivery) {
 func (n *NotificationEventHandler) handlePayoutApproved(msg rabbitmq.Delivery) {
 	var e event.PayoutApprovedEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling PayoutApprovedEvent:", err)
+		slog.Error("Error unmarshalling PayoutApprovedEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Payout Approved - ClaimID: %d, Amount: %.2f\n", e.ClaimID, e.AcceptedPayoutAmount)
-
+	slog.Info("Handling PayoutApprovedEvent", "claimID", e.ClaimID, "approvedPayoutAmount", e.AcceptedPayoutAmount, "byEmployeeID", e.ByEmployeeID)
 	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
 	if err != nil {
-		log.Printf("Error getting email for ClaimID %d: %v\n", e.ClaimID, err)
+		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
@@ -175,14 +178,13 @@ func (n *NotificationEventHandler) handlePayoutApproved(msg rabbitmq.Delivery) {
 func (n *NotificationEventHandler) handlePayoutRejected(msg rabbitmq.Delivery) {
 	var e event.PayoutRejectedEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling PayoutRejectedEvent:", err)
+		slog.Error("Error unmarshalling PayoutRejectedEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Payout Rejected - ClaimID: %d, Reason: %s\n", e.ClaimID, e.Reason)
-
+	slog.Info("Handling PayoutRejectedEvent", "claimID", e.ClaimID, "reason", e.Reason, "byEmployeeID", e.ByEmployeeID)
 	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
 	if err != nil {
-		log.Printf("Error getting email for ClaimID %d: %v\n", e.ClaimID, err)
+		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
@@ -198,31 +200,31 @@ func (n *NotificationEventHandler) handlePayoutRejected(msg rabbitmq.Delivery) {
 func (n *NotificationEventHandler) handleRegisterUserForNotification(msg rabbitmq.Delivery) {
 	var e event.RegisterUserForNotificationEvent
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling RegisterUserForNotificationEvent:", err)
+		slog.Error("Error unmarshalling RegisterUserForNotificationEvent", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Register User for Notification - ClaimID: %d, Email: %s\n", e.ClaimID, e.Email)
+	slog.Info("Handling RegisterUserForNotificationEvent", "claimID", e.ClaimID, "email", e.Email)
 	_, err := n.notificationService.CreateNotificationReceiver(&domain.NotificationReceiver{
 		ClaimID: e.ClaimID,
 		Email:   e.Email,
 	})
 	if err != nil {
-		log.Printf("Error creating notification receiver: %v\n", err)
+		slog.Error("Error creating notification receiver", "claimID", e.ClaimID, "email", e.Email, "error", err)
 	}
 }
 
 func (n *NotificationEventHandler) handleChangeEmailForNotification(msg rabbitmq.Delivery) {
 	var e event.ChangeEmailForNotification
 	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		log.Println("Error unmarshalling ChangeEmailForNotification:", err)
+		slog.Error("Error unmarshalling ChangeEmailForNotification", "error", err)
 		return
 	}
-	log.Printf("[NOTIFICATION] Change Email for Notification - ClaimID: %d, New Email: %s\n", e.ClaimID, e.Email)
+	slog.Info("Handling ChangeEmailForNotification", "claimID", e.ClaimID, "email", e.Email)
 	_, err := n.notificationService.UpdateNotificationReceiver(&domain.NotificationReceiver{
 		ClaimID: e.ClaimID,
 		Email:   e.Email,
 	})
 	if err != nil {
-		log.Printf("Error updating notification receiver: %v\n", err)
+		slog.Error("Error updating notification receiver", "claimID", e.ClaimID, "email", e.Email, "error", err)
 	}
 }

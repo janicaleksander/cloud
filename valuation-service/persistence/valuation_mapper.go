@@ -1,4 +1,4 @@
-package persistance
+package persistence
 
 import (
 	"github.com/janicaleksander/cloud/valuationservice/domain"

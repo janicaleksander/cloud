@@ -9,7 +9,7 @@ import (
 	"github.com/janicaleksander/cloud/notificationservice/application"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure/messaging"
-	"github.com/janicaleksander/cloud/notificationservice/persistance"
+	"github.com/janicaleksander/cloud/notificationservice/persistence"
 	"github.com/janicaleksander/cloud/notificationservice/presentation"
 	"github.com/janicaleksander/cloud/notificationservice/presentation/router"
 	"github.com/joho/godotenv"
@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&persistance.NotificationReceiverModel{}, &persistance.NotificationModel{})
+	err = db.AutoMigrate(&persistence.NotificationReceiverModel{}, &persistence.NotificationModel{})
 	if err != nil {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Initialize repositories and services
-	notificationRepository := persistance.NewNotificationRepository(db)
+	notificationRepository := persistence.NewNotificationRepository(db)
 	emailService := application.NewEmailService("notifications@insurance.com")
 	notificationService := application.NewNotificationService(notificationRepository)
 

@@ -1,8 +1,7 @@
 package application
 
 import (
-	"fmt"
-	"log"
+	"log/slog"
 )
 
 type EmailService struct {
@@ -16,19 +15,15 @@ type EmailMessage struct {
 }
 
 func NewEmailService(fromEmail string) *EmailService {
+	slog.Info("Initializing EmailService", "fromEmail", fromEmail)
 	return &EmailService{
 		fromEmail: fromEmail,
 	}
 }
 
 func (es *EmailService) Send(message EmailMessage) error {
-	// Mock implementation - just log the email
-	log.Printf("Mock Email Sent\n")
-	log.Printf("  From: %s\n", es.fromEmail)
-	log.Printf("  To: %s\n", message.To)
-	log.Printf("  Subject: %s\n", message.Subject)
-	log.Printf("  Body: %s\n", message.Body)
-
-	fmt.Printf("Email successfully sent to %s\n", message.To)
+	slog.Info("Sending email", "to", message.To, "subject", message.Subject)
+	slog.Info("Email content", "body", message.Body)
+	slog.Info("Email sent successfully", "to", message.To)
 	return nil
 }

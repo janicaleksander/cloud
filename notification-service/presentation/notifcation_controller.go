@@ -2,6 +2,7 @@ package presentation
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -14,6 +15,7 @@ type NotificationController struct {
 }
 
 func NewNotificationController(notificationService *application.NotificationService) *NotificationController {
+	slog.Info("Creating NotificationController")
 	return &NotificationController{
 		notificationService: notificationService,
 	}
@@ -35,6 +37,7 @@ func (nc *NotificationController) GetNotificationsHandler(w http.ResponseWriter,
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
 	}
+	slog.Info("HTTP GetNotificationsHandler called")
 	notificationsDomain, err := nc.notificationService.GetNotifications()
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notifications")
@@ -52,6 +55,7 @@ func (nc *NotificationController) GetNotificationHandler(w http.ResponseWriter, 
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
 	}
+	slog.Info("HTTP GetNotificationHandler called")
 	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid notification ID")
@@ -71,6 +75,7 @@ func (nc *NotificationController) GetNotificationsForClaimIDHandler(w http.Respo
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
 	}
+	slog.Info("HTTP GetNotificationsForClaimIDHandler called")
 	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid notification ID")
@@ -93,6 +98,7 @@ func (nc *NotificationController) DeleteNotificationHandler(w http.ResponseWrite
 		failure(w, http.StatusBadRequest, "Invalid method")
 		return
 	}
+	slog.Info("HTTP DeleteNotificationHandler called")
 	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid notification ID")

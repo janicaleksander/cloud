@@ -10,7 +10,7 @@ import (
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/ai"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/messaging"
-	"github.com/janicaleksander/cloud/valuationservice/persistance"
+	"github.com/janicaleksander/cloud/valuationservice/persistence"
 	"github.com/janicaleksander/cloud/valuationservice/presentation"
 	"github.com/janicaleksander/cloud/valuationservice/presentation/router"
 	"github.com/joho/godotenv"
@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(&persistance.ValuationModel{}, &persistance.PartModel{})
+	err = db.AutoMigrate(&persistence.ValuationModel{}, &persistence.PartModel{})
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	valuationRepository := persistance.NewValuationRepository(db)
+	valuationRepository := persistence.NewValuationRepository(db)
 	valuationService := application.NewValuationService(valuationRepository, publisher, newMockDamageDetectro)
 	valuationController := presentation.NewValuationController(valuationService)
 	valuationHandler := messaging.NewValuationEventHandler(valuationService)
