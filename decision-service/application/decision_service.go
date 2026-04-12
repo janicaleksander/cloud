@@ -18,7 +18,7 @@ type DecisionPublisher interface {
 }
 
 func NewDecisionService(decisionRepo domain.DecisionRepository, publisher DecisionPublisher) *DecisionService {
-	slog.Info("Creating DecisionService with provided repository and publisher")
+	slog.Info("Creating DecisionService")
 	return &DecisionService{
 		decisionRepository: decisionRepo,
 		publisher:          publisher,
@@ -65,7 +65,7 @@ func (ds *DecisionService) PrepareDecision(claimID uint, payoutAmount float64) (
 }
 
 func (ds *DecisionService) GetDecision(decisionID uint) (*domain.Decision, error) {
-	slog.Info("Getting decision by ID", "decisionID", decisionID)
+	slog.Info("Getting decision with ID", "decisionID", decisionID)
 	return ds.decisionRepository.GetByID(decisionID)
 }
 func (ds *DecisionService) GetDecisions() ([]*domain.Decision, error) {
@@ -78,12 +78,12 @@ func (ds *DecisionService) GetWaitingDecisions() ([]*domain.Decision, error) {
 	return ds.decisionRepository.GetAllWaiting()
 }
 func (ds *DecisionService) DeleteDecision(decisionID uint) error {
-	slog.Info("Deleting decision by ID", "decisionID", decisionID)
+	slog.Info("Deleting decision with ID", "decisionID", decisionID)
 	return ds.decisionRepository.DeleteById(decisionID)
 
 }
 func (ds *DecisionService) UpdateDecisionState(oldDecision *domain.Decision, newState domain.DecisionResult, empID uint, reason string) (*domain.Decision, error) {
-	slog.Info("Updating decision state", "claimID", oldDecision.ClaimID, "newState", newState, "employeeID", empID)
+	slog.Info("Update Decision with ID", "decisionID", oldDecision.ID, "newState", newState, "employeeID", empID, "reason", reason)
 	if oldDecision.Result != domain.WAITING {
 		return nil, errors.New("already accepted/denied")
 	}

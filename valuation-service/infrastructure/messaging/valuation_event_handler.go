@@ -44,7 +44,7 @@ func (v *ValuationEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 }
 
 func (v *ValuationEventHandler) registerHandlers() {
-	slog.Info("Registering handlers for ValuationEventHandler")
+	slog.Info("Registering event handlers for ValuationEventHandler")
 	v.handlers[rabbitmq.RouteKeyToTopicNotation(
 		utils.NameOfType(event.PolicyVerifiedEvent{}),
 	)] = v.handlePolicyVerifiedEvent
@@ -55,7 +55,7 @@ func (v *ValuationEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery)
 	var policyVerifiedEvent event.PolicyVerifiedEvent
 	err := json.Unmarshal(msg.Body, &policyVerifiedEvent)
 	if err != nil {
-		slog.Error("Failed to unmarshal PolicyVerifiedEvent", "error", err.Error())
+		slog.Error("failed to unmarshal PolicyVerifiedEvent", "error", err.Error())
 		return
 	}
 	err = v.valuationService.CalculateValuation(

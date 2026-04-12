@@ -12,7 +12,7 @@ type NotificationService struct {
 }
 
 func NewNotificationService(notificationRepository domain.NotificationRepository) *NotificationService {
-	slog.Info("Creating new NotificationService")
+	slog.Info("Creating NotificationService")
 	return &NotificationService{
 		notificationRepository: notificationRepository,
 	}
@@ -29,7 +29,7 @@ func (s *NotificationService) GetNotifications() ([]*domain.Notification, error)
 }
 
 func (s *NotificationService) GetNotification(id uint) (*domain.Notification, error) {
-	slog.Info("Getting notification by ID", "id", id)
+	slog.Info("Getting notification with ID", "id", id)
 	return s.notificationRepository.GetNotification(context.Background(), id)
 }
 func (s *NotificationService) GetNotificationsForClaimID(claimID uint) ([]*domain.Notification, error) {
@@ -37,7 +37,7 @@ func (s *NotificationService) GetNotificationsForClaimID(claimID uint) ([]*domai
 	return s.notificationRepository.GetNotificationsByClaimID(context.Background(), claimID)
 }
 func (s *NotificationService) DeleteNotification(id uint) error {
-	slog.Info("Deleting notification by ID", "id", id)
+	slog.Info("Deleting notification with ID", "id", id)
 	return s.notificationRepository.DeleteNotificationByID(context.Background(), id)
 }
 

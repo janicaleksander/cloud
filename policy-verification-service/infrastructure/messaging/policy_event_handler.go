@@ -19,7 +19,7 @@ type PolicyEventHandler struct {
 }
 
 func NewPolicyEventHandler(pS *application.PolicyService) *PolicyEventHandler {
-	slog.Info("Initializing PolicyEventHandler")
+	slog.Info("Creating PolicyEventHandler")
 	p := &PolicyEventHandler{
 		policyService: pS,
 		handlers:      make(map[string]rabbitmq.HandlerFunc),
@@ -64,7 +64,7 @@ func (p *PolicyEventHandler) handleClaimSubmittedEvent(msg rabbitmq.Delivery) {
 	var claimSubmittedEvent event.ClaimSubmittedEvent
 	err := json.Unmarshal(msg.Body, &claimSubmittedEvent)
 	if err != nil {
-		slog.Info("Failed to unmarshal ClaimSubmittedEvent", "error", err)
+		slog.Info("failed to unmarshal ClaimSubmittedEvent", "error", err)
 		return
 	}
 	p.policyService.CheckUserPolicy(

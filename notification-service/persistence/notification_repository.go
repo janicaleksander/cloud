@@ -13,7 +13,7 @@ type NotificationRepository struct {
 }
 
 func NewNotificationRepository(db *gorm.DB) *NotificationRepository {
-	slog.Info("Initializing Notification Repository")
+	slog.Info("Initializing NotificationRepository")
 	return &NotificationRepository{
 		db: db,
 	}

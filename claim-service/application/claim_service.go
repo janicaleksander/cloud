@@ -85,7 +85,7 @@ func (c *ClaimService) DeleteClaim(id uint) error {
 }
 
 func (c *ClaimService) UpdateClaim(oldClaimDomain *domain.Claim, newUserEmail string) (*domain.Claim, error) {
-	slog.Info("Updating claim with ID: ", "claimID", oldClaimDomain.ID)
+	slog.Info("Updating claim with ID: ", "claimID", oldClaimDomain.ID, "newEmail", newUserEmail)
 	if newUserEmail != oldClaimDomain.Email && newUserEmail != "" {
 		oldClaimDomain.Email = newUserEmail
 	}

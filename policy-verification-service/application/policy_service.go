@@ -19,7 +19,7 @@ type PolicyEventPublisher interface {
 }
 
 func NewPolicyService(policyRepository domain.PolicyRepository, publisher PolicyEventPublisher) *PolicyService {
-	slog.Info("Creating PolicyService with provided PolicyRepository and PolicyEventPublisher")
+	slog.Info("Creating PolicyService")
 	return &PolicyService{
 		policyRepository: policyRepository,
 		publisher:        publisher,
@@ -33,7 +33,7 @@ func (s *PolicyService) CreatePolicy(policy *domain.Policy) (*domain.Policy, err
 }
 
 func (s *PolicyService) GetPolicy(policyId uint) (*domain.Policy, error) {
-	slog.Info("Getting policy by ID", "policyId", policyId)
+	slog.Info("Getting policy with ID", "policyId", policyId)
 	return s.policyRepository.GetById(context.Background(), policyId)
 }
 
@@ -43,7 +43,7 @@ func (s *PolicyService) GetPolicies() ([]*domain.Policy, error) {
 }
 
 func (s *PolicyService) UpdatePolicy(newPolicy *domain.Policy, newFrom, newTo time.Time) (*domain.Policy, error) {
-	slog.Info("Updating policy with ID: ", "policyId", newPolicy.ID)
+	slog.Info("Updating policy with ID: ", "policyId", newPolicy.ID, "newFrom", newFrom, "newTo", newTo)
 	updated := *newPolicy
 
 	if newFrom != (time.Time{}) {
@@ -61,7 +61,7 @@ func (s *PolicyService) DeletePolicy(policyID uint) error {
 }
 
 func (s *PolicyService) CheckUserPolicy(claimID uint, userID uint, vin string, accidentDate time.Time, urls []string) {
-	slog.Info("Checking user policy", "claimID", claimID, "userID", userID, "vin", vin)
+	slog.Info("Checking user policy", "claimID", claimID, "userID", userID, "vin", vin, "accidentDate", accidentDate)
 	hasPolicy, policy := s.policyRepository.IfUserHasPolicy(context.Background(), userID, vin)
 
 	if !hasPolicy {

@@ -23,7 +23,7 @@ type NotificationEventHandler struct {
 }
 
 func NewNotificationHandler(notificationService *application.NotificationService, emailService *application.EmailService) *NotificationEventHandler {
-	slog.Info("Initializing NotificationEventHandler")
+	slog.Info("Creating NotificationEventHandler")
 	h := &NotificationEventHandler{
 		notificationService: notificationService,
 		emailService:        emailService,
@@ -48,7 +48,7 @@ func (n *NotificationEventHandler) Run(rabbit *rabbitmq.RabbitMQ) error {
 }
 
 func (n *NotificationEventHandler) registerHandlers() {
-	slog.Info("Registering handlers for NotificationEventHandler")
+	slog.Info("Registering event handlers for NotificationEventHandler")
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.ClaimSubmittedEvent{}))] = n.handleClaimSubmitted
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PolicyVerifiedEvent{}))] = n.handlePolicyVerified
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PolicyDeniedEvent{}))] = n.handlePolicyDenied

@@ -15,7 +15,7 @@ type DecisionController struct {
 }
 
 func NewDecisionController(decisionService *application.DecisionService) *DecisionController {
-	slog.Info("Initializing DecisionController")
+	slog.Info("Creating DecisionController")
 	return &DecisionController{
 		decisionService: decisionService,
 	}

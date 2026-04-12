@@ -29,7 +29,7 @@ func NewDecisionEventHandler(decisionService *application.DecisionService) *Deci
 }
 
 func (dH *DecisionEventHandler) registerHandlers() {
-	slog.Info("Registering handlers for DecisionEventHandler")
+	slog.Info("Registering event handlers for DecisionEventHandler")
 	dH.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.ValuationCalculatedEvent{}))] = dH.handleValuationCalculated
 
 }
@@ -64,7 +64,7 @@ func (dH *DecisionEventHandler) handleValuationCalculated(msg rabbitmq.Delivery)
 	var e event.ValuationCalculatedEvent
 	err := json.Unmarshal(msg.Body, &e)
 	if err != nil {
-		slog.Error("Failed to unmarshal ValuationCalculatedEvent", "error", err)
+		slog.Error("failed to unmarshal ValuationCalculatedEvent", "error", err)
 		return
 	}
 	_, err = dH.decisionService.PrepareDecision(e.ClaimID, e.PayoutAmount)

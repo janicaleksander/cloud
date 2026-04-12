@@ -41,12 +41,12 @@ func (vs *ValuationService) GetValuations() ([]*domain.Valuation, error) {
 }
 
 func (vs *ValuationService) GetValuation(claimID uint) (*domain.Valuation, error) {
-	slog.Info("Getting valuation for claimID", "claimID", claimID)
+	slog.Info("Getting valuation with claimID", "claimID", claimID)
 	return vs.valuationRepository.GetById(context.Background(), claimID)
 }
 
 func (vs *ValuationService) UpdateValuation(oldValuation *domain.Valuation, amount float64) (*domain.Valuation, error) {
-	slog.Info("Updating valuation for claimID", "claimID")
+	slog.Info("Updating valuation with claimID", "claimID", oldValuation.ClaimID, "newAmount", amount)
 	updated := *oldValuation
 	if updated.Amount != amount && amount != 0 {
 		updated.Amount = amount
