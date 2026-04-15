@@ -3,15 +3,16 @@ package presentation
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
-	"path/filepath"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/janicaleksander/cloud/claimservice/application"
-	"github.com/janicaleksander/cloud/claimservice/domain"
 )
 
 type ClaimController struct {
@@ -37,7 +38,7 @@ func failure(w http.ResponseWriter, statusCode int, msg string) {
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-func parseFile(r *http.Request) ([]*domain.File, error) {
+func parseFile(r *http.Request) ([]*os.File, error) {
 	slog.Info("Parsing multipart form data for files")
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
@@ -49,21 +50,38 @@ func parseFile(r *http.Request) ([]*domain.File, error) {
 		return nil, errors.New("no files provided")
 	}
 
-	domainFiles := make([]*domain.File, 0, len(files))
+	filesObject := make([]*os.File, 0, len(files))
 	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
+		multipartFile, err := fileHeader.Open()
 		if err != nil {
 			return nil, err
 		}
 
-		domainFiles = append(domainFiles, &domain.File{
-			FileName: fileHeader.Filename,
-			FileExt:  filepath.Ext(fileHeader.Filename),
-		})
+		slog.Info("Processing file: ", "filename", fileHeader.Filename, "size", fileHeader.Size)
+		f, err := os.Create(fileHeader.Filename)
+		if err != nil {
+			multipartFile.Close()
+			return nil, err
+		}
 
-		file.Close() // close immediately
+		// Copy contents from the uploaded file to the local temp file
+		_, err = io.Copy(f, multipartFile)
+		multipartFile.Close() // close the multipart file after copying
+		if err != nil {
+			f.Close()
+			return nil, err
+		}
+
+		// Reset the file pointer to the beginning so it can be read later by S3
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			f.Close()
+			return nil, err
+		}
+
+		filesObject = append(filesObject, f)
 	}
-	return domainFiles, nil
+	return filesObject, nil
 }
 func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -91,17 +109,14 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	domainFiles, err := parseFile(r)
-	for idx := range domainFiles {
-		slog.Info("Parsed file: "+domainFiles[idx].FileName, "ext", domainFiles[idx].FileExt)
-	}
+	objectFiles, err := parseFile(r)
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Error processing files: "+err.Error())
 		return
 	}
 
 	claimDomain := CreateClaimRequestToDomain(&createClaimRequest)
-	createdClaim, err := c.claimService.CreateClaim(claimDomain, domainFiles)
+	createdClaim, err := c.claimService.CreateClaim(claimDomain, objectFiles)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error creating claim: "+err.Error())
 		return
@@ -202,4 +217,29 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 	}
 	claimResponse := GetClaimDomainToResponse(updatedClaim)
 	success(w, map[string]any{"claim": claimResponse})
+}
+
+func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	fileID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid file ID")
+		return
+	}
+	reader, metaFile, err := c.claimService.GetFileFromStorage(uint(fileID))
+	fmt.Println(metaFile)
+	// fileID -> getURL -> getFile
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Storage err "+err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", metaFile.FileExt)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", metaFile.ID))
+
+	defer reader.Close()
+	io.Copy(w, reader)
 }

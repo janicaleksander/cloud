@@ -1,4 +1,4 @@
-package persistence
+package claim_persistence
 
 import (
 	"context"
@@ -126,4 +126,13 @@ func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uint, newSta
 		return fmt.Errorf("claim %d not found", claimID)
 	}
 	return nil
+}
+
+func (r *ClaimRepository) GetFileById(ctx context.Context, fileID uint) (*domain.File, error) {
+	fileModel, err := gorm.G[FileModel](r.gorm).Where("id = ?", fileID).First(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return FileModelToDomain(&fileModel), nil
+
 }

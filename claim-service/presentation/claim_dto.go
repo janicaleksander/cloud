@@ -21,8 +21,6 @@ type GetClaimResponseDTO struct {
 }
 type FileResponseDTO struct {
 	ID         uint   `json:"id"`
-	FileName   string `json:"file_name"`
-	FileExt    string `json:"file_ext"`
 	StorageURL string `json:"storage_url"`
 }
 

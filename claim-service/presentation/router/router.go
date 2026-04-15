@@ -20,10 +20,11 @@ func NewRouter(claimHandler *presentation.ClaimController) http.Handler {
 }
 func setupPaths(r *chi.Mux, handler *presentation.ClaimController) {
 	r.Route("/claim", func(router chi.Router) {
-		router.Get("/", handler.GetClaimsHandler)          // all claims /claim
-		router.Get("/{id}", handler.GetClaimHandler)       //claim /claim/id
-		router.Post("/", handler.CreateClaimHandler)       //add claim
-		router.Delete("/{id}", handler.DeleteClaimHandler) //delete claim /claim/id
-		router.Patch("/{id}", handler.UpdateClaimHandler)  //update claim /claim/id
+		router.Get("/", handler.GetClaimsHandler)                   // all claims /claim
+		router.Get("/{id}", handler.GetClaimHandler)                //claim /claim/id
+		router.Post("/", handler.CreateClaimHandler)                //add claim
+		router.Delete("/{id}", handler.DeleteClaimHandler)          //delete claim /claim/id
+		router.Patch("/{id}", handler.UpdateClaimHandler)           //update claim /claim/id
+		router.Get("/file/{id}", handler.GetFileFromStorageHandler) // get file from S3 by ID from database
 	})
 }

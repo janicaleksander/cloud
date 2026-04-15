@@ -46,8 +46,6 @@ type Claim struct {
 
 type File struct {
 	ID         uint
-	FileName   string
-	FileExt    string
 	StorageURL string //added
 }
 
@@ -58,9 +56,5 @@ type ClaimRepository interface {
 	Update(context.Context, *Claim) (*Claim, error)
 	UpdateStatus(context.Context, uint, Status) error
 	DeleteById(context.Context, uint) error
+	GetFileById(ctx context.Context, fileID uint) (*File, error)
 }
-
-//evnet driven architecture ? hanlder" a nie w ramach serwisu
-
-//jakis common serwis ktory ma nprabbit mq config  i on jest zaciagany  przez inne mikrosweriy
-//ten event -> ten handler

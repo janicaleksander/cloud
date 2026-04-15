@@ -1,4 +1,4 @@
-package persistence
+package claim_persistence
 
 import (
 	"github.com/janicaleksander/cloud/claimservice/domain"
@@ -10,8 +10,6 @@ func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
 	for idx := range c.Files {
 		domainFiles = append(domainFiles, &domain.File{
 			ID:         c.Files[idx].ID,
-			FileName:   c.Files[idx].FileName,
-			FileExt:    c.Files[idx].FileExt,
 			StorageURL: c.Files[idx].StorageURL,
 		},
 		)
@@ -41,8 +39,6 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 			Model: gorm.Model{
 				ID: c.Files[idx].ID,
 			},
-			FileName:     c.Files[idx].FileName,
-			FileExt:      c.Files[idx].FileExt,
 			StorageURL:   c.Files[idx].StorageURL,
 			ClaimModelID: c.ID,
 		})
@@ -60,4 +56,21 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	}
 	return claimModel, nil
 
+}
+
+func FileModelToDomain(f *FileModel) *domain.File {
+	return &domain.File{
+		ID:         f.ID,
+		StorageURL: f.StorageURL,
+	}
+}
+
+func FileDomainToModel(f *domain.File, claimID uint) *FileModel {
+	return &FileModel{
+		Model: gorm.Model{
+			ID: f.ID,
+		},
+		StorageURL:   f.StorageURL,
+		ClaimModelID: claimID,
+	}
 }
