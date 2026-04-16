@@ -20,8 +20,12 @@ type GetClaimResponseDTO struct {
 	UpdatedAt    time.Time         `json:"updated_at"`
 }
 type FileResponseDTO struct {
-	ID         uint   `json:"id"`
-	StorageURL string `json:"storage_url"`
+	ID         uint      `json:"id"`
+	FileName   string    `json:"file_name"`
+	FileExt    string    `json:"file_ext"`
+	FileSize   int64     `json:"file_size"`
+	UploadedAt time.Time `json:"uploaded_at"`
+	StorageURL string    `json:"storage_url"`
 }
 
 type UpdateClaimRequestDTO struct {

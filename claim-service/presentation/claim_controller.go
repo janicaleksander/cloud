@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
 	"os"
 	"strconv"
@@ -229,16 +230,18 @@ func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *ht
 		failure(w, http.StatusBadRequest, "Invalid file ID")
 		return
 	}
-	reader, metaFile, err := c.claimService.GetFileFromStorage(uint(fileID))
-	fmt.Println(metaFile)
-	// fileID -> getURL -> getFile
+	reader, file, err := c.claimService.GetFileFromStorage(uint(fileID))
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Storage err "+err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", metaFile.FileExt)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", metaFile.ID))
+	contentType := mime.TypeByExtension(file.FileExt)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file.FileName))
 
 	defer reader.Close()
 	io.Copy(w, reader)

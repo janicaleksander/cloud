@@ -7,14 +7,12 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/janicaleksander/cloud/claimservice/application"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure/aws"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure/messaging"
-	"github.com/janicaleksander/cloud/claimservice/persistence/claim-persistence"
-	meta_file_persistence "github.com/janicaleksander/cloud/claimservice/persistence/meta-file-persistence"
+	"github.com/janicaleksander/cloud/claimservice/persistence"
 	"github.com/janicaleksander/cloud/claimservice/presentation"
 	"github.com/janicaleksander/cloud/claimservice/presentation/router"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
@@ -32,7 +30,7 @@ func main() {
 		slog.Error("Error connecting to database", "error", err)
 		panic(err)
 	}
-	err = db.AutoMigrate(&claim_persistence.ClaimModel{}, &claim_persistence.FileModel{})
+	err = db.AutoMigrate(&persistence.ClaimModel{}, &persistence.FileModel{})
 	if err != nil {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
@@ -48,11 +46,9 @@ func main() {
 	}
 	client := s3.NewFromConfig(cfg)
 	fileStorage := aws.NewAWSStorage(client)
-	dynamoClient := dynamodb.NewFromConfig(cfg)
 
 	claimService := application.NewClaimService(
-		claim_persistence.NewClaimRepository(db),
-		meta_file_persistence.NewMetaFileRepository(dynamoClient),
+		persistence.NewClaimRepository(db),
 		publisher,
 		fileStorage,
 	)

@@ -46,7 +46,11 @@ type Claim struct {
 
 type File struct {
 	ID         uint
-	StorageURL string //added
+	FileName   string
+	FileExt    string
+	FileSize   int64
+	UploadedAt time.Time
+	StorageURL string
 }
 
 type ClaimRepository interface {

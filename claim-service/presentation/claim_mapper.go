@@ -16,6 +16,10 @@ func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 	for _, f := range claim.Files {
 		files = append(files, FileResponseDTO{
 			ID:         f.ID,
+			FileName:   f.FileName,
+			FileExt:    f.FileExt,
+			FileSize:   f.FileSize,
+			UploadedAt: f.UploadedAt,
 			StorageURL: f.StorageURL,
 		})
 	}

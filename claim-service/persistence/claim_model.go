@@ -1,4 +1,4 @@
-package claim_persistence
+package persistence
 
 import (
 	"time"
@@ -18,6 +18,10 @@ type ClaimModel struct {
 
 type FileModel struct {
 	gorm.Model
-	StorageURL   string `gorm:"not null"`
-	ClaimModelID uint   `gorm:"not null"`
+	FileName     string    `gorm:"not null"`
+	FileExt      string    `gorm:"not null"`
+	FileSize     int64     `gorm:"not null"`
+	UploadedAt   time.Time `gorm:"not null"`
+	StorageURL   string    `gorm:"not null"`
+	ClaimModelID uint      `gorm:"not null"`
 }

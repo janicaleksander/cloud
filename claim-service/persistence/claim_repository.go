@@ -1,4 +1,4 @@
-package claim_persistence
+package persistence
 
 import (
 	"context"
