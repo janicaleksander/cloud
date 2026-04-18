@@ -1,30 +1,30 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"log/slog"
 
-	"github.com/janicaleksander/cloud/claimservice/application"
+	"github.com/janicaleksander/cloud/claimservice/application/command"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 const exchangeName = "events"
 const queueName = "claim-service"
 
 type ClaimEventHandler struct {
-	claimService *application.ClaimService
-	handlers     map[string]rabbitmq.HandlerFunc
+	handlers map[string]rabbitmq.HandlerFunc
 }
 
-func NewClaimEventHandler(claimService *application.ClaimService) *ClaimEventHandler {
+func NewClaimEventHandler() *ClaimEventHandler {
 	slog.Info("Creating ClaimEventHandler")
 	h := &ClaimEventHandler{
-		claimService: claimService,
-		handlers:     make(map[string]rabbitmq.HandlerFunc),
+		handlers: make(map[string]rabbitmq.HandlerFunc),
 	}
 	h.registerHandlers()
 	return h
@@ -63,6 +63,7 @@ func (h *ClaimEventHandler) Run(rabbit *rabbitmq.RabbitMQ) {
 
 	go h.dispatch(msgs)
 }
+
 func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	for msg := range msgs {
 		if handler, ok := h.handlers[msg.RoutingKey]; ok {
@@ -73,60 +74,55 @@ func (h *ClaimEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	}
 }
 
-func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery) {
-	slog.Info("HandlePolicyVerifiedEvent: ", "routingKey", msg.RoutingKey)
-	var e event.PolicyVerifiedEvent
-	err := json.Unmarshal(msg.Body, &e)
+func sendChangeStatus(claimID string, status domain.Status) {
+	_, err := mediatr.Send[*command.UpdateClaimStatusCommand, *mediatr.Unit](
+		context.Background(),
+		&command.UpdateClaimStatusCommand{
+			ClaimID: claimID,
+			Status:  string(status),
+		},
+	)
 	if err != nil {
+		slog.Error("failed to change claim status", "status", status, "error", err)
+	}
+}
+
+func (h *ClaimEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery) {
+	slog.Info("HandlePolicyVerifiedEvent", "routingKey", msg.RoutingKey)
+	var e event.PolicyVerifiedEvent
+	if err := json.Unmarshal(msg.Body, &e); err != nil {
 		slog.Error("failed to unmarshal policy_verified event", "error", err)
 		return
 	}
-	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.VERIFIED)
-	if err != nil {
-		slog.Error("failed to change claim status to VERIFIED", "error", err)
-	}
+	sendChangeStatus(e.ClaimID, domain.VERIFIED)
 }
 
 func (h *ClaimEventHandler) handlePolicyDeniedEvent(msg rabbitmq.Delivery) {
-	slog.Info("HandlePolicyDeniedEvent: ", "routingKey", msg.RoutingKey)
+	slog.Info("HandlePolicyDeniedEvent", "routingKey", msg.RoutingKey)
 	var e event.PolicyDeniedEvent
-	err := json.Unmarshal(msg.Body, &e)
-	if err != nil {
+	if err := json.Unmarshal(msg.Body, &e); err != nil {
 		slog.Error("failed to unmarshal policy_denied event", "error", err)
 		return
 	}
-	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.DENIED)
-	if err != nil {
-		slog.Error("failed to change claim status to DENIED", "error", err)
-	}
-
+	sendChangeStatus(e.ClaimID, domain.DENIED)
 }
 
 func (h *ClaimEventHandler) handlePayoutApprovedEvent(msg rabbitmq.Delivery) {
-	slog.Info("HandlePayoutApprovedEvent: ", "routingKey", msg.RoutingKey)
+	slog.Info("HandlePayoutApprovedEvent", "routingKey", msg.RoutingKey)
 	var e event.PayoutApprovedEvent
-	err := json.Unmarshal(msg.Body, &e)
-	if err != nil {
+	if err := json.Unmarshal(msg.Body, &e); err != nil {
 		slog.Error("failed to unmarshal payout_approved event", "error", err)
 		return
 	}
-	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.APPROVED)
-	if err != nil {
-		slog.Error("failed to change claim status to APPROVED", "error", err)
-	}
+	sendChangeStatus(e.ClaimID, domain.APPROVED)
 }
 
 func (h *ClaimEventHandler) handlePayoutRejectedEvent(msg rabbitmq.Delivery) {
-	slog.Info("HandlePayoutRejectedEvent: ", "routingKey", msg.RoutingKey)
+	slog.Info("HandlePayoutRejectedEvent", "routingKey", msg.RoutingKey)
 	var e event.PayoutRejectedEvent
-	err := json.Unmarshal(msg.Body, &e)
-	if err != nil {
+	if err := json.Unmarshal(msg.Body, &e); err != nil {
 		slog.Error("failed to unmarshal payout_rejected event", "error", err)
 		return
 	}
-	err = h.claimService.ChangeClaimStatus(e.ClaimID, domain.REJECTED)
-	if err != nil {
-		slog.Error("failed to change claim status to REJECTED", "error", err)
-	}
-
+	sendChangeStatus(e.ClaimID, domain.REJECTED)
 }

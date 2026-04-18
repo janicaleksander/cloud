@@ -16,7 +16,7 @@ import (
 )
 
 type CreateClaimCommand struct {
-	UserID       uint
+	UserID       string
 	Email        string
 	VIN          string
 	AccidentDate time.Time
@@ -39,11 +39,10 @@ func (h *CreateClaimCommandHandler) SelfRegister() error {
 func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateClaimCommand) (*mediatr.Unit, error) {
 
 	domainFiles := make([]*domain.File, 0, len(command.ObjectFiles))
-
 	for idx := range command.ObjectFiles {
-		fileUUID := uuid.New().String()
+		fileUUID := uuid.New()
 		ext := filepath.Ext(command.ObjectFiles[idx].Name())
-		newKey := fileUUID + ext
+		newKey := fileUUID.String() + ext
 		newURL := utils.S3URL("us-east-1", "claim-cloud-bucket", newKey)
 
 		contentType, err := utils.DetectContentType(command.ObjectFiles[idx])
@@ -61,6 +60,7 @@ func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateC
 		}
 
 		domainFiles = append(domainFiles, &domain.File{
+			ID:         fileUUID,
 			FileName:   command.ObjectFiles[idx].Name(),
 			FileExt:    ext,
 			FileSize:   info.Size(),
@@ -69,7 +69,6 @@ func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateC
 		})
 	}
 	claimDomain := CreateClaimCommandToDomain(command)
-	//TODO mapper from command to domain
 	claimDomain.Status = domain.NEW
 	if len(domainFiles) != 0 {
 		claimDomain.Files = domainFiles
@@ -84,7 +83,7 @@ func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateC
 		return nil, err
 	}
 	err = h.publisher.Publish("events", event.RegisterUserForNotificationEvent{
-		ClaimID: savedClaim.ID,
+		ClaimID: savedClaim.ID.String(),
 		Email:   savedClaim.Email,
 	})
 	if err != nil {
@@ -92,8 +91,8 @@ func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateC
 	}
 
 	err = h.publisher.Publish("events", &event.ClaimSubmittedEvent{
-		UserID:       savedClaim.UserID,
-		ClaimID:      savedClaim.ID,
+		UserID:       savedClaim.UserID.String(),
+		ClaimID:      savedClaim.ID.String(),
 		VIN:          savedClaim.VIN,
 		AccidentDate: savedClaim.AccidentDate,
 		StorageURL:   urls,

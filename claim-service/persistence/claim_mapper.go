@@ -1,8 +1,8 @@
 package persistence
 
 import (
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/domain"
-	"gorm.io/gorm"
 )
 
 func ClaimModelToDomain(c *ClaimModel) (*domain.Claim, error) {
@@ -39,7 +39,7 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 	modelFiles := make([]FileModel, 0, len(c.Files))
 	for idx := range c.Files {
 		modelFiles = append(modelFiles, FileModel{
-			Model:        gorm.Model{ID: c.Files[idx].ID},
+			ID:           c.Files[idx].ID,
 			FileName:     c.Files[idx].FileName,
 			FileExt:      c.Files[idx].FileExt,
 			FileSize:     c.Files[idx].FileSize,
@@ -49,15 +49,14 @@ func ClaimDomainToModel(c *domain.Claim) (*ClaimModel, error) {
 		})
 	}
 	var claimModel = &ClaimModel{
-		Model: gorm.Model{
-			ID: c.ID,
-		},
+		ID:           c.ID,
 		UserID:       c.UserID,
 		VIN:          c.VIN,
 		Email:        c.Email,
 		AccidentDate: c.AccidentDate,
 		Status:       string(c.Status),
 		Files:        modelFiles,
+		UpdatedAt:    c.UpdatedAt,
 	}
 	return claimModel, nil
 
@@ -74,9 +73,9 @@ func FileModelToDomain(f *FileModel) *domain.File {
 	}
 }
 
-func FileDomainToModel(f *domain.File, claimID uint) *FileModel {
+func FileDomainToModel(f *domain.File, claimID uuid.UUID) *FileModel {
 	return &FileModel{
-		Model:        gorm.Model{ID: f.ID},
+		ID:           f.ID,
 		FileName:     f.FileName,
 		FileExt:      f.FileExt,
 		FileSize:     f.FileSize,

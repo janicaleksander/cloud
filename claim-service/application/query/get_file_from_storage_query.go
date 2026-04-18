@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/application/interfaces"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/mehdihadeli/go-mediatr"
@@ -32,7 +33,7 @@ func ParseS3URL(rawURL string) (bucket, key string, err error) {
 }
 
 type GetFileFromStorageQuery struct {
-	FileID uint `json:"file_id"`
+	FileID string `json:"file_id"`
 }
 
 type GetFileFromStorageQueryResponse struct {
@@ -57,7 +58,11 @@ func (h *GetFileFromStorageQueryHandler) SelfRegister() error {
 }
 
 func (h *GetFileFromStorageQueryHandler) Handle(ctx context.Context, query *GetFileFromStorageQuery) (*GetFileFromStorageQueryResponse, error) {
-	file, err := h.repo.GetFileById(ctx, query.FileID)
+	fid, err := uuid.Parse(query.FileID)
+	if err != nil {
+		return nil, err
+	}
+	file, err := h.repo.GetFileById(ctx, fid)
 	if err != nil {
 		return nil, err
 	}

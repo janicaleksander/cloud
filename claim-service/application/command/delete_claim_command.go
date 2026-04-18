@@ -3,12 +3,13 @@ package command
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/mehdihadeli/go-mediatr"
 )
 
 type DeleteClaimCommand struct {
-	ClaimID uint
+	ClaimID string
 }
 
 type DeleteClaimCommandHandler struct {
@@ -24,6 +25,10 @@ func (h *DeleteClaimCommandHandler) SelfRegister() error {
 }
 
 func (h *DeleteClaimCommandHandler) Handle(ctx context.Context, command *DeleteClaimCommand) (*mediatr.Unit, error) {
-	err := h.repo.DeleteById(context.Background(), command.ClaimID)
+	cid, err := uuid.Parse(command.ClaimID)
+	if err != nil {
+		return nil, err
+	}
+	err = h.repo.DeleteById(context.Background(), cid)
 	return &mediatr.Unit{}, err
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"gorm.io/gorm"
 )
@@ -52,7 +53,7 @@ func (r *ClaimRepository) GetAll(ctx context.Context) ([]*domain.Claim, error) {
 	return claimDomains, nil
 }
 
-func (r *ClaimRepository) GetById(ctx context.Context, id uint) (*domain.Claim, error) {
+func (r *ClaimRepository) GetById(ctx context.Context, id uuid.UUID) (*domain.Claim, error) {
 	slog.Info("Getting claim by ID from database", "claimID", id)
 	claimModel, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).First(ctx)
 	if err != nil {
@@ -83,7 +84,6 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 		}
 
 		for i := range claimModel.Files {
-			claimModel.Files[i].ID = 0
 			claimModel.Files[i].ClaimModelID = claimModel.ID
 		}
 
@@ -106,13 +106,13 @@ func (r *ClaimRepository) Update(ctx context.Context, c *domain.Claim) (*domain.
 
 	return ClaimModelToDomain(&updated)
 }
-func (r *ClaimRepository) DeleteById(ctx context.Context, id uint) error {
+func (r *ClaimRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting claim by ID from database", "claimID", id)
 	_, err := gorm.G[ClaimModel](r.gorm).Preload("Files", nil).Where("id = ?", id).Delete(ctx)
 	return err
 }
 
-func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uint, newStatus domain.Status) error {
+func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uuid.UUID, newStatus domain.Status) error {
 	slog.Info("Updating claim status in database", "claimID", claimID, "newStatus", newStatus)
 	result := r.gorm.WithContext(ctx).
 		Model(&ClaimModel{}).
@@ -128,7 +128,7 @@ func (r *ClaimRepository) UpdateStatus(ctx context.Context, claimID uint, newSta
 	return nil
 }
 
-func (r *ClaimRepository) GetFileById(ctx context.Context, fileID uint) (*domain.File, error) {
+func (r *ClaimRepository) GetFileById(ctx context.Context, fileID uuid.UUID) (*domain.File, error) {
 	fileModel, err := gorm.G[FileModel](r.gorm).Where("id = ?", fileID).First(ctx)
 	if err != nil {
 		return nil, err

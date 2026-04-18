@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Status string
@@ -34,8 +36,8 @@ func StringToStatus(s string) (Status, error) {
 }
 
 type Claim struct {
-	ID           uint
-	UserID       uint
+	ID           uuid.UUID
+	UserID       uuid.UUID
 	Email        string
 	VIN          string
 	AccidentDate time.Time
@@ -45,7 +47,7 @@ type Claim struct {
 }
 
 type File struct {
-	ID         uint
+	ID         uuid.UUID
 	FileName   string
 	FileExt    string
 	FileSize   int64
@@ -55,10 +57,10 @@ type File struct {
 
 type ClaimRepository interface {
 	GetAll(context.Context) ([]*Claim, error)
-	GetById(context.Context, uint) (*Claim, error)
+	GetById(context.Context, uuid.UUID) (*Claim, error)
 	Save(context.Context, *Claim) (*Claim, error)
 	Update(context.Context, *Claim) (*Claim, error)
-	UpdateStatus(context.Context, uint, Status) error
-	DeleteById(context.Context, uint) error
-	GetFileById(ctx context.Context, fileID uint) (*File, error)
+	UpdateStatus(context.Context, uuid.UUID, Status) error
+	DeleteById(context.Context, uuid.UUID) error
+	GetFileById(ctx context.Context, fileID uuid.UUID) (*File, error)
 }

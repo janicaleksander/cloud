@@ -1,10 +1,14 @@
 package presentation
 
-import "github.com/janicaleksander/cloud/claimservice/domain"
+import (
+	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/claimservice/domain"
+)
 
 func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
+	id, _ := uuid.FromBytes([]byte(dto.UserID))
 	return &domain.Claim{
-		UserID:       dto.UserID,
+		UserID:       id,
 		AccidentDate: dto.AccidentDate,
 		Email:        dto.Email,
 		VIN:          dto.VIN,
@@ -13,9 +17,10 @@ func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
 
 func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 	files := make([]FileResponseDTO, 0, len(claim.Files))
+
 	for _, f := range claim.Files {
 		files = append(files, FileResponseDTO{
-			ID:         f.ID,
+			ID:         f.ID.String(),
 			FileName:   f.FileName,
 			FileExt:    f.FileExt,
 			FileSize:   f.FileSize,
@@ -24,8 +29,8 @@ func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 		})
 	}
 	return &GetClaimResponseDTO{
-		ID:           claim.ID,
-		UserID:       claim.UserID,
+		ID:           claim.ID.String(),
+		UserID:       claim.UserID.String(),
 		AccidentDate: claim.AccidentDate,
 		VIN:          claim.VIN,
 		Email:        claim.Email,

@@ -8,7 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/janicaleksander/cloud/claimservice/application"
+	"github.com/janicaleksander/cloud/claimservice/application/command"
+	"github.com/janicaleksander/cloud/claimservice/application/query"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure/aws"
 	"github.com/janicaleksander/cloud/claimservice/infrastructure/messaging"
@@ -25,21 +26,25 @@ func main() {
 		slog.Error("Error loading .env file", "error", err)
 		panic(err)
 	}
+
 	db, err := infrastructure.NewDB()
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)
 		panic(err)
 	}
+
 	err = db.AutoMigrate(&persistence.ClaimModel{}, &persistence.FileModel{})
 	if err != nil {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
 	}
+
 	rabbit, err := rabbitmq.NewRabbitMQ()
 	if err != nil {
 		panic(err)
 	}
 	publisher := rabbitmq.NewPublisher(rabbit)
+
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion("us-east-1"))
 	if err != nil {
 		panic(err)
@@ -47,15 +52,32 @@ func main() {
 	client := s3.NewFromConfig(cfg)
 	fileStorage := aws.NewAWSStorage(client)
 
-	claimService := application.NewClaimService(
-		persistence.NewClaimRepository(db),
-		publisher,
-		fileStorage,
-	)
-	claimController := presentation.NewClaimController(claimService)
-	claimEventHandler := messaging.NewClaimEventHandler(claimService)
-	claimEventHandler.Run(rabbit)
+	claimRepo := persistence.NewClaimRepository(db)
 
+	createClaimHandler := command.NewCreateClaimCommandHandler(claimRepo, publisher, fileStorage)
+	deleteClaimHandler := command.NewDeleteClaimCommandHandler(claimRepo)
+	updateClaimHandler := command.NewUpdateClaimCommandHandler(claimRepo, publisher)
+	updateStatusHandler := command.NewUpdateClaimStatusCommandHandler(claimRepo, publisher)
+
+	_ = createClaimHandler.SelfRegister()
+	_ = deleteClaimHandler.SelfRegister()
+	_ = updateClaimHandler.SelfRegister()
+	_ = updateStatusHandler.SelfRegister()
+
+	getClaimQuery := query.NewGetClaimQueryHandler(claimRepo)
+	getClaimsQuery := query.NewGetClaimsQueryHandler(claimRepo)
+	getFileQuery := query.NewGetFileFromStorageQueryHandler(claimRepo)
+
+	_ = getClaimQuery.SelfRegister()
+	_ = getClaimsQuery.SelfRegister()
+	_ = getFileQuery.SelfRegister()
+	claimEventHandler := messaging.NewClaimEventHandler()
+	go claimEventHandler.Run(rabbit)
+
+	// =========================
+	// HTTP
+	// =========================
+	claimController := presentation.NewClaimController()
 	r := router.NewRouter(claimController)
 
 	log.Println("serving on 8080")
@@ -64,9 +86,4 @@ func main() {
 		slog.Error("Error running http: ", err)
 		panic(err)
 	}
-
 }
-
-//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

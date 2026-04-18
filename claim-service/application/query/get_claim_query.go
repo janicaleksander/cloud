@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/mehdihadeli/go-mediatr"
 )
 
 type GetClaimByIdQuery struct {
-	ClaimID uint `json:"claim_id"`
+	ClaimID string `json:"claim_id"`
 }
 
 type GetClaimByIdQueryResponse struct {
-	ID           uint
-	UserID       uint
+	ID           string
+	UserID       string
 	Email        string
 	VIN          string
 	AccidentDate time.Time
@@ -24,7 +25,7 @@ type GetClaimByIdQueryResponse struct {
 }
 
 type FileResponse struct {
-	ID         uint
+	ID         string
 	FileName   string
 	FileExt    string
 	FileSize   int64
@@ -44,14 +45,18 @@ func (h *GetClaimQueryHandler) SelfRegister() error {
 }
 
 func (h *GetClaimQueryHandler) Handle(ctx context.Context, query *GetClaimByIdQuery) (*GetClaimByIdQueryResponse, error) {
-	claimDomain, err := h.repo.GetById(ctx, query.ClaimID)
+	qid, err := uuid.Parse(query.ClaimID)
+	if err != nil {
+		return nil, err
+	}
+	claimDomain, err := h.repo.GetById(ctx, qid)
 	if err != nil {
 		return nil, err
 	}
 	filesResponse := make([]FileResponse, len(claimDomain.Files))
 	for i, file := range claimDomain.Files {
 		filesResponse[i] = FileResponse{
-			ID:         file.ID,
+			ID:         file.ID.String(),
 			FileName:   file.FileName,
 			FileExt:    file.FileExt,
 			FileSize:   file.FileSize,
@@ -60,8 +65,8 @@ func (h *GetClaimQueryHandler) Handle(ctx context.Context, query *GetClaimByIdQu
 		}
 	}
 	return &GetClaimByIdQueryResponse{
-		ID:           claimDomain.ID,
-		UserID:       claimDomain.UserID,
+		ID:           claimDomain.ID.String(),
+		UserID:       claimDomain.UserID.String(),
 		Email:        claimDomain.Email,
 		VIN:          claimDomain.VIN,
 		AccidentDate: claimDomain.AccidentDate,

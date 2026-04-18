@@ -3,13 +3,14 @@ package command
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/application/interfaces"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/mehdihadeli/go-mediatr"
 )
 
 type UpdateClaimStatusCommand struct {
-	ClaimID uint
+	ClaimID string
 	Status  string
 }
 
@@ -34,7 +35,11 @@ func (h *UpdateClaimStatusCommandHandler) Handle(ctx context.Context, command *U
 	if err != nil {
 		return nil, err
 	}
-	err = h.repo.UpdateStatus(context.Background(), command.ClaimID, newStatus)
+	cid, err := uuid.Parse(command.ClaimID)
+	if err != nil {
+		return nil, err
+	}
+	err = h.repo.UpdateStatus(context.Background(), cid, newStatus)
 	if err != nil {
 		return nil, err
 	}

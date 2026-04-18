@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/claimservice/application/interfaces"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 	"github.com/janicaleksander/cloud/common/event"
@@ -10,7 +11,7 @@ import (
 )
 
 type UpdateClaimCommand struct {
-	ClaimID  uint
+	ClaimID  string
 	NewEmail string
 }
 
@@ -34,7 +35,11 @@ func (h *UpdateClaimCommandHandler) Handle(ctx context.Context, command *UpdateC
 	if command.NewEmail == "" {
 		return nil, nil
 	}
-	oldClaimDomain, err := h.repo.GetById(context.Background(), command.ClaimID)
+	cid, err := uuid.Parse(command.ClaimID)
+	if err != nil {
+		return nil, err
+	}
+	oldClaimDomain, err := h.repo.GetById(context.Background(), cid)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +49,7 @@ func (h *UpdateClaimCommandHandler) Handle(ctx context.Context, command *UpdateC
 		return nil, err
 	}
 	err = h.publisher.Publish("events", event.ChangeEmailForNotification{
-		ClaimID: oldClaimDomain.ID,
+		ClaimID: oldClaimDomain.ID.String(),
 		Email:   command.NewEmail,
 	})
 	return &mediatr.Unit{}, err
