@@ -45,3 +45,16 @@ func (s *Storage) GetFile(ctx context.Context, bucket string, fileID string) (io
 	slog.Info("File retrieved from S3", "bucket", bucket, "fileID", fileID)
 	return resp.Body, nil
 }
+
+func (s *Storage) RemoveFile(ctx context.Context, bucket string, fileID string) error {
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(fileID),
+	})
+	if err != nil {
+		return err
+	}
+
+	slog.Info("File removed from S3", "bucket", bucket, "fileID", fileID)
+	return nil
+}

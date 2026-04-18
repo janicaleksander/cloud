@@ -47,8 +47,11 @@ type GetFileFromStorageQueryHandler struct {
 	fileStorage interfaces.FileStorage
 }
 
-func NewGetFileFromStorageQueryHandler(r domain.ClaimRepository) *GetFileFromStorageQueryHandler {
-	return &GetFileFromStorageQueryHandler{repo: r}
+func NewGetFileFromStorageQueryHandler(r domain.ClaimRepository, f interfaces.FileStorage) *GetFileFromStorageQueryHandler {
+	return &GetFileFromStorageQueryHandler{
+		repo:        r,
+		fileStorage: f,
+	}
 
 }
 

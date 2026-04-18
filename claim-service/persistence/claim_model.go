@@ -7,13 +7,13 @@ import (
 )
 
 type ClaimModel struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserID       uuid.UUID `gorm:"not null"`
-	Email        string    `gorm:"not null"`
-	VIN          string    `gorm:"not null"`
-	AccidentDate time.Time `gorm:"not null"`
-	Status       string    `gorm:"not null"`
-	Files        []FileModel
+	ID           uuid.UUID   `gorm:"type:uuid;primaryKey"`
+	UserID       uuid.UUID   `gorm:"not null"`
+	Email        string      `gorm:"not null"`
+	VIN          string      `gorm:"not null"`
+	AccidentDate time.Time   `gorm:"not null"`
+	Status       string      `gorm:"not null"`
+	Files        []FileModel `gorm:"constraint:OnDelete:CASCADE;"`
 
 	UpdatedAt time.Time
 }

@@ -55,7 +55,7 @@ func main() {
 	claimRepo := persistence.NewClaimRepository(db)
 
 	createClaimHandler := command.NewCreateClaimCommandHandler(claimRepo, publisher, fileStorage)
-	deleteClaimHandler := command.NewDeleteClaimCommandHandler(claimRepo)
+	deleteClaimHandler := command.NewDeleteClaimCommandHandler(claimRepo, fileStorage)
 	updateClaimHandler := command.NewUpdateClaimCommandHandler(claimRepo, publisher)
 	updateStatusHandler := command.NewUpdateClaimStatusCommandHandler(claimRepo, publisher)
 
@@ -66,7 +66,7 @@ func main() {
 
 	getClaimQuery := query.NewGetClaimQueryHandler(claimRepo)
 	getClaimsQuery := query.NewGetClaimsQueryHandler(claimRepo)
-	getFileQuery := query.NewGetFileFromStorageQueryHandler(claimRepo)
+	getFileQuery := query.NewGetFileFromStorageQueryHandler(claimRepo, fileStorage)
 
 	_ = getClaimQuery.SelfRegister()
 	_ = getClaimsQuery.SelfRegister()
