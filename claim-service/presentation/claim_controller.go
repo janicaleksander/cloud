@@ -124,14 +124,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	uid := uuid.New().String()
-	cmd := &command.CreateClaimCommand{
-		ID:           uid,
-		UserID:       createClaimRequest.UserID,
-		Email:        createClaimRequest.Email,
-		VIN:          createClaimRequest.VIN,
-		AccidentDate: createClaimRequest.AccidentDate,
-		ObjectFiles:  objectFiles,
-	}
+	cmd := CreateClaimRequestHTTPToCommand(&createClaimRequest, objectFiles)
 
 	_, err = mediatr.Send[*command.CreateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
@@ -149,7 +142,7 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 	}
 	slog.Info("HTTP GetClaimHandler called")
 	claimID := chi.URLParam(r, "id")
-	q := &query.GetClaimByIdQuery{ClaimID: claimID}
+	q := GetClaimRequestHTTPToQuery(claimID)
 	response, err := mediatr.Send[*query.GetClaimByIdQuery, *query.GetClaimByIdQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such claim")
@@ -164,7 +157,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	slog.Info("HTTP GetClaimsHandler called")
-	q := &query.GetClaimsQuery{}
+	q := GetClaimsRequestHTTPToQuery()
 	response, err := mediatr.Send[*query.GetClaimsQuery, *query.GetClaimsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
@@ -180,7 +173,7 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 	}
 	slog.Info("HTTP DeleteClaimHandler called")
 	claimID := chi.URLParam(r, "id")
-	cmd := &command.DeleteClaimCommand{ClaimID: claimID}
+	cmd := DeleteClaimRequestHTTPToCommand(claimID)
 	_, err := mediatr.Send[*command.DeleteClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error deleting claim: "+err.Error())
@@ -203,10 +196,7 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusBadRequest, "Invalid JSON in request body")
 		return
 	}
-	cmd := &command.UpdateClaimCommand{
-		ClaimID:  claimID,
-		NewEmail: updateClaimRequestDTO.Email,
-	}
+	cmd := UpdateClaimRequestHTTPToCommand(claimID, &updateClaimRequestDTO)
 	_, err = mediatr.Send[*command.UpdateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such claim")
@@ -222,7 +212,7 @@ func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *ht
 		return
 	}
 	fileID := chi.URLParam(r, "id")
-	q := &query.GetFileFromStorageQuery{FileID: fileID}
+	q := GetFileRequestHTTPToQuery(fileID)
 	response, err := mediatr.Send[*query.GetFileFromStorageQuery, *query.GetFileFromStorageQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such file")

@@ -1,7 +1,11 @@
 package presentation
 
 import (
+	"os"
+
 	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/claimservice/application/command"
+	"github.com/janicaleksander/cloud/claimservice/application/query"
 	"github.com/janicaleksander/cloud/claimservice/domain"
 )
 
@@ -39,4 +43,38 @@ func HTTPGetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 		UpdatedAt:    claim.UpdatedAt,
 	}
 
+}
+
+func CreateClaimRequestHTTPToCommand(dto *CreateClaimRequestDTO, files []*os.File) *command.CreateClaimCommand {
+	return &command.CreateClaimCommand{
+		ID:           uuid.New().String(),
+		UserID:       dto.UserID,
+		Email:        dto.Email,
+		VIN:          dto.VIN,
+		AccidentDate: dto.AccidentDate,
+		ObjectFiles:  files,
+	}
+}
+
+func GetClaimRequestHTTPToQuery(claimID string) *query.GetClaimByIdQuery {
+	return &query.GetClaimByIdQuery{ClaimID: claimID}
+}
+
+func GetClaimsRequestHTTPToQuery() *query.GetClaimsQuery {
+	return &query.GetClaimsQuery{}
+}
+
+func DeleteClaimRequestHTTPToCommand(claimID string) *command.DeleteClaimCommand {
+	return &command.DeleteClaimCommand{ClaimID: claimID}
+}
+
+func UpdateClaimRequestHTTPToCommand(claimID string, dto *UpdateClaimRequestDTO) *command.UpdateClaimCommand {
+	return &command.UpdateClaimCommand{
+		ClaimID:  claimID,
+		NewEmail: dto.Email,
+	}
+}
+
+func GetFileRequestHTTPToQuery(fileID string) *query.GetFileFromStorageQuery {
+	return &query.GetFileFromStorageQuery{FileID: fileID}
 }
