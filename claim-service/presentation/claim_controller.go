@@ -1,6 +1,7 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,24 +14,25 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/janicaleksander/cloud/claimservice/application"
+	"github.com/janicaleksander/cloud/claimservice/application/command"
+	"github.com/janicaleksander/cloud/claimservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 type ClaimController struct {
-	claimService *application.ClaimService
 }
 
-func NewClaimController(claimService *application.ClaimService) *ClaimController {
+func NewClaimController() *ClaimController {
 	slog.Info("Creating ClaimController")
-	return &ClaimController{
-		claimService: claimService,
-	}
+	return &ClaimController{}
 }
 
-func success(w http.ResponseWriter, msg any) {
+func success(w http.ResponseWriter, msg *any, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(msg)
+	w.WriteHeader(code)
+	if msg != nil {
+		json.NewEncoder(w).Encode(msg)
+	}
 }
 
 func failure(w http.ResponseWriter, statusCode int, msg string) {
@@ -117,12 +119,14 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	claimDomain := CreateClaimRequestToDomain(&createClaimRequest)
-	createdClaim, err := c.claimService.CreateClaim(claimDomain, objectFiles)
+	cmd := command.ClaimDomainToCommand(claimDomain, objectFiles)
+
+	_, err = mediatr.Send[*command.CreateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error creating claim: "+err.Error())
 		return
 	}
-	dto := GetClaimDomainToResponse(createdClaim)
+
 	success(w, dto)
 }
 
@@ -137,14 +141,15 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 		failure(w, http.StatusBadRequest, "Invalid claim ID")
 		return
 	}
-	claim, err := c.claimService.GetClaim(uint(claimID))
+	q := &query.GetClaimByIdQuery{ClaimID: uint(claimID)}
+	response, err := mediatr.Send[*query.GetClaimByIdQuery, *query.GetClaimByIdQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such claim")
 		return
 	}
+	claimDomain := query.GetClaimQueryResponseToDomain(response)
 
-	claimDTO := GetClaimDomainToResponse(claim)
-
+	claimDTO := GetClaimDomainToResponse(claimDomain)
 	success(w, map[string]any{"claim": claimDTO})
 }
 
@@ -154,11 +159,15 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	slog.Info("HTTP GetClaimsHandler called")
-	claims, err := c.claimService.GetClaims()
+	q := &query.GetClaimsQuery{}
+	response, err := mediatr.Send[*query.GetClaimsQuery, *query.GetClaimsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
 		return
 	}
+
+	claims := query.GetClaimsQueryResponseToDomain(response.Claims)
+
 	claimsDTO := make([]*GetClaimResponseDTO, 0, len(claims))
 	for idx := range claims {
 		claimDTO := GetClaimDomainToResponse(claims[idx])
@@ -179,11 +188,13 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusBadRequest, "Invalid claim ID")
 		return
 	}
-	err = c.claimService.DeleteClaim(uint(claimID))
+	cmd := &command.DeleteClaimCommand{ClaimID: uint(claimID)}
+	response, err := mediatr.Send[*command.DeleteClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error deleting claim: "+err.Error())
 		return
 	}
+
 	success(w, map[string]any{"message": "Claim deleted successfully +: " + strconv.Itoa(claimID)})
 }
 
@@ -204,18 +215,16 @@ func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusBadRequest, "Invalid JSON in request body")
 		return
 	}
-
-	claim, err := c.claimService.GetClaim(uint(claimID))
+	cmd := &command.UpdateClaimCommand{
+		ClaimID:  uint(claimID),
+		NewEmail: updateClaimRequestDTO.Email,
+	}
+	response, err := mediatr.Send[*command.UpdateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such claim")
 		return
 	}
 
-	updatedClaim, err := c.claimService.UpdateClaim(claim, updateClaimRequestDTO.Email)
-	if err != nil {
-		failure(w, http.StatusForbidden, "Error updating claim: "+err.Error())
-		return
-	}
 	claimResponse := GetClaimDomainToResponse(updatedClaim)
 	success(w, map[string]any{"claim": claimResponse})
 }
@@ -230,19 +239,20 @@ func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *ht
 		failure(w, http.StatusBadRequest, "Invalid file ID")
 		return
 	}
-	reader, file, err := c.claimService.GetFileFromStorage(uint(fileID))
+	q := &query.GetFileFromStorageQuery{FileID: uint(fileID)}
+	response, err := mediatr.Send[*query.GetFileFromStorageQuery, *query.GetFileFromStorageQueryResponse](context.Background(), q)
 	if err != nil {
-		failure(w, http.StatusBadRequest, "Storage err "+err.Error())
+		failure(w, http.StatusNotFound, "No such file")
 		return
 	}
 
-	contentType := mime.TypeByExtension(file.FileExt)
+	contentType := mime.TypeByExtension(response.FileExt)
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
 	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file.FileName))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", response.FileName))
 
-	defer reader.Close()
-	io.Copy(w, reader)
+	defer response.Reader.Close()
+	io.Copy(w, response.Reader)
 }

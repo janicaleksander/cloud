@@ -1,15 +1,13 @@
 package application
 
+/*package application
+
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,14 +22,6 @@ type ClaimService struct {
 	fileStorage     FileStorage
 }
 
-type ClaimEventPublisher interface {
-	Publish(exchange string, msg interface{}) error
-}
-type FileStorage interface {
-	StoreFile(ctx context.Context, bucket string, fileID string, contentType string, reader io.Reader) error
-	GetFile(ctx context.Context, bucket string, fileID string) (io.ReadCloser, error)
-}
-
 func NewClaimService(claimRepo domain.ClaimRepository, publisher ClaimEventPublisher, fileStorage FileStorage) *ClaimService {
 	slog.Info("Creating ClaimService")
 	return &ClaimService{
@@ -43,23 +33,6 @@ func NewClaimService(claimRepo domain.ClaimRepository, publisher ClaimEventPubli
 
 // TODO: user data - raz wykonywane przy budowie na root (nie trzeba sudo)
 
-func DetectContentType(file *os.File) (string, error) {
-	buffer := make([]byte, 512)
-
-	_, err := file.Read(buffer)
-	if err != nil {
-		return "", err
-	}
-
-	contentType := http.DetectContentType(buffer)
-
-	_, err = file.Seek(0, 0)
-	if err != nil {
-		return "", err
-	}
-
-	return contentType, nil
-}
 func (c *ClaimService) CreateClaim(claim *domain.Claim, objectFiles []*os.File) (*domain.Claim, error) {
 	slog.Info("Creating claim for user: ", "userID", claim.UserID, "vin", claim.VIN, "accidentDate", claim.AccidentDate)
 	domainFiles := make([]*domain.File, 0, len(objectFiles))
@@ -171,24 +144,6 @@ func (c *ClaimService) ChangeClaimStatus(claimID uint, newStatus domain.Status) 
 	return c.claimRepository.UpdateStatus(context.Background(), claimID, newStatus)
 }
 
-func ParseS3URL(rawURL string) (bucket, key string, err error) {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "", "", fmt.Errorf("invalid URL: %w", err)
-	}
-
-	// Host: "{bucket}.s3.{region}.amazonaws.com"
-	host := u.Hostname()
-	parts := strings.SplitN(host, ".", 2)
-	if len(parts) < 2 || !strings.HasSuffix(parts[1], ".amazonaws.com") {
-		return "", "", fmt.Errorf("not an S3 URL: %s", host)
-	}
-
-	bucket = parts[0]
-	key = strings.TrimPrefix(u.Path, "/")
-
-	return bucket, key, nil
-}
 func (c *ClaimService) GetFileFromStorage(fileID uint) (io.ReadCloser, *domain.File, error) {
 	file, err := c.claimRepository.GetFileById(context.Background(), fileID)
 	if err != nil {
@@ -204,3 +159,4 @@ func (c *ClaimService) GetFileFromStorage(fileID uint) (io.ReadCloser, *domain.F
 	}
 	return reader, file, nil
 }
+*/

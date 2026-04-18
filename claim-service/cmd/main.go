@@ -66,3 +66,7 @@ func main() {
 	}
 
 }
+
+//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+//TODO w bazach CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
