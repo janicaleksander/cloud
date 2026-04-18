@@ -33,7 +33,7 @@ func ParseS3URL(rawURL string) (bucket, key string, err error) {
 }
 
 type GetFileFromStorageQuery struct {
-	FileID string `json:"file_id"`
+	FileID string
 }
 
 type GetFileFromStorageQueryResponse struct {

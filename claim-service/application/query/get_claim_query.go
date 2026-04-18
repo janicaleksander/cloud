@@ -10,7 +10,7 @@ import (
 )
 
 type GetClaimByIdQuery struct {
-	ClaimID string `json:"claim_id"`
+	ClaimID string
 }
 
 type GetClaimByIdQueryResponse struct {
