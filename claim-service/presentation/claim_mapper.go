@@ -5,8 +5,8 @@ import (
 	"github.com/janicaleksander/cloud/claimservice/domain"
 )
 
-func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
-	id, _ := uuid.FromBytes([]byte(dto.UserID))
+func HTTPCreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
+	id, _ := uuid.Parse(dto.UserID)
 	return &domain.Claim{
 		UserID:       id,
 		AccidentDate: dto.AccidentDate,
@@ -15,7 +15,7 @@ func CreateClaimRequestToDomain(dto *CreateClaimRequestDTO) *domain.Claim {
 	}
 }
 
-func GetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
+func HTTPGetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 	files := make([]FileResponseDTO, 0, len(claim.Files))
 
 	for _, f := range claim.Files {

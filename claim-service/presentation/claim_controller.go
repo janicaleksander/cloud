@@ -124,7 +124,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	claimDomain := CreateClaimRequestToDomain(&createClaimRequest)
+	claimDomain := HTTPCreateClaimRequestToDomain(&createClaimRequest)
 	claimDomain.ID = uuid.New()
 	cmd := command.ClaimDomainToCreateClaimCommand(claimDomain, objectFiles)
 
@@ -152,7 +152,7 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 	}
 	claimDomain := query.GetClaimQueryResponseToDomain(response)
 
-	claimDTO := GetClaimDomainToResponse(claimDomain)
+	claimDTO := HTTPGetClaimDomainToResponse(claimDomain)
 	success(w, map[string]any{"claim": claimDTO}, 200)
 }
 
@@ -173,7 +173,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 
 	claimsDTO := make([]*GetClaimResponseDTO, 0, len(claims))
 	for idx := range claims {
-		claimDTO := GetClaimDomainToResponse(claims[idx])
+		claimDTO := HTTPGetClaimDomainToResponse(claims[idx])
 		claimsDTO = append(claimsDTO, claimDTO)
 	}
 

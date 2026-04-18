@@ -16,6 +16,7 @@ import (
 )
 
 type CreateClaimCommand struct {
+	ID           string
 	UserID       string
 	Email        string
 	VIN          string
