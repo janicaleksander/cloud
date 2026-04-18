@@ -14,23 +14,23 @@ type GetClaimByIdQuery struct {
 }
 
 type GetClaimByIdQueryResponse struct {
-	ID           string
-	UserID       string
-	Email        string
-	VIN          string
-	AccidentDate time.Time
-	Status       string
-	Files        []FileResponse
-	UpdatedAt    time.Time
+	ID           string         `json:"id"`
+	UserID       string         `json:"user_id"`
+	Email        string         `json:"email"`
+	VIN          string         `json:"vin"`
+	AccidentDate time.Time      `json:"accident_date"`
+	Status       string         `json:"status"`
+	Files        []FileResponse `json:"files"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type FileResponse struct {
-	ID         string
-	FileName   string
-	FileExt    string
-	FileSize   int64
-	UploadedAt time.Time
-	StorageURL string
+	ID         string    `json:"id"`
+	FileName   string    `json:"file_name"`
+	FileExt    string    `json:"file_ext"`
+	FileSize   int64     `json:"file_size"`
+	UploadedAt time.Time `json:"uploaded_at"`
+	StorageURL string    `json:"storage_url"`
 }
 
 type GetClaimQueryHandler struct {

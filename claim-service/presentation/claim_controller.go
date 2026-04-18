@@ -123,17 +123,22 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusBadRequest, "Error processing files: "+err.Error())
 		return
 	}
-
-	claimDomain := HTTPCreateClaimRequestToDomain(&createClaimRequest)
-	claimDomain.ID = uuid.New()
-	cmd := command.ClaimDomainToCreateClaimCommand(claimDomain, objectFiles)
+	uid := uuid.New().String()
+	cmd := &command.CreateClaimCommand{
+		ID:           uid,
+		UserID:       createClaimRequest.UserID,
+		Email:        createClaimRequest.Email,
+		VIN:          createClaimRequest.VIN,
+		AccidentDate: createClaimRequest.AccidentDate,
+		ObjectFiles:  objectFiles,
+	}
 
 	_, err = mediatr.Send[*command.CreateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error creating claim: "+err.Error())
 		return
 	}
-	successWithLocation(w, fmt.Sprintf("/claim/%s", claimDomain.ID), http.StatusCreated)
+	successWithLocation(w, fmt.Sprintf("/claim/%s", uid), http.StatusCreated)
 
 }
 
@@ -150,10 +155,7 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 		failure(w, http.StatusNotFound, "No such claim")
 		return
 	}
-	claimDomain := query.GetClaimQueryResponseToDomain(response)
-
-	claimDTO := HTTPGetClaimDomainToResponse(claimDomain)
-	success(w, map[string]any{"claim": claimDTO}, 200)
+	success(w, map[string]any{"claim": response}, 200)
 }
 
 func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Request) {
@@ -168,16 +170,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
 		return
 	}
-
-	claims := query.GetClaimsQueryResponseToDomain(response.Claims)
-
-	claimsDTO := make([]*GetClaimResponseDTO, 0, len(claims))
-	for idx := range claims {
-		claimDTO := HTTPGetClaimDomainToResponse(claims[idx])
-		claimsDTO = append(claimsDTO, claimDTO)
-	}
-
-	success(w, map[string]any{"claims": claimsDTO}, 200)
+	success(w, map[string]any{"claims": response.Claims}, 200)
 }
 
 func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Request) {

@@ -37,9 +37,9 @@ type GetFileFromStorageQuery struct {
 }
 
 type GetFileFromStorageQueryResponse struct {
-	FileExt  string
-	FileName string
-	Reader   io.ReadCloser
+	FileExt  string        `json:"file_ext"`
+	FileName string        `json:"file_name"`
+	Reader   io.ReadCloser `json:"-"`
 }
 
 type GetFileFromStorageQueryHandler struct {
