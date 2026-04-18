@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
-	"github.com/janicaleksander/cloud/policyverificationservice/application"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
@@ -35,12 +36,51 @@ func main() {
 	publisher := rabbitmq.NewPublisher(rabbit)
 
 	policyRepository := persistance.NewPolicyRepository(db)
-	policyService := application.NewPolicyService(policyRepository, publisher)
-	policyController := presentation.NewPolicyController(policyService)
 
-	policyEventHandler := messaging.NewPolicyEventHandler(policyService)
-	policyEventHandler.Run(rabbit)
-	//evsent handler
+	createPolicyHandler := command.NewCreatePolicyCommandHandler(policyRepository)
+	deletePolicyHandler := command.NewDeletePolicyCommandHandler(policyRepository)
+	updatePolicyHandler := command.NewUpdatePolicyCommandHandler(policyRepository)
+
+	err = createPolicyHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering create policy command handler", "error", err)
+		panic(err)
+	}
+	err = deletePolicyHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering delete policy command handler", "error", err)
+		panic(err)
+	}
+	err = updatePolicyHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering update policy command handler", "error", err)
+		panic(err)
+	}
+
+	getPolicyHandler := query.NewGetPolicyQueryHandler(policyRepository)
+	getPoliciesHandler := query.NewGetPoliciesQueryHandler(policyRepository)
+	checkPolicyHandler := query.NewCheckPolicyQueryHandler(policyRepository, publisher)
+
+	err = getPolicyHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering get policy query handler", "error", err)
+		panic(err)
+	}
+	err = getPoliciesHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering get policies query handler", "error", err)
+		panic(err)
+	}
+	err = checkPolicyHandler.SelfRegister()
+	if err != nil {
+		slog.Error("Error registering check policy query handler", "error", err)
+		panic(err)
+	}
+
+	policyController := presentation.NewPolicyController()
+
+	policyEventHandler := messaging.NewPolicyEventHandler()
+	go policyEventHandler.Run(rabbit)
 
 	r := router.NewRouter(policyController)
 	log.Println("serving on 8081")

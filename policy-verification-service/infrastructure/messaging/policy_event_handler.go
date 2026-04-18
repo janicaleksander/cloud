@@ -1,28 +1,28 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
-	"github.com/janicaleksander/cloud/policyverificationservice/application"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 const queueName = "policy-verification-service"
 const exchangeName = "events"
 
 type PolicyEventHandler struct {
-	policyService *application.PolicyService
-	handlers      map[string]rabbitmq.HandlerFunc
+	handlers map[string]rabbitmq.HandlerFunc
 }
 
-func NewPolicyEventHandler(pS *application.PolicyService) *PolicyEventHandler {
+func NewPolicyEventHandler() *PolicyEventHandler {
 	slog.Info("Creating PolicyEventHandler")
 	p := &PolicyEventHandler{
-		policyService: pS,
-		handlers:      make(map[string]rabbitmq.HandlerFunc),
+		handlers: make(map[string]rabbitmq.HandlerFunc),
 	}
 	p.registerHandlers()
 	return p
@@ -67,11 +67,16 @@ func (p *PolicyEventHandler) handleClaimSubmittedEvent(msg rabbitmq.Delivery) {
 		slog.Info("failed to unmarshal ClaimSubmittedEvent", "error", err)
 		return
 	}
-	p.policyService.CheckUserPolicy(
-		claimSubmittedEvent.ClaimID,
-		claimSubmittedEvent.UserID,
-		claimSubmittedEvent.VIN,
-		claimSubmittedEvent.AccidentDate,
-		claimSubmittedEvent.StorageURL,
-	)
+	q := &query.CheckPolicyQuery{
+		ClaimID:      claimSubmittedEvent.ClaimID,
+		UserID:       claimSubmittedEvent.UserID,
+		VIN:          claimSubmittedEvent.VIN,
+		AccidentDate: claimSubmittedEvent.AccidentDate,
+	}
+	_, err = mediatr.Send[*query.CheckPolicyQuery, *query.CheckPolicyQueryResponse](context.Background(), q)
+	if err != nil {
+		slog.Error("Error sending CheckPolicyQuery", "error", err)
+		return
+	}
+
 }

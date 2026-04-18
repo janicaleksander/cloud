@@ -1,5 +1,7 @@
 package application
 
+/*package application
+
 import (
 	"context"
 	"log/slog"
@@ -12,10 +14,6 @@ import (
 type PolicyService struct {
 	policyRepository domain.PolicyRepository
 	publisher        PolicyEventPublisher
-}
-
-type PolicyEventPublisher interface {
-	Publish(exchange string, msg interface{}) error
 }
 
 func NewPolicyService(policyRepository domain.PolicyRepository, publisher PolicyEventPublisher) *PolicyService {
@@ -95,3 +93,4 @@ func (s *PolicyService) CheckUserPolicy(claimID uint, userID uint, vin string, a
 		}
 	}
 }
+*/

@@ -2,7 +2,6 @@ package persistance
 
 import (
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
-	"gorm.io/gorm"
 )
 
 // model -> domain
@@ -21,9 +20,7 @@ func PolicyModelToDomain(pm *PolicyModel) *domain.Policy {
 
 func PolicyDomainToModel(pd *domain.Policy) *PolicyModel {
 	return &PolicyModel{
-		Model: gorm.Model{
-			ID: pd.ID,
-		},
+		ID:     pd.ID,
 		UserID: pd.UserID,
 		VIN:    pd.VIN,
 		From:   pd.From,

@@ -1,28 +1,37 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/janicaleksander/cloud/policyverificationservice/application"
+	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 type PolicyController struct {
-	policyService *application.PolicyService
 }
 
-func NewPolicyController(policyService *application.PolicyService) *PolicyController {
+func NewPolicyController() *PolicyController {
 	slog.Info("Creating PolicyController")
-	return &PolicyController{policyService: policyService}
+	return &PolicyController{}
+}
+func success(w http.ResponseWriter, msg any, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if msg != nil {
+		json.NewEncoder(w).Encode(msg)
+	}
 }
 
-func success(w http.ResponseWriter, msg any) {
+func successWithLocation(w http.ResponseWriter, location string, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(msg)
+	w.Header().Set("Location", location)
+	w.WriteHeader(code)
 }
 
 func failure(w http.ResponseWriter, statusCode int, msg string) {
@@ -43,35 +52,34 @@ func (p *PolicyController) CreatePolicyHandler(w http.ResponseWriter, r *http.Re
 		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	policyDomain := CreatePolicyRequestToDomain(&d)
-	createdPolicy, err := p.policyService.CreatePolicy(policyDomain)
+	uid := uuid.New()
+	cmd := CreatePolicyResponseHTTPToCommand(uid, &d)
+
+	_, err = mediatr.Send[*command.CreatePolicyCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
-		failure(w, http.StatusInternalServerError, err.Error())
+		failure(w, http.StatusInternalServerError, "Error creating policy: "+err.Error())
 		return
 	}
-	success(w, map[string]any{"policy": GetPolicyDomainToResponse(createdPolicy)})
+	successWithLocation(w, "/policy/"+uid.String(), http.StatusCreated)
 
 }
 
+// TODO repiar in dtos that i have embeded {} with the same tag in every get
 func (p *PolicyController) GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	slog.Info("HTTP GetPolicyHandler called")
-	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid policy ID")
-		return
+	policyId := chi.URLParam(r, "id")
+	q := &query.GetPolicyQuery{PolicyID: policyId}
 
-	}
-	domainPolicy, err := p.policyService.GetPolicy(uint(policyId))
+	d, err := mediatr.Send[*query.GetPolicyQuery, *query.GetPolicyQueryResponse](context.Background(), q)
 	if err != nil {
-		failure(w, http.StatusBadRequest, "no such policy ID")
+		failure(w, http.StatusInternalServerError, "Error fetching policy: "+err.Error())
 		return
 	}
-	d := GetPolicyDomainToResponse(domainPolicy)
-	success(w, map[string]any{"policy": d})
+	success(w, map[string]any{"policy": d}, http.StatusOK)
 
 }
 
@@ -82,16 +90,13 @@ func (p *PolicyController) GetPoliciesHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	slog.Info("HTTP GetPoliciesHandler called")
-	domainPolicies, err := p.policyService.GetPolicies()
+	q := &query.GetPoliciesQuery{}
+	policies, err := mediatr.Send[*query.GetPoliciesQuery, *query.GetPoliciesQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching policies: "+err.Error())
 		return
 	}
-	responseDTOs := make([]*GetPolicyResponseDTO, 0, len(domainPolicies))
-	for idx := range domainPolicies {
-		responseDTOs = append(responseDTOs, GetPolicyDomainToResponse(domainPolicies[idx]))
-	}
-	success(w, map[string]any{"policies": responseDTOs})
+	success(w, map[string]any{"policies": policies}, http.StatusOK)
 }
 
 func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,29 +105,25 @@ func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	slog.Info("HTTP UpdatePolicyHandler called")
-	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid policy ID")
-		return
-	}
+	policyId := chi.URLParam(r, "id")
+
 	var d UpdatePolicyRequest
-	err = json.NewDecoder(r.Body).Decode(&d)
+	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	policyDomain, err := p.policyService.GetPolicy(uint(policyId))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "no such policy ID")
-		return
+	cmd := command.UpdatePolicyCommand{
+		PolicyID: policyId,
+		NewFrom:  d.From,
+		NewTo:    d.From,
 	}
-
-	updatedPolicy, err := p.policyService.UpdatePolicy(policyDomain, d.From, d.To)
+	_, err = mediatr.Send[*command.UpdatePolicyCommand, *mediatr.Unit](context.Background(), &cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error updating policy: "+err.Error())
 		return
 	}
-	success(w, map[string]any{"policy": GetPolicyDomainToResponse(updatedPolicy)})
+	successWithLocation(w, "/policy/"+policyId, http.StatusOK)
 }
 
 func (p *PolicyController) DeletePolicyHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,15 +132,13 @@ func (p *PolicyController) DeletePolicyHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	slog.Info("HTTP DeletePolicyHandler called")
-	policyId, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid policy ID")
-		return
-	}
-	err = p.policyService.DeletePolicy(uint(policyId))
+	policyId := chi.URLParam(r, "id")
+
+	cmd := command.DeletePolicyCommand{PolicyID: policyId}
+	_, err := mediatr.Send[*command.DeletePolicyCommand, *mediatr.Unit](context.Background(), &cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error deleting policy: "+err.Error())
 		return
 	}
-	success(w, map[string]any{"message": "policy deleted" + strconv.Itoa(policyId)})
+	success(w, nil, http.StatusNoContent)
 }

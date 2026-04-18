@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/policyverificationservice/domain"
 	"gorm.io/gorm"
 )
@@ -31,7 +32,7 @@ func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error
 
 }
 
-func (pr *PolicyRepository) GetById(ctx context.Context, id uint) (*domain.Policy, error) {
+func (pr *PolicyRepository) GetById(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
 	slog.Info("Getting policy by ID from the database", "id", id)
 	policyModel, err := gorm.G[PolicyModel](pr.gorm).Where("id = ?", id).First(ctx)
 	if err != nil {
@@ -60,13 +61,13 @@ func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*doma
 
 	return PolicyModelToDomain(policyModel), nil
 }
-func (pr *PolicyRepository) DeleteById(ctx context.Context, id uint) error {
+func (pr *PolicyRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting policy by ID from the database", "id", id)
 	_, err := gorm.G[PolicyModel](pr.gorm).Where("id = ?", id).Delete(ctx)
 	return err
 
 }
-func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uint, vin string) (bool, *domain.Policy) {
+func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uuid.UUID, vin string) (bool, *domain.Policy) {
 	slog.Info("Checking if user has policy for given VIN", "userID", userID, "vin", vin)
 	p, err := gorm.G[PolicyModel](pr.gorm).
 		Where("user_id = ? AND vin = ?", userID, vin).

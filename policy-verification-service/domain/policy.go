@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type RejectionReason string
@@ -15,8 +17,8 @@ const (
 )
 
 type Policy struct {
-	ID     uint
-	UserID uint
+	ID     uuid.UUID
+	UserID uuid.UUID
 	VIN    string
 	From   time.Time
 	To     time.Time
@@ -36,9 +38,9 @@ func (p Policy) IsValid(accidentDate time.Time) (bool, RejectionReason) {
 
 type PolicyRepository interface {
 	GetAll(context.Context) ([]*Policy, error)
-	GetById(context.Context, uint) (*Policy, error)
+	GetById(context.Context, uuid.UUID) (*Policy, error)
 	Save(context.Context, *Policy) (*Policy, error)
 	Update(context.Context, *Policy) (*Policy, error)
-	DeleteById(context.Context, uint) error
-	IfUserHasPolicy(context.Context, uint, string) (bool, *Policy)
+	DeleteById(context.Context, uuid.UUID) error
+	IfUserHasPolicy(context.Context, uuid.UUID, string) (bool, *Policy)
 }

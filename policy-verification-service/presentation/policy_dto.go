@@ -3,15 +3,15 @@ package presentation
 import "time"
 
 type CreatePolicyRequestDTO struct {
-	UserID uint      `json:"user_id"`
+	UserID string    `json:"user_id"`
 	VIN    string    `json:"vin"`
 	From   time.Time `json:"from"`
 	To     time.Time `json:"to"`
 }
 
 type GetPolicyResponseDTO struct {
-	ID     uint      `json:"id"`
-	UserID uint      `json:"user_id"`
+	ID     string    `json:"id"`
+	UserID string    `json:"user_id"`
 	VIN    string    `json:"vin"`
 	From   time.Time `json:"from"`
 	To     time.Time `json:"to"`
