@@ -45,9 +45,9 @@ func HTTPGetClaimDomainToResponse(claim *domain.Claim) *GetClaimResponseDTO {
 
 }
 
-func CreateClaimRequestHTTPToCommand(dto *CreateClaimRequestDTO, files []*os.File) *command.CreateClaimCommand {
+func CreateClaimRequestHTTPToCommand(newID uuid.UUID, dto *CreateClaimRequestDTO, files []*os.File) *command.CreateClaimCommand {
 	return &command.CreateClaimCommand{
-		ID:           uuid.New().String(),
+		ID:           newID.String(),
 		UserID:       dto.UserID,
 		Email:        dto.Email,
 		VIN:          dto.VIN,

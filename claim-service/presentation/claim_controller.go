@@ -123,8 +123,8 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		failure(w, http.StatusBadRequest, "Error processing files: "+err.Error())
 		return
 	}
-	uid := uuid.New().String()
-	cmd := CreateClaimRequestHTTPToCommand(&createClaimRequest, objectFiles)
+	uid := uuid.New()
+	cmd := CreateClaimRequestHTTPToCommand(uid, &createClaimRequest, objectFiles)
 
 	_, err = mediatr.Send[*command.CreateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
