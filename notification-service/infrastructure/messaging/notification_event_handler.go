@@ -1,33 +1,35 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
 	"github.com/janicaleksander/cloud/notificationservice/application"
-	"github.com/janicaleksander/cloud/notificationservice/domain"
+	"github.com/janicaleksander/cloud/notificationservice/application/command"
+	"github.com/janicaleksander/cloud/notificationservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 const exchangeName = "events"
 const queueName = "notification-service"
 
 type NotificationEventHandler struct {
-	notificationService *application.NotificationService
-	emailService        *application.EmailService
-	handlers            map[string]rabbitmq.HandlerFunc
+	emailService *application.EmailService
+	handlers     map[string]rabbitmq.HandlerFunc
 }
 
-func NewNotificationHandler(notificationService *application.NotificationService, emailService *application.EmailService) *NotificationEventHandler {
+func NewNotificationHandler(emailService *application.EmailService) *NotificationEventHandler {
 	slog.Info("Creating NotificationEventHandler")
 	h := &NotificationEventHandler{
-		notificationService: notificationService,
-		emailService:        emailService,
-		handlers:            make(map[string]rabbitmq.HandlerFunc),
+		emailService: emailService,
+		handlers:     make(map[string]rabbitmq.HandlerFunc),
 	}
 	h.registerHandlers()
 	return h
@@ -67,18 +69,25 @@ func (n *NotificationEventHandler) dispatch(msgs rabbitmq.MsgChan) {
 	}
 }
 
-func (n *NotificationEventHandler) sendAndSave(claimID uint, emailMsg application.EmailMessage) {
+func (n *NotificationEventHandler) sendAndSave(claimID string, emailMsg application.EmailMessage) {
 	slog.Info("Sending email and saving notification", "claimID", claimID, "to", emailMsg.To)
 	if err := n.emailService.Send(emailMsg); err != nil {
 		slog.Error("Error sending email", "claimID", claimID, "to", emailMsg.To, "error", err)
 		return
 	}
-	_, err := n.notificationService.CreateNotification(&domain.Notification{
-		ClaimID: claimID,
+	cid, err := uuid.Parse(claimID)
+	if err != nil {
+		slog.Error("Error parsing claimID", "claimID", claimID, "error", err)
+		return
+	}
+	cmd := &command.CreateNotificationCommand{
+		ClaimID: cid,
 		Body:    emailMsg.Body,
 		SentTo:  emailMsg.To,
 		Time:    time.Now(),
-	})
+	}
+
+	_, err = mediatr.Send[*command.CreateNotificationCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		slog.Error("Error saving notification", "claimID", claimID, "to", emailMsg.To, "error", err)
 	}
@@ -91,14 +100,14 @@ func (n *NotificationEventHandler) handleClaimSubmitted(msg rabbitmq.Delivery) {
 		return
 	}
 	slog.Info("Handling ClaimSubmittedEvent", "claimID", e.ClaimID, "userID", e.UserID, "vin", e.VIN)
-
-	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
+	q := &query.GetEmailByClaimIDQuery{ClaimID: e.ClaimID}
+	response, err := mediatr.Send[*query.GetEmailByClaimIDQuery, *query.GetEmailByClaimIDQueryResponse](context.Background(), q)
 	if err != nil {
 		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
-		To:      email,
+		To:      response.Email,
 		Subject: fmt.Sprintf("Claim #%d Received", e.ClaimID),
 		Body: fmt.Sprintf("Your insurance claim has been submitted successfully.\n\n"+
 			"Claim ID: %d\nVehicle VIN: %s\nAccident Date: %s\nEvidence Files: %d\n\n"+
@@ -115,13 +124,14 @@ func (n *NotificationEventHandler) handlePolicyVerified(msg rabbitmq.Delivery) {
 	}
 	slog.Info("Handling PolicyVerifiedEvent", "claimID", e.ClaimID)
 
-	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
+	q := &query.GetEmailByClaimIDQuery{ClaimID: e.ClaimID}
+	response, err := mediatr.Send[*query.GetEmailByClaimIDQuery, *query.GetEmailByClaimIDQueryResponse](context.Background(), q)
 	if err != nil {
 		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
-		To:      email,
+		To:      response.Email,
 		Subject: fmt.Sprintf("Claim #%d - Policy Verified", e.ClaimID),
 		Body: fmt.Sprintf("Great news! We have verified your policy and confirmed coverage.\n\n"+
 			"Claim ID: %d\nEvidence files reviewed: %d\n\n"+
@@ -137,13 +147,14 @@ func (n *NotificationEventHandler) handlePolicyDenied(msg rabbitmq.Delivery) {
 		return
 	}
 	slog.Info("Handling PolicyDeniedEvent", "claimID", e.ClaimID, "reason", e.Reason)
-	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
+	q := &query.GetEmailByClaimIDQuery{ClaimID: e.ClaimID}
+	response, err := mediatr.Send[*query.GetEmailByClaimIDQuery, *query.GetEmailByClaimIDQueryResponse](context.Background(), q)
 	if err != nil {
 		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
-		To:      email,
+		To:      response.Email,
 		Subject: fmt.Sprintf("Claim #%d - Policy Verification Failed", e.ClaimID),
 		Body: fmt.Sprintf("Unfortunately, we were unable to verify your policy coverage.\n\n"+
 			"Claim ID: %d\nReason: %s\n\n"+
@@ -159,13 +170,14 @@ func (n *NotificationEventHandler) handlePayoutApproved(msg rabbitmq.Delivery) {
 		return
 	}
 	slog.Info("Handling PayoutApprovedEvent", "claimID", e.ClaimID, "approvedPayoutAmount", e.AcceptedPayoutAmount, "byEmployeeID", e.ByEmployeeID)
-	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
+	q := &query.GetEmailByClaimIDQuery{ClaimID: e.ClaimID}
+	response, err := mediatr.Send[*query.GetEmailByClaimIDQuery, *query.GetEmailByClaimIDQueryResponse](context.Background(), q)
 	if err != nil {
 		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
-		To:      email,
+		To:      response.Email,
 		Subject: fmt.Sprintf("Claim #%d - Payout Approved", e.ClaimID),
 		Body: fmt.Sprintf("Great news! Your claim has been approved.\n\n"+
 			"Claim ID: %d\nApproved Payout Amount: $%.2f\nApproved by Employee ID: %d\n\n"+
@@ -181,13 +193,14 @@ func (n *NotificationEventHandler) handlePayoutRejected(msg rabbitmq.Delivery) {
 		return
 	}
 	slog.Info("Handling PayoutRejectedEvent", "claimID", e.ClaimID, "reason", e.Reason, "byEmployeeID", e.ByEmployeeID)
-	email, err := n.notificationService.GetEmailByClaimID(e.ClaimID)
+	q := &query.GetEmailByClaimIDQuery{ClaimID: e.ClaimID}
+	response, err := mediatr.Send[*query.GetEmailByClaimIDQuery, *query.GetEmailByClaimIDQueryResponse](context.Background(), q)
 	if err != nil {
 		slog.Error("Error getting email for ClaimID", "claimID", e.ClaimID, "error", err)
 		return
 	}
 	n.sendAndSave(e.ClaimID, application.EmailMessage{
-		To:      email,
+		To:      response.Email,
 		Subject: fmt.Sprintf("Claim #%d - Payout Rejected", e.ClaimID),
 		Body: fmt.Sprintf("We regret to inform you that your claim payout has been rejected.\n\n"+
 			"Claim ID: %d\nReason: %s\nReviewed by Employee ID: %d\n\n"+
@@ -203,10 +216,12 @@ func (n *NotificationEventHandler) handleRegisterUserForNotification(msg rabbitm
 		return
 	}
 	slog.Info("Handling RegisterUserForNotificationEvent", "claimID", e.ClaimID, "email", e.Email)
-	_, err := n.notificationService.CreateNotificationReceiver(&domain.NotificationReceiver{
+
+	cmd := &command.CreateNotificationReceiverCommand{
 		ClaimID: e.ClaimID,
 		Email:   e.Email,
-	})
+	}
+	_, err := mediatr.Send[*command.CreateNotificationReceiverCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		slog.Error("Error creating notification receiver", "claimID", e.ClaimID, "email", e.Email, "error", err)
 	}

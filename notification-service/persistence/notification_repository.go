@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/notificationservice/domain"
 	"gorm.io/gorm"
 )
@@ -29,7 +30,7 @@ func (nr *NotificationRepository) SaveNotification(ctx context.Context, notifica
 
 }
 
-func (nr *NotificationRepository) GetNotification(ctx context.Context, id uint) (*domain.Notification, error) {
+func (nr *NotificationRepository) GetNotification(ctx context.Context, id uuid.UUID) (*domain.Notification, error) {
 	slog.Info("Getting notification from database", "id", id)
 	notificationModel, err := gorm.G[NotificationModel](nr.db).Where("id = ? ", id).First(ctx)
 	if err != nil {
@@ -51,7 +52,7 @@ func (nr *NotificationRepository) GetNotifications(ctx context.Context) ([]*doma
 	return notificationDomains, nil
 }
 
-func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context, claimID uint) ([]*domain.Notification, error) {
+func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context, claimID uuid.UUID) ([]*domain.Notification, error) {
 	slog.Info("Getting notifications by claim ID from database", "claimID", claimID)
 	notificationDomains := make([]*domain.Notification, 0)
 	notificationModels, err := gorm.G[NotificationModel](nr.db).Where("claim_id = ?", claimID).Find(ctx)
@@ -64,7 +65,7 @@ func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context,
 	return notificationDomains, nil
 
 }
-func (nr *NotificationRepository) DeleteNotificationByID(ctx context.Context, notID uint) error {
+func (nr *NotificationRepository) DeleteNotificationByID(ctx context.Context, notID uuid.UUID) error {
 	slog.Info("Deleting notification by ID from database", "notID", notID)
 	_, err := gorm.G[NotificationModel](nr.db).Where("id = ?", notID).Delete(ctx)
 	return err
@@ -90,7 +91,7 @@ func (nr *NotificationRepository) UpdateNotificationReceiver(ctx context.Context
 	return NotificationReceiverModelToDomain(model), nil
 }
 
-func (nr *NotificationRepository) GetEmailByClaimID(ctx context.Context, claimID uint) (string, error) {
+func (nr *NotificationRepository) GetEmailByClaimID(ctx context.Context, claimID uuid.UUID) (string, error) {
 	slog.Info("Getting email by claim ID from database", "claimID", claimID)
 	var receiver NotificationReceiverModel
 	err := nr.db.Where("claim_id = ?", claimID).First(&receiver).Error

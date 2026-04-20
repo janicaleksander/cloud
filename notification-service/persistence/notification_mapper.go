@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"github.com/janicaleksander/cloud/notificationservice/domain"
-	"gorm.io/gorm"
 )
 
 func NotificationReceiverModelToDomain(receiver *NotificationReceiverModel) *domain.NotificationReceiver {
@@ -15,7 +14,7 @@ func NotificationReceiverModelToDomain(receiver *NotificationReceiverModel) *dom
 
 func NotificationReceiverDomainToModel(receiver *domain.NotificationReceiver) *NotificationReceiverModel {
 	return &NotificationReceiverModel{
-		Model:   gorm.Model{ID: receiver.ID},
+		ID:      receiver.ID,
 		ClaimID: receiver.ClaimID,
 		Email:   receiver.Email,
 	}
@@ -33,7 +32,7 @@ func NotificationModelToDomain(notification *NotificationModel) *domain.Notifica
 
 func NotificationDomainToModel(notification *domain.Notification) *NotificationModel {
 	return &NotificationModel{
-		Model:   gorm.Model{ID: notification.ID},
+		ID:      notification.ID,
 		ClaimID: notification.ClaimID,
 		Body:    notification.Body,
 		SentTo:  notification.SentTo,

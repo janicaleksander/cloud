@@ -3,19 +3,19 @@ package persistence
 import (
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type NotificationModel struct {
-	gorm.Model
-	ClaimID uint      `gorm:"not null"`
+	ID      uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ClaimID uuid.UUID `gorm:"not null"`
 	Body    string    `gorm:"not null"`
 	SentTo  string    `gorm:"not null"`
 	Time    time.Time `gorm:"not null"`
 }
 
 type NotificationReceiverModel struct {
-	gorm.Model
-	ClaimID uint   `gorm:"not null"`
-	Email   string `gorm:"not null"`
+	ID      uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ClaimID uuid.UUID `gorm:"not null"`
+	Email   string    `gorm:"not null"`
 }

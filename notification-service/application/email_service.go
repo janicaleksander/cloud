@@ -25,5 +25,6 @@ func (es *EmailService) Send(message EmailMessage) error {
 	slog.Info("Sending email", "to", message.To, "subject", message.Subject)
 	slog.Info("Email content", "body", message.Body)
 	slog.Info("Email sent successfully", "to", message.To)
+
 	return nil
 }

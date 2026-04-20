@@ -7,6 +7,8 @@ import (
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/notificationservice/application"
+	"github.com/janicaleksander/cloud/notificationservice/application/command"
+	"github.com/janicaleksander/cloud/notificationservice/application/query"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/notificationservice/persistence"
@@ -43,10 +45,27 @@ func main() {
 	// Initialize repositories and services
 	notificationRepository := persistence.NewNotificationRepository(db)
 	emailService := application.NewEmailService("notifications@insurance.com")
-	notificationService := application.NewNotificationService(notificationRepository)
 
-	notificationController := presentation.NewNotificationController(notificationService)
-	notificationEventHandler := messaging.NewNotificationHandler(notificationService, emailService)
+	createNotificationCommand := command.NewCreateNotificationCommandHandler(notificationRepository)
+	createNotificationReceiver := command.NewCreateNotificationReceiverCommandHandler(notificationRepository)
+	deleteNotificationCommand := command.NewDeleteNotificationCommandHandler(notificationRepository)
+
+	_ = createNotificationCommand.SelfRegister()
+	_ = createNotificationReceiver.SelfRegister()
+	_ = deleteNotificationCommand.SelfRegister()
+
+	getEmailByClaimIDQuery := query.NewGetEmailByClaimIDQueryHandler(notificationRepository)
+	getNotificationQuery := query.NewGetNotificationQueryHandler(notificationRepository)
+	getNotificationsQuery := query.NewGetNotificationsQueryHandler(notificationRepository)
+	getNotificationsForClaimIDQuery := query.NewGetNotificationsForClaimIDQueryHandler(notificationRepository)
+
+	_ = getEmailByClaimIDQuery.SelfRegister()
+	_ = getNotificationQuery.SelfRegister()
+	_ = getNotificationsQuery.SelfRegister()
+	_ = getNotificationsForClaimIDQuery.SelfRegister()
+
+	notificationController := presentation.NewNotificationController()
+	notificationEventHandler := messaging.NewNotificationHandler(emailService)
 	err = notificationEventHandler.Run(rabbit)
 	if err != nil {
 		slog.Error("Error running notification event handler", "error", err)

@@ -1,5 +1,7 @@
 package application
 
+/*
+
 import (
 	"context"
 	"log/slog"
@@ -54,3 +56,4 @@ func (s *NotificationService) GetEmailByClaimID(claimID uint) (string, error) {
 	}
 	return email, nil
 }
+*/

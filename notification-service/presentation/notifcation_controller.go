@@ -1,29 +1,36 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/janicaleksander/cloud/notificationservice/application"
+	"github.com/janicaleksander/cloud/notificationservice/application/command"
+	"github.com/janicaleksander/cloud/notificationservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 type NotificationController struct {
-	notificationService *application.NotificationService
 }
 
-func NewNotificationController(notificationService *application.NotificationService) *NotificationController {
+func NewNotificationController() *NotificationController {
 	slog.Info("Creating NotificationController")
-	return &NotificationController{
-		notificationService: notificationService,
+	return &NotificationController{}
+}
+func success(w http.ResponseWriter, msg any, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if msg != nil {
+		json.NewEncoder(w).Encode(msg)
 	}
 }
-func success(w http.ResponseWriter, msg any) {
+
+func successWithLocation(w http.ResponseWriter, location string, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(msg)
+	w.Header().Set("Location", location)
+	w.WriteHeader(code)
 }
 
 func failure(w http.ResponseWriter, statusCode int, msg string) {
@@ -38,16 +45,13 @@ func (nc *NotificationController) GetNotificationsHandler(w http.ResponseWriter,
 		return
 	}
 	slog.Info("HTTP GetNotificationsHandler called")
-	notificationsDomain, err := nc.notificationService.GetNotifications()
+	q := &query.GetNotificationsQuery{}
+	notifications, err := mediatr.Send[*query.GetNotificationsQuery, *query.GetNotificationsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notifications")
 		return
 	}
-	notificationsDTO := make([]GetNotificationResponseDTO, 0, len(notificationsDomain))
-	for _, notification := range notificationsDomain {
-		notificationsDTO = append(notificationsDTO, *GetNotificationDomainToResponse(notification))
-	}
-	success(w, map[string]any{"notifications": notificationsDTO})
+	success(w, map[string]any{"notifications": notifications.Notifications}, 200)
 
 }
 func (nc *NotificationController) GetNotificationHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,18 +60,15 @@ func (nc *NotificationController) GetNotificationHandler(w http.ResponseWriter, 
 		return
 	}
 	slog.Info("HTTP GetNotificationHandler called")
-	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid notification ID")
-		return
-	}
-	notificationDomain, err := nc.notificationService.GetNotification(uint(idStr))
+	idStr := chi.URLParam(r, "id")
+
+	q := &query.GetNotificationQuery{NotificationID: idStr}
+	notification, err := mediatr.Send[*query.GetNotificationQuery, *query.GetNotificationQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notification")
 		return
 	}
-	notificationDTO := GetNotificationDomainToResponse(notificationDomain)
-	success(w, map[string]any{"notification": notificationDTO})
+	success(w, map[string]any{"notification": notification}, 200)
 
 }
 func (nc *NotificationController) GetNotificationsForClaimIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,21 +77,15 @@ func (nc *NotificationController) GetNotificationsForClaimIDHandler(w http.Respo
 		return
 	}
 	slog.Info("HTTP GetNotificationsForClaimIDHandler called")
-	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid notification ID")
-		return
-	}
-	notificationDomain, err := nc.notificationService.GetNotificationsForClaimID(uint(idStr))
+	idStr := chi.URLParam(r, "id")
+
+	q := &query.GetNotificationsForClaimIDQuery{ClaimID: idStr}
+	notificationForClaimID, err := mediatr.Send[*query.GetNotificationsForClaimIDQuery, *query.GetNotificationsForClaimIDQueryResult](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notification")
 		return
 	}
-	notificationDTO := make([]GetNotificationResponseDTO, 0, len(notificationDomain))
-	for _, notification := range notificationDomain {
-		notificationDTO = append(notificationDTO, *GetNotificationDomainToResponse(notification))
-	}
-	success(w, map[string]any{"notifications": notificationDTO})
+	success(w, map[string]any{"notifications": notificationForClaimID.Notifications}, 200)
 
 }
 func (nc *NotificationController) DeleteNotificationHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,15 +94,14 @@ func (nc *NotificationController) DeleteNotificationHandler(w http.ResponseWrite
 		return
 	}
 	slog.Info("HTTP DeleteNotificationHandler called")
-	idStr, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid notification ID")
-		return
-	}
-	err = nc.notificationService.DeleteNotification(uint(idStr))
+	idStr := chi.URLParam(r, "id")
+
+	cmd := command.DeleteNotificationCommand{NotificationID: idStr}
+
+	_, err := mediatr.Send[*command.DeleteNotificationCommand, *mediatr.Unit](context.Background(), &cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to delete notification")
 		return
 	}
-	success(w, map[string]string{"message": "Notification deleted successfully"})
+	success(w, nil, http.StatusNoContent)
 }
