@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/decisionservice/domain"
 	"gorm.io/gorm"
 )
@@ -17,7 +18,7 @@ func NewDecisionRepository(gorm *gorm.DB) *DecisionRepository {
 	return &DecisionRepository{gorm: gorm}
 }
 
-func (d *DecisionRepository) Save(decision *domain.Decision) (*domain.Decision, error) {
+func (d *DecisionRepository) Save(ctx context.Context, decision *domain.Decision) (*domain.Decision, error) {
 	slog.Info("Saving decision to database")
 	decisionModel := DomainToDecisionModel(decision)
 	err := gorm.G[DecisionModel](d.gorm).Create(context.Background(), decisionModel)
@@ -25,7 +26,7 @@ func (d *DecisionRepository) Save(decision *domain.Decision) (*domain.Decision, 
 
 }
 
-func (d *DecisionRepository) GetByID(decision uint) (*domain.Decision, error) {
+func (d *DecisionRepository) GetByID(ctx context.Context, decision uuid.UUID) (*domain.Decision, error) {
 	slog.Info("Getting decision by ID from database", "decisionID", decision)
 	decisionModel, err := gorm.G[DecisionModel](d.gorm).Where("id = ? ", decision).First(context.Background())
 	if err != nil {
@@ -35,7 +36,7 @@ func (d *DecisionRepository) GetByID(decision uint) (*domain.Decision, error) {
 
 }
 
-func (d *DecisionRepository) GetAll() ([]*domain.Decision, error) {
+func (d *DecisionRepository) GetAll(ctx context.Context) ([]*domain.Decision, error) {
 	slog.Info("Getting all decisions from database")
 	decisionModels, err := gorm.G[DecisionModel](d.gorm).Find(context.Background())
 	if err != nil {
@@ -46,9 +47,8 @@ func (d *DecisionRepository) GetAll() ([]*domain.Decision, error) {
 		decisions[i] = DecisionModelToDomain(&model)
 	}
 	return decisions, nil
-
 }
-func (d *DecisionRepository) GetAllWaiting() ([]*domain.Decision, error) {
+func (d *DecisionRepository) GetAllWaiting(ctx context.Context) ([]*domain.Decision, error) {
 	slog.Info("Getting all waiting decisions from database")
 	decisionModels, err := gorm.G[DecisionModel](d.gorm).Where("result = ?", string(domain.WAITING)).Find(context.Background())
 	if err != nil {
@@ -62,7 +62,7 @@ func (d *DecisionRepository) GetAllWaiting() ([]*domain.Decision, error) {
 
 }
 
-func (d *DecisionRepository) Update(decision *domain.Decision) (*domain.Decision, error) {
+func (d *DecisionRepository) Update(ctx context.Context, decision *domain.Decision) (*domain.Decision, error) {
 	slog.Info("Updating decision in database", "decisionID", decision.ID)
 	decisionModel := DomainToDecisionModel(decision)
 	if err := d.gorm.Save(decisionModel).Error; err != nil {
@@ -71,7 +71,7 @@ func (d *DecisionRepository) Update(decision *domain.Decision) (*domain.Decision
 	return DecisionModelToDomain(decisionModel), nil
 }
 
-func (d *DecisionRepository) DeleteById(id uint) error {
+func (d *DecisionRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting decision by ID from database", "decisionID", id)
 	_, err := gorm.G[DecisionModel](d.gorm).Where("id = ?", id).Delete(context.Background())
 	return err

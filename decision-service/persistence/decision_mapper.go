@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"github.com/janicaleksander/cloud/decisionservice/domain"
-	"gorm.io/gorm"
 )
 
 func DecisionModelToDomain(decision *DecisionModel) *domain.Decision {
@@ -17,7 +16,7 @@ func DecisionModelToDomain(decision *DecisionModel) *domain.Decision {
 
 func DomainToDecisionModel(decision *domain.Decision) *DecisionModel {
 	return &DecisionModel{
-		Model:      gorm.Model{ID: decision.ID},
+		ID:         decision.ID,
 		ClaimID:    decision.ClaimID,
 		EmployeeID: decision.EmployeeID,
 		Payout:     decision.Payout,

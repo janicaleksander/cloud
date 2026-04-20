@@ -1,5 +1,7 @@
 package application
 
+/*package application
+
 import (
 	"errors"
 	"log/slog"
@@ -11,10 +13,6 @@ import (
 type DecisionService struct {
 	decisionRepository domain.DecisionRepository
 	publisher          DecisionPublisher
-}
-
-type DecisionPublisher interface {
-	Publish(exchange string, message any) error
 }
 
 func NewDecisionService(decisionRepo domain.DecisionRepository, publisher DecisionPublisher) *DecisionService {
@@ -92,3 +90,4 @@ func (ds *DecisionService) UpdateDecisionState(oldDecision *domain.Decision, new
 	ds.makeDecision(oldDecision, reason)
 	return ds.decisionRepository.Update(oldDecision)
 }
+*/

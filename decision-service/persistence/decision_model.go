@@ -1,13 +1,13 @@
 package persistence
 
 import (
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type DecisionModel struct {
-	gorm.Model
-	ClaimID    uint    `gorm:"not null"`
-	EmployeeID *uint   `gorm:""`
-	Payout     float64 `gorm:"not null"`
-	Result     string  `gorm:"not null"`
+	ID         uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ClaimID    uuid.UUID `gorm:"not null"`
+	EmployeeID uuid.UUID `gorm:""`
+	Payout     float64   `gorm:"not null"`
+	Result     string    `gorm:"not null"`
 }

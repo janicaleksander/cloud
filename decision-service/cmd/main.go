@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
-	"github.com/janicaleksander/cloud/decisionservice/application"
+	"github.com/janicaleksander/cloud/decisionservice/application/command"
+	"github.com/janicaleksander/cloud/decisionservice/application/query"
 	"github.com/janicaleksander/cloud/decisionservice/infrastructure"
 	"github.com/janicaleksander/cloud/decisionservice/infrastructure/messaging"
 	"github.com/janicaleksander/cloud/decisionservice/persistence"
@@ -35,9 +36,26 @@ func main() {
 	}
 	publisher := rabbitmq.NewPublisher(rabbit)
 	decisionRepository := persistence.NewDecisionRepository(db)
-	decisionService := application.NewDecisionService(decisionRepository, publisher)
-	decisionController := presentation.NewDecisionController(decisionService)
-	decisionEventHandler := messaging.NewDecisionEventHandler(decisionService)
+
+	deleteDecisionCommand := command.NewDeleteDecisionCommandHandler(decisionRepository)
+	prepareDecisionCommand := command.NewPrepareDecisionCommandHandler(decisionRepository)
+	updateDecisionStateCommand := command.NewUpdateDecisionStateCommandHandler(decisionRepository, publisher)
+	updateEmpCommand := command.NewUpdateEmpCommandHandler(decisionRepository)
+
+	_ = deleteDecisionCommand.SelfRegister()
+	_ = prepareDecisionCommand.SelfRegister()
+	_ = updateDecisionStateCommand.SelfRegister()
+	_ = updateEmpCommand.SelfRegister()
+
+	getDecisionQuery := query.NewGetDecisionQueryHandler(decisionRepository)
+	getDecisionsQuery := query.NewGetDecisionsQueryHandler(decisionRepository)
+	getWaitingDecisions := query.NewGetWaitingDecisionsQueryHandler(decisionRepository)
+	_ = getDecisionQuery.SelfRegister()
+	_ = getDecisionsQuery.SelfRegister()
+	_ = getWaitingDecisions.SelfRegister()
+
+	decisionController := presentation.NewDecisionController()
+	decisionEventHandler := messaging.NewDecisionEventHandler()
 	err = decisionEventHandler.Run(rabbit)
 	if err != nil {
 		panic(err)

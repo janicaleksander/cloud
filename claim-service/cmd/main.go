@@ -56,12 +56,10 @@ func main() {
 
 	createClaimHandler := command.NewCreateClaimCommandHandler(claimRepo, publisher, fileStorage)
 	deleteClaimHandler := command.NewDeleteClaimCommandHandler(claimRepo, fileStorage)
-	updateClaimHandler := command.NewUpdateClaimCommandHandler(claimRepo, publisher)
 	updateStatusHandler := command.NewUpdateClaimStatusCommandHandler(claimRepo, publisher)
 
 	_ = createClaimHandler.SelfRegister()
 	_ = deleteClaimHandler.SelfRegister()
-	_ = updateClaimHandler.SelfRegister()
 	_ = updateStatusHandler.SelfRegister()
 
 	getClaimQuery := query.NewGetClaimQueryHandler(claimRepo)

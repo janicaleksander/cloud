@@ -1,28 +1,29 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
-	"github.com/janicaleksander/cloud/decisionservice/application"
+	"github.com/janicaleksander/cloud/decisionservice/application/command"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 const queueName = "decision-services"
 const exchangeName = "events"
 
 type DecisionEventHandler struct {
-	decisionService *application.DecisionService
-	handlers        map[string]rabbitmq.HandlerFunc
+	handlers map[string]rabbitmq.HandlerFunc
 }
 
-func NewDecisionEventHandler(decisionService *application.DecisionService) *DecisionEventHandler {
+func NewDecisionEventHandler() *DecisionEventHandler {
 	slog.Info("Creating DecisionEventHandler")
 	h := &DecisionEventHandler{
-		decisionService: decisionService,
-		handlers:        make(map[string]rabbitmq.HandlerFunc),
+		handlers: make(map[string]rabbitmq.HandlerFunc),
 	}
 	h.registerHandlers()
 	return h
@@ -67,7 +68,13 @@ func (dH *DecisionEventHandler) handleValuationCalculated(msg rabbitmq.Delivery)
 		slog.Error("failed to unmarshal ValuationCalculatedEvent", "error", err)
 		return
 	}
-	_, err = dH.decisionService.PrepareDecision(e.ClaimID, e.PayoutAmount)
+
+	cmd := &command.PrepareDecisionCommand{
+		ID:           uuid.New().String(),
+		ClaimID:      e.ClaimID,
+		PayoutAmount: e.PayoutAmount,
+	}
+	_, err = mediatr.Send[*command.PrepareDecisionCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		slog.Error("Failed to prepare decision", "error", err)
 	}

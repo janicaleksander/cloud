@@ -33,6 +33,7 @@ func (h *CreateValuationCommandHandler) SelfRegister() error {
 
 // TODO remember about ID
 // TODO do mappers in services
+// TODO do mappers in controllers -> dto -> cmd/query
 func (h *CreateValuationCommandHandler) Handle(ctx context.Context, cmd *CreateValuationCommand) (*mediatr.Unit, error) {
 	valuationDomain := CreateValuationCommandToDomain(cmd)
 	_, err := h.repo.Save(ctx, valuationDomain)
