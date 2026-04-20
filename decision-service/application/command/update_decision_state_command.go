@@ -48,8 +48,7 @@ func (h *UpdateDecisionStateCommandHandler) Handle(ctx context.Context, cmd *Upd
 	if oldDecisionDomain.Result != domain.WAITING {
 		return nil, errors.New("already accepted/denied")
 	}
-	decisionResult := domain.StringToResult(cmd.NewState)
-	oldDecisionDomain.Result = decisionResult
+	oldDecisionDomain.Result = domain.StringToResult(cmd.NewState)
 	oldDecisionDomain.EmployeeID = eid
 	h.makeDecision(oldDecisionDomain, cmd.Reason)
 	return &mediatr.Unit{}, nil
@@ -67,6 +66,17 @@ func (h *UpdateDecisionStateCommandHandler) makeDecision(newDecision *domain.Dec
 			slog.Error("Failed to publish PayoutApprovedEvent", "error", err)
 			return
 		}
+		cmd := &UpdateEmpCommand{
+			NewState:   string(newDecision.Result),
+			DecisionID: newDecision.ID.String(),
+			EmpID:      newDecision.EmployeeID.String(),
+		}
+		_, err = mediatr.Send[*UpdateEmpCommand, *mediatr.Unit](context.Background(), cmd)
+
+		if err != nil {
+			slog.Error("Failed to send UpdateDecisionStateCommand", "error", err)
+			return
+		}
 	}
 	if newDecision.Result == domain.REJECTED {
 		err := h.publisher.Publish("events", event.PayoutRejectedEvent{
@@ -78,15 +88,17 @@ func (h *UpdateDecisionStateCommandHandler) makeDecision(newDecision *domain.Dec
 			slog.Error("Failed to publish PayoutRejectedEvent", "error", err)
 			return
 		}
-	}
-	cmd := &UpdateEmpCommand{
-		DecisionID: newDecision.ID.String(),
-		EmpID:      newDecision.EmployeeID.String(),
-	}
-	_, err := mediatr.Send[*UpdateEmpCommand, *mediatr.Unit](context.Background(), cmd)
+		cmd := &UpdateEmpCommand{
+			NewState:   string(newDecision.Result),
+			DecisionID: newDecision.ID.String(),
+			EmpID:      newDecision.EmployeeID.String(),
+		}
+		_, err = mediatr.Send[*UpdateEmpCommand, *mediatr.Unit](context.Background(), cmd)
 
-	if err != nil {
-		slog.Error("Failed to send UpdateDecisionStateCommand", "error", err)
-		return
+		if err != nil {
+			slog.Error("Failed to send UpdateDecisionStateCommand", "error", err)
+			return
+		}
 	}
+
 }

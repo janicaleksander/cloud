@@ -11,6 +11,7 @@ import (
 type UpdateEmpCommand struct {
 	DecisionID string
 	EmpID      string
+	NewState   string
 }
 
 type UpdateEmpCommandHandler struct {
@@ -39,6 +40,7 @@ func (h *UpdateEmpCommandHandler) Handle(ctx context.Context, cmd *UpdateEmpComm
 		return nil, err
 	}
 	oldDecisionDomain.EmployeeID = eid
+	oldDecisionDomain.Result = domain.StringToResult(cmd.NewState)
 	_, err = h.repo.Update(ctx, oldDecisionDomain)
 	if err != nil {
 		return nil, err

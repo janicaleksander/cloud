@@ -125,12 +125,11 @@ func (d *DecisionController) UpdateDecisionHandler(w http.ResponseWriter, r *htt
 		DecisionID: decisionID,
 		NewState:   dto.NewState,
 		EmpID:      dto.EmpID,
-		Reason:     dto.Reason,
 	}
 	_, err = mediatr.Send[*command.UpdateDecisionStateCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusNotFound, "Decision not found")
 		return
 	}
-	success(w, nil, http.StatusNoContent)
+	successWithLocation(w, "/decisions/"+decisionID, http.StatusOK)
 }
