@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
-	"github.com/janicaleksander/cloud/valuationservice/application"
+	"github.com/janicaleksander/cloud/valuationservice/application/command"
+	"github.com/janicaleksander/cloud/valuationservice/application/query"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/ai"
 	"github.com/janicaleksander/cloud/valuationservice/infrastructure/messaging"
@@ -37,9 +38,25 @@ func main() {
 		panic(err)
 	}
 	valuationRepository := persistence.NewValuationRepository(db)
-	valuationService := application.NewValuationService(valuationRepository, publisher, newMockDamageDetectro)
-	valuationController := presentation.NewValuationController(valuationService)
-	valuationHandler := messaging.NewValuationEventHandler(valuationService)
+
+	calculateValuationCommand := command.NewCalculateValuationCommandHandler(valuationRepository, newMockDamageDetectro, publisher)
+	createValuationCommand := command.NewCreateValuationCommandHandler(valuationRepository)
+	deleteValuationCommand := command.NewDeleteValuationCommandHandler(valuationRepository)
+	updateValuationCommand := command.NewUpdateValuationCommandHandler(valuationRepository)
+
+	_ = calculateValuationCommand.SelfRegister()
+	_ = createValuationCommand.SelfRegister()
+	_ = deleteValuationCommand.SelfRegister()
+	_ = updateValuationCommand.SelfRegister()
+
+	getValuationQuery := query.NewGetValuationQueryHandler(valuationRepository)
+	getValuationsQuery := query.NewGetValuationsQueryHandler(valuationRepository)
+
+	_ = getValuationQuery.SelfRegister()
+	_ = getValuationsQuery.SelfRegister()
+
+	valuationController := presentation.NewValuationController()
+	valuationHandler := messaging.NewValuationEventHandler()
 	valuationHandler.Run(rabbit)
 	r := router.NewRouter(valuationController)
 

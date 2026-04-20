@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"github.com/janicaleksander/cloud/valuationservice/domain"
-	"gorm.io/gorm"
 )
 
 func ValuationModelToDomain(m *ValuationModel) *domain.Valuation {
@@ -26,18 +25,14 @@ func ValuationDomainToModel(d *domain.Valuation) *ValuationModel {
 	parts := make([]PartModel, 0)
 	for _, part := range d.Parts {
 		parts = append(parts, PartModel{
-			Model: gorm.Model{
-				ID: part.ID,
-			},
+			ID:   part.ID,
 			Name: part.Name,
 			Cost: part.Cost,
 		})
 
 	}
 	return &ValuationModel{
-		Model: gorm.Model{
-			ID: d.ID,
-		},
+		ID:      d.ID,
 		ClaimID: d.ClaimID,
 		Amount:  d.Amount,
 		Parts:   parts,

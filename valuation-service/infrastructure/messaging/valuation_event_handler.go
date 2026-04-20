@@ -1,29 +1,28 @@
 package messaging
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 	"log/slog"
 
 	"github.com/janicaleksander/cloud/common/event"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/common/rabbitmq/utils"
-	"github.com/janicaleksander/cloud/valuationservice/application"
+	"github.com/janicaleksander/cloud/valuationservice/application/command"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 const queueName = "valuation-service"
 const exchangeName = "events"
 
 type ValuationEventHandler struct {
-	valuationService *application.ValuationService
-	handlers         map[string]rabbitmq.HandlerFunc
+	handlers map[string]rabbitmq.HandlerFunc
 }
 
-func NewValuationEventHandler(vS *application.ValuationService) *ValuationEventHandler {
+func NewValuationEventHandler() *ValuationEventHandler {
 	slog.Info("Creating ValuationEventHandler")
 	v := &ValuationEventHandler{
-		valuationService: vS,
-		handlers:         make(map[string]rabbitmq.HandlerFunc),
+		handlers: make(map[string]rabbitmq.HandlerFunc),
 	}
 	v.registerHandlers()
 	return v
@@ -58,14 +57,15 @@ func (v *ValuationEventHandler) handlePolicyVerifiedEvent(msg rabbitmq.Delivery)
 		slog.Error("failed to unmarshal PolicyVerifiedEvent", "error", err.Error())
 		return
 	}
-	err = v.valuationService.CalculateValuation(
-		policyVerifiedEvent.StorageURL,
-		policyVerifiedEvent.ClaimID,
-	)
-	if err != nil {
-		log.Println(err.Error())
+	cmd := &command.CalculateValuationCommand{
+		ClaimID: policyVerifiedEvent.ClaimID,
+		Urls:    policyVerifiedEvent.StorageURL,
 	}
-
+	_, err = mediatr.Send[*command.CalculateValuationCommand, *mediatr.Unit](context.Background(), cmd)
+	if err != nil {
+		slog.Error("failed to send CalculateValuationCommand", "error", err.Error())
+		return
+	}
 }
 
 func (v *ValuationEventHandler) dispatch(msgs rabbitmq.MsgChan) {

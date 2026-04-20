@@ -1,5 +1,7 @@
 package application
 
+/*
+
 import (
 	"context"
 	"log/slog"
@@ -12,14 +14,6 @@ type ValuationService struct {
 	valuationRepository domain.ValuationRepository
 	publisher           ValuationPublisher
 	damageDetector      DamageDetector
-}
-
-type ValuationPublisher interface {
-	Publish(exchange string, msg interface{}) error
-}
-
-type DamageDetector interface {
-	Analyze(ctx context.Context, urls []string) ([]string, error)
 }
 
 func NewValuationService(valuationRepo domain.ValuationRepository, publisher ValuationPublisher, damageDetector DamageDetector) *ValuationService {
@@ -97,3 +91,4 @@ func (vs *ValuationService) CalculateValuation(urls []string, claimID uint) erro
 		PayoutAmount: amount,
 	})
 }
+*/

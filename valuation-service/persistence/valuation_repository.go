@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/valuationservice/domain"
 	"gorm.io/gorm"
 )
@@ -30,7 +31,7 @@ func (v *ValuationRepository) GetAll(ctx context.Context) ([]*domain.Valuation, 
 	}
 	return valuationDomains, nil
 }
-func (v *ValuationRepository) GetById(ctx context.Context, id uint) (*domain.Valuation, error) {
+func (v *ValuationRepository) GetById(ctx context.Context, id uuid.UUID) (*domain.Valuation, error) {
 	slog.Info("Getting valuation by ID from the database", "id", id)
 	valuationModel, err := gorm.G[ValuationModel](v.gorm).Preload("Parts", nil).Where("id = ?", id).First(ctx)
 	if err != nil {
@@ -64,7 +65,6 @@ func (v *ValuationRepository) Update(ctx context.Context, valuationDomain *domai
 		}
 
 		for i := range valuationModel.Parts {
-			valuationModel.Parts[i].ID = 0
 			valuationModel.Parts[i].ValuationID = valuationModel.ID
 		}
 
@@ -84,7 +84,7 @@ func (v *ValuationRepository) Update(ctx context.Context, valuationDomain *domai
 
 	return ValuationModelToDomain(&updated), nil
 }
-func (v *ValuationRepository) DeleteById(ctx context.Context, id uint) error {
+func (v *ValuationRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting valuation by ID from the database", "id", id)
 	_, err := gorm.G[ValuationModel](v.gorm).Where("id = ?", id).Delete(ctx)
 	return err

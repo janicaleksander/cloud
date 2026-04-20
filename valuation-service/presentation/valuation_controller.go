@@ -1,31 +1,37 @@
 package presentation
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/janicaleksander/cloud/valuationservice/application"
+	"github.com/janicaleksander/cloud/valuationservice/application/command"
+	"github.com/janicaleksander/cloud/valuationservice/application/query"
+	"github.com/mehdihadeli/go-mediatr"
 )
 
 type ValuationController struct {
-	valuationService *application.ValuationService
 }
 
-func NewValuationController(vS *application.ValuationService) *ValuationController {
+func NewValuationController() *ValuationController {
 	slog.Info("Creating ValuationController")
-	return &ValuationController{
-		valuationService: vS,
+	return &ValuationController{}
+}
+func success(w http.ResponseWriter, msg any, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if msg != nil {
+		json.NewEncoder(w).Encode(msg)
 	}
 }
-func success(w http.ResponseWriter, msg any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(msg)
-}
 
+func successWithLocation(w http.ResponseWriter, location string, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Location", location)
+	w.WriteHeader(code)
+}
 func failure(w http.ResponseWriter, statusCode int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -38,17 +44,13 @@ func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *htt
 		return
 	}
 	slog.Info("HTTP GetValuationsHandler called")
-	domainValuation, err := v.valuationService.GetValuations()
+	q := &query.GetValuationsQuery{}
+	valuationsResponse, err := mediatr.Send[*query.GetValuationsQuery, *query.GetValuationsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuations")
 		return
 	}
-	valuationDTO := make([]*GetValuationResponseDTO, 0, len(domainValuation))
-	for _, valu := range domainValuation {
-		valuationDTO = append(valuationDTO, GetValuationDomainToResponse(valu))
-	}
-	success(w, map[string]any{"valuations": valuationDTO})
-
+	success(w, map[string]any{"valuations": valuationsResponse}, 200)
 }
 
 func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,18 +59,14 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 		return
 	}
 	slog.Info("HTTP GetValuationHandler called")
-	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid valuation ID")
-		return
-	}
-	domainValuation, err := v.valuationService.GetValuation(uint(valuationID))
+	valuationID := chi.URLParam(r, "id")
+	q := &query.GetValuationQuery{ClaimID: valuationID}
+	valuationResponse, err := mediatr.Send[*query.GetValuationQuery, *query.GetValuationQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuation")
 		return
 	}
-	valuationDTO := GetValuationDomainToResponse(domainValuation)
-	success(w, map[string]any{"valuation": valuationDTO})
+	success(w, map[string]any{"valuation": valuationResponse}, 200)
 }
 
 /*
@@ -108,16 +106,13 @@ func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *h
 		return
 	}
 	slog.Info("HTTP DeleteValuationHandler called")
-	valuationID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid valuation ID")
-		return
-	}
-	err = v.valuationService.DeleteValuation(uint(valuationID))
+	valuationID := chi.URLParam(r, "id")
+
+	cmd := &command.DeleteValuationCommand{ID: valuationID}
+	_, err := mediatr.Send[*command.DeleteValuationCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to delete valuation")
 		return
 	}
-	success(w, map[string]any{"message": "Valuation deleted successfully"})
-
+	success(w, map[string]any{"message": "Valuation deleted successfully"}, 204)
 }
