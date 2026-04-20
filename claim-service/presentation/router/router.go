@@ -24,7 +24,6 @@ func setupPaths(r *chi.Mux, handler *presentation.ClaimController) {
 		router.Get("/{id}", handler.GetClaimHandler)                //claim /claim/id
 		router.Post("/", handler.CreateClaimHandler)                //add claim
 		router.Delete("/{id}", handler.DeleteClaimHandler)          //delete claim /claim/id
-		router.Patch("/{id}", handler.UpdateClaimHandler)           //update claim /claim/id
 		router.Get("/file/{id}", handler.GetFileFromStorageHandler) // get file from S3 by ID from database
 	})
 }

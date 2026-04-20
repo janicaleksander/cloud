@@ -183,29 +183,6 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
-func (c *ClaimController) UpdateClaimHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPatch {
-		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-	slog.Info("HTTP UpdateClaimHandler called")
-	claimID := chi.URLParam(r, "id")
-	var updateClaimRequestDTO UpdateClaimRequestDTO
-	err := json.NewDecoder(r.Body).Decode(&updateClaimRequestDTO)
-	if err != nil {
-		failure(w, http.StatusBadRequest, "Invalid JSON in request body")
-		return
-	}
-	cmd := UpdateClaimRequestHTTPToCommand(claimID, &updateClaimRequestDTO)
-	_, err = mediatr.Send[*command.UpdateClaimCommand, *mediatr.Unit](context.Background(), cmd)
-	if err != nil {
-		failure(w, http.StatusNotFound, "No such claim")
-		return
-	}
-	successWithLocation(w, fmt.Sprintf("/claim/%s", claimID), http.StatusOK)
-
-}
-
 func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")

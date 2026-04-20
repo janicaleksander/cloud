@@ -55,7 +55,6 @@ func (n *NotificationEventHandler) registerHandlers() {
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PayoutApprovedEvent{}))] = n.handlePayoutApproved
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.PayoutRejectedEvent{}))] = n.handlePayoutRejected
 	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.RegisterUserForNotificationEvent{}))] = n.handleRegisterUserForNotification
-	n.handlers[rabbitmq.RouteKeyToTopicNotation(utils.NameOfType(event.ChangeEmailForNotification{}))] = n.handleChangeEmailForNotification
 }
 
 func (n *NotificationEventHandler) dispatch(msgs rabbitmq.MsgChan) {
@@ -210,21 +209,5 @@ func (n *NotificationEventHandler) handleRegisterUserForNotification(msg rabbitm
 	})
 	if err != nil {
 		slog.Error("Error creating notification receiver", "claimID", e.ClaimID, "email", e.Email, "error", err)
-	}
-}
-
-func (n *NotificationEventHandler) handleChangeEmailForNotification(msg rabbitmq.Delivery) {
-	var e event.ChangeEmailForNotification
-	if err := json.Unmarshal(msg.Body, &e); err != nil {
-		slog.Error("Error unmarshalling ChangeEmailForNotification", "error", err)
-		return
-	}
-	slog.Info("Handling ChangeEmailForNotification", "claimID", e.ClaimID, "email", e.Email)
-	_, err := n.notificationService.UpdateNotificationReceiver(&domain.NotificationReceiver{
-		ClaimID: e.ClaimID,
-		Email:   e.Email,
-	})
-	if err != nil {
-		slog.Error("Error updating notification receiver", "claimID", e.ClaimID, "email", e.Email, "error", err)
 	}
 }

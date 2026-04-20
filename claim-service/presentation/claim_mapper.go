@@ -68,13 +68,6 @@ func DeleteClaimRequestHTTPToCommand(claimID string) *command.DeleteClaimCommand
 	return &command.DeleteClaimCommand{ClaimID: claimID}
 }
 
-func UpdateClaimRequestHTTPToCommand(claimID string, dto *UpdateClaimRequestDTO) *command.UpdateClaimCommand {
-	return &command.UpdateClaimCommand{
-		ClaimID:  claimID,
-		NewEmail: dto.Email,
-	}
-}
-
 func GetFileRequestHTTPToQuery(fileID string) *query.GetFileFromStorageQuery {
 	return &query.GetFileFromStorageQuery{FileID: fileID}
 }
