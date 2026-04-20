@@ -46,11 +46,6 @@ func (s *NotificationService) CreateNotificationReceiver(nr *domain.Notification
 	return s.notificationRepository.SaveNotificationReceiver(context.Background(), nr)
 }
 
-func (s *NotificationService) UpdateNotificationReceiver(nr *domain.NotificationReceiver) (*domain.NotificationReceiver, error) {
-	slog.Info("Updating notification receiver", "claimID", nr.ClaimID, "email", nr.Email)
-	return s.notificationRepository.UpdateNotificationReceiver(context.Background(), nr)
-}
-
 func (s *NotificationService) GetEmailByClaimID(claimID uint) (string, error) {
 	slog.Info("Getting email by claim ID", "claimID", claimID)
 	email, err := s.notificationRepository.GetEmailByClaimID(context.Background(), claimID)
