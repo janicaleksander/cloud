@@ -10,7 +10,7 @@ import (
 type GetValuationsQuery struct{}
 
 type GetValuationsQueryResponse struct {
-	Valuations []*GetValuationQueryResponse
+	Valuations []*GetValuationQueryResponse `json:"valuations"`
 }
 
 type GetValuationsQueryHandler struct {

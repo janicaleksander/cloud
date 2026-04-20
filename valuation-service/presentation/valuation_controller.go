@@ -50,7 +50,7 @@ func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusInternalServerError, "Failed to get valuations")
 		return
 	}
-	success(w, map[string]any{"valuations": valuationsResponse}, 200)
+	success(w, map[string]any{"valuations": valuationsResponse.Valuations}, 200)
 }
 
 func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http.Request) {

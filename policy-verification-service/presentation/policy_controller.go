@@ -96,7 +96,7 @@ func (p *PolicyController) GetPoliciesHandler(w http.ResponseWriter, r *http.Req
 		failure(w, http.StatusInternalServerError, "Error fetching policies: "+err.Error())
 		return
 	}
-	success(w, map[string]any{"policies": policies}, http.StatusOK)
+	success(w, map[string]any{"policies": policies.Policies}, http.StatusOK)
 }
 
 func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Request) {

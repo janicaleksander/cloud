@@ -10,7 +10,7 @@ import (
 type GetClaimsQuery struct{}
 
 type GetClaimsQueryResponse struct {
-	Claims []*GetClaimByIdQueryResponse
+	Claims []*GetClaimByIdQueryResponse `json:"claims"`
 }
 
 type GetClaimsQueryHandler struct {

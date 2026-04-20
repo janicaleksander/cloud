@@ -10,7 +10,7 @@ import (
 type GetDecisionsQuery struct{}
 
 type GetDecisionsQueryResult struct {
-	Decisions []*GetDecisionQueryResult
+	Decisions []*GetDecisionQueryResult `json:"decisions"`
 }
 type GetDecisionsQueryHandler struct {
 	repo domain.DecisionRepository

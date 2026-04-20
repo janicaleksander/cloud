@@ -51,7 +51,7 @@ func (d *DecisionController) GetDecisionsHandler(w http.ResponseWriter, r *http.
 		failure(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	success(w, map[string]any{"decisions": decisions}, 200)
+	success(w, map[string]any{"decisions": decisions.Decisions}, 200)
 }
 
 func (d *DecisionController) GetDecisionHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +84,7 @@ func (d *DecisionController) GetWaitingDecisionsHandler(w http.ResponseWriter, r
 		failure(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	success(w, map[string]any{"decisions": waitingDecisions}, 200)
+	success(w, map[string]any{"decisions": waitingDecisions.Waiting}, 200)
 
 }
 

@@ -10,7 +10,7 @@ import (
 type GetWaitingDecisionsQuery struct{}
 
 type GetWaitingDecisionsQueryResponse struct {
-	Waiting []*GetDecisionQueryResult
+	Waiting []*GetDecisionQueryResult `json:"waiting"`
 }
 type GetWaitingDecisionsQueryHandler struct {
 	repo domain.DecisionRepository
