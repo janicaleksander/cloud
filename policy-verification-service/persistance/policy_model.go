@@ -7,9 +7,9 @@ import (
 )
 
 type PolicyModel struct {
-	ID     uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserID uuid.UUID `gorm:"not null"`
-	VIN    string    `gorm:"not null"`
-	From   time.Time `gorm:"not null"`
-	To     time.Time `gorm:"not null"`
+	ID     uuid.UUID `dynamodbav:"id"`
+	UserID uuid.UUID `dynamodbav:"user_id"`
+	VIN    string    `dynamodbav:"vin"`
+	From   time.Time `dynamodbav:"from"`
+	To     time.Time `dynamodbav:"to"`
 }
