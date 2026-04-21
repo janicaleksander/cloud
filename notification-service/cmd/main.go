@@ -74,7 +74,7 @@ func main() {
 	r := router.NewRouter(notificationController)
 	log.Println("Notification service is running...")
 
-	err = http.ListenAndServe(":8085", r)
+	err = http.ListenAndServe("localhost:8085", r)
 
 	if err != nil {
 		slog.Error("Error starting HTTP server", "error", err)
