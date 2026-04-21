@@ -42,11 +42,5 @@ func (h *GetNotificationQueryHandler) Handle(ctx context.Context, query *GetNoti
 	if err != nil {
 		return nil, err
 	}
-	return &GetNotificationQueryResponse{
-		ID:      notificationDomain.ID.String(),
-		ClaimID: notificationDomain.ClaimID.String(),
-		Body:    notificationDomain.Body,
-		SentTo:  notificationDomain.SentTo,
-		Time:    notificationDomain.Time,
-	}, nil
+	return NotificationDomainToQueryResponse(notificationDomain), nil
 }

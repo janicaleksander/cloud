@@ -28,13 +28,13 @@ func (h *CreateNotificationCommandHandler) SelfRegister() error {
 }
 
 func (h *CreateNotificationCommandHandler) Handle(ctx context.Context, cmd *CreateNotificationCommand) (*mediatr.Unit, error) {
-	notification := &domain.Notification{
-		ID:      uuid.New(),
-		ClaimID: cmd.ClaimID,
-		Body:    cmd.Body,
-		SentTo:  cmd.SentTo,
-		Time:    cmd.Time,
-	}
+	notification := domain.NewNotification(
+		uuid.New(),
+		cmd.ClaimID,
+		cmd.Body,
+		cmd.SentTo,
+		cmd.Time,
+	)
 	_, err := h.repo.SaveNotification(ctx, notification)
 	if err != nil {
 		return nil, err

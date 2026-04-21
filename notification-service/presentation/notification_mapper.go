@@ -1,13 +1,29 @@
 package presentation
 
-import "github.com/janicaleksander/cloud/notificationservice/domain"
+import (
+	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/notificationservice/application/command"
+	"github.com/janicaleksander/cloud/notificationservice/application/query"
+)
 
-func GetNotificationDomainToResponse(notification *domain.Notification) *GetNotificationResponseDTO {
-	return &GetNotificationResponseDTO{
-		ID:      notification.ID.String(),
-		ClaimID: notification.ClaimID.String(),
-		Body:    notification.Body,
-		SentTo:  notification.SentTo,
-		Time:    notification.Time,
+func GetNotificationHTTPToQuery(notificationID uuid.UUID) *query.GetNotificationQuery {
+	return &query.GetNotificationQuery{
+		NotificationID: notificationID.String(),
+	}
+}
+
+func GetNotificationsHTTPToQuery() *query.GetNotificationsQuery {
+	return &query.GetNotificationsQuery{}
+}
+
+func GetNotificationsForClaimIDHTTPToQuery(claimID uuid.UUID) *query.GetNotificationsForClaimIDQuery {
+	return &query.GetNotificationsForClaimIDQuery{
+		ClaimID: claimID.String(),
+	}
+}
+
+func DeleteNotificationHTTPToCommand(notificationID uuid.UUID) *command.DeleteNotificationCommand {
+	return &command.DeleteNotificationCommand{
+		NotificationID: notificationID.String(),
 	}
 }

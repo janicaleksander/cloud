@@ -36,13 +36,7 @@ func (h *GetNotificationsQueryHandler) Handle(ctx context.Context, query *GetNot
 	}
 
 	for i, n := range notifications {
-		response.Notifications[i] = &GetNotificationQueryResponse{
-			ID:      n.ID.String(),
-			ClaimID: n.ClaimID.String(),
-			Body:    n.Body,
-			SentTo:  n.SentTo,
-			Time:    n.Time,
-		}
+		response.Notifications[i] = NotificationDomainToQueryResponse(n)
 	}
 
 	return response, nil

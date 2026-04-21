@@ -32,11 +32,11 @@ func (h *CreateNotificationReceiverCommandHandler) Handle(ctx context.Context, c
 	if err != nil {
 		return nil, err
 	}
-	nr := &domain.NotificationReceiver{
-		ID:      uuid.New(),
-		ClaimID: cid,
-		Email:   cmd.Email,
-	}
+	nr := domain.NewNotificationReceiver(
+		uuid.New(),
+		cid,
+		cmd.Email,
+	)
 
 	_, err = h.repo.SaveNotificationReceiver(ctx, nr)
 	if err != nil {

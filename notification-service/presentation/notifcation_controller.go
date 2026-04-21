@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/notificationservice/application/command"
 	"github.com/janicaleksander/cloud/notificationservice/application/query"
 	"github.com/mehdihadeli/go-mediatr"
@@ -45,7 +46,7 @@ func (nc *NotificationController) GetNotificationsHandler(w http.ResponseWriter,
 		return
 	}
 	slog.Info("HTTP GetNotificationsHandler called")
-	q := &query.GetNotificationsQuery{}
+	q := GetNotificationsHTTPToQuery()
 	notifications, err := mediatr.Send[*query.GetNotificationsQuery, *query.GetNotificationsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notifications")
@@ -62,7 +63,12 @@ func (nc *NotificationController) GetNotificationHandler(w http.ResponseWriter, 
 	slog.Info("HTTP GetNotificationHandler called")
 	idStr := chi.URLParam(r, "id")
 
-	q := &query.GetNotificationQuery{NotificationID: idStr}
+	notificationID, err := uuid.Parse(idStr)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid notification ID")
+		return
+	}
+	q := GetNotificationHTTPToQuery(notificationID)
 	notification, err := mediatr.Send[*query.GetNotificationQuery, *query.GetNotificationQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notification")
@@ -78,8 +84,12 @@ func (nc *NotificationController) GetNotificationsForClaimIDHandler(w http.Respo
 	}
 	slog.Info("HTTP GetNotificationsForClaimIDHandler called")
 	idStr := chi.URLParam(r, "id")
-
-	q := &query.GetNotificationsForClaimIDQuery{ClaimID: idStr}
+	claimID, err := uuid.Parse(idStr)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid claim ID")
+		return
+	}
+	q := GetNotificationsForClaimIDHTTPToQuery(claimID)
 	notificationForClaimID, err := mediatr.Send[*query.GetNotificationsForClaimIDQuery, *query.GetNotificationsForClaimIDQueryResult](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get notification")
@@ -95,10 +105,13 @@ func (nc *NotificationController) DeleteNotificationHandler(w http.ResponseWrite
 	}
 	slog.Info("HTTP DeleteNotificationHandler called")
 	idStr := chi.URLParam(r, "id")
-
-	cmd := command.DeleteNotificationCommand{NotificationID: idStr}
-
-	_, err := mediatr.Send[*command.DeleteNotificationCommand, *mediatr.Unit](context.Background(), &cmd)
+	notificationID, err := uuid.Parse(idStr)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid notification ID")
+		return
+	}
+	cmd := DeleteNotificationHTTPToCommand(notificationID)
+	_, err = mediatr.Send[*command.DeleteNotificationCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to delete notification")
 		return

@@ -40,13 +40,7 @@ func (h *GetNotificationsForClaimIDQueryHandler) Handle(ctx context.Context, que
 		Notifications: make([]*GetNotificationQueryResponse, len(notifications)),
 	}
 	for i, n := range notifications {
-		result.Notifications[i] = &GetNotificationQueryResponse{
-			ID:      n.ID.String(),
-			ClaimID: n.ClaimID.String(),
-			Body:    n.Body,
-			SentTo:  n.SentTo,
-			Time:    n.Time,
-		}
+		result.Notifications[i] = NotificationDomainToQueryResponse(n)
 	}
 	return result, nil
 }

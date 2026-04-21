@@ -21,6 +21,24 @@ type NotificationReceiver struct {
 	Email   string
 }
 
+func NewNotification(id, claimID uuid.UUID, body, sentTo string, time time.Time) *Notification {
+	return &Notification{
+		ID:      id,
+		ClaimID: claimID,
+		Body:    body,
+		SentTo:  sentTo,
+		Time:    time,
+	}
+}
+
+func NewNotificationReceiver(id, claimID uuid.UUID, email string) *NotificationReceiver {
+	return &NotificationReceiver{
+		ID:      id,
+		ClaimID: claimID,
+		Email:   email,
+	}
+}
+
 type NotificationRepository interface {
 	SaveNotification(context.Context, *Notification) (*Notification, error)
 	GetNotification(context.Context, uuid.UUID) (*Notification, error)
