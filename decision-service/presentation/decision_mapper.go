@@ -1,13 +1,32 @@
 package presentation
 
-import "github.com/janicaleksander/cloud/decisionservice/domain"
+import (
+	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/decisionservice/application/command"
+	"github.com/janicaleksander/cloud/decisionservice/application/query"
+)
 
-func GetDecisionDomainToResponse(d *domain.Decision) *GetDecisionResponseDTO {
-	return &GetDecisionResponseDTO{
-		ID:         d.ID.String(),
-		EmployeeID: d.EmployeeID.String(),
-		ClaimID:    d.ClaimID.String(),
-		Payout:     d.Payout,
-		State:      string(d.Result),
+func GetDecisionHTTPToQuery(decisionID uuid.UUID) *query.GetDecisionQuery {
+	return &query.GetDecisionQuery{DecisionID: decisionID.String()}
+}
+
+func GetDecisionsHTTPToQuery() *query.GetDecisionsQuery {
+	return &query.GetDecisionsQuery{}
+}
+
+func GetWaitingDecisionsHTTPToQuery() *query.GetWaitingDecisionsQuery {
+	return &query.GetWaitingDecisionsQuery{}
+}
+
+func DeleteDecisionHTTPToCommand(decisionID uuid.UUID) *command.DeleteDecisionCommand {
+	return &command.DeleteDecisionCommand{DecisionID: decisionID.String()}
+}
+
+func UpdateDecisionHTTPToCommand(decisionID uuid.UUID, req *UpdateDecisionRequestDTO) *command.UpdateDecisionStateCommand {
+	return &command.UpdateDecisionStateCommand{
+		DecisionID: decisionID.String(),
+		NewState:   req.NewState,
+		EmpID:      req.EmpID,
+		Reason:     req.Reason,
 	}
 }

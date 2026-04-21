@@ -42,11 +42,5 @@ func (h *GetDecisionQueryHandler) Handle(ctx context.Context, query *GetDecision
 	if err != nil {
 		return nil, err
 	}
-	return &GetDecisionQueryResult{
-		ID:         decision.ID.String(),
-		EmployeeID: decision.EmployeeID.String(),
-		ClaimID:    decision.ClaimID.String(),
-		Payout:     decision.Payout,
-		State:      string(decision.Result),
-	}, nil
+	return DecisionDomainToQueryResponse(decision), nil
 }

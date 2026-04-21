@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/decisionservice/domain"
 	"github.com/mehdihadeli/go-mediatr"
 )
@@ -27,21 +26,8 @@ func (h *PrepareDecisionCommandHandler) SelfRegister() error {
 }
 
 func (h *PrepareDecisionCommandHandler) Handle(ctx context.Context, cmd *PrepareDecisionCommand) (*mediatr.Unit, error) {
-	cid, err := uuid.Parse(cmd.ClaimID)
-	if err != nil {
-		return nil, err
-	}
-	did, err := uuid.Parse(cmd.ID)
-	if err != nil {
-		return nil, err
-	}
-	decisionDomain := &domain.Decision{
-		ID:      did,
-		ClaimID: cid,
-		Payout:  cmd.PayoutAmount,
-		Result:  domain.WAITING,
-	}
-	_, err = h.repo.Save(ctx, decisionDomain)
+	decisionDomain := PrepareDecisionCommandToDomain(cmd)
+	_, err := h.repo.Save(ctx, decisionDomain)
 	if err != nil {
 		return nil, err
 	}

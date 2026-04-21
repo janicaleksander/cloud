@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/decisionservice/application/command"
 	"github.com/janicaleksander/cloud/decisionservice/application/query"
 	"github.com/mehdihadeli/go-mediatr"
@@ -45,7 +46,7 @@ func (d *DecisionController) GetDecisionsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 	slog.Info("HTTP GetDecisionsHandler called")
-	q := &query.GetDecisionsQuery{}
+	q := GetDecisionsHTTPToQuery()
 	decisions, err := mediatr.Send[*query.GetDecisionsQuery, *query.GetDecisionsQueryResult](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, err.Error())
@@ -60,10 +61,14 @@ func (d *DecisionController) GetDecisionHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 	slog.Info("HTTP GetDecisionHandler called")
-	decisionID := chi.URLParam(r, "id")
+	decisionId := chi.URLParam(r, "id")
 
-	q := &query.GetDecisionQuery{DecisionID: decisionID}
-
+	decisionID, err := uuid.Parse(decisionId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid decision ID")
+		return
+	}
+	q := GetDecisionHTTPToQuery(decisionID)
 	decision, err := mediatr.Send[*query.GetDecisionQuery, *query.GetDecisionQueryResult](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, err.Error())
@@ -78,7 +83,8 @@ func (d *DecisionController) GetWaitingDecisionsHandler(w http.ResponseWriter, r
 		return
 	}
 	slog.Info("HTTP GetWaitingDecisionsHandler called")
-	q := &query.GetWaitingDecisionsQuery{}
+
+	q := GetWaitingDecisionsHTTPToQuery()
 	waitingDecisions, err := mediatr.Send[*query.GetWaitingDecisionsQuery, *query.GetWaitingDecisionsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, err.Error())
@@ -94,11 +100,16 @@ func (d *DecisionController) DeleteDecisionHandler(w http.ResponseWriter, r *htt
 		return
 	}
 	slog.Info("HTTP DeleteDecisionHandler called")
-	decisionID := chi.URLParam(r, "id")
+	decisionId := chi.URLParam(r, "id")
 
-	cmd := &command.DeleteDecisionCommand{DecisionID: decisionID}
+	decisionID, err := uuid.Parse(decisionId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid decision ID")
+		return
+	}
 
-	_, err := mediatr.Send[*command.DeleteDecisionCommand, *mediatr.Unit](context.Background(), cmd)
+	cmd := DeleteDecisionHTTPToCommand(decisionID)
+	_, err = mediatr.Send[*command.DeleteDecisionCommand, *mediatr.Unit](context.Background(), cmd)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
@@ -113,7 +124,7 @@ func (d *DecisionController) UpdateDecisionHandler(w http.ResponseWriter, r *htt
 		return
 	}
 	slog.Info("HTTP UpdateDecisionHandler called")
-	decisionID := chi.URLParam(r, "id")
+	decisionId := chi.URLParam(r, "id")
 
 	var dto UpdateDecisionRequestDTO
 	err := json.NewDecoder(r.Body).Decode(&dto)
@@ -121,15 +132,17 @@ func (d *DecisionController) UpdateDecisionHandler(w http.ResponseWriter, r *htt
 		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	cmd := &command.UpdateDecisionStateCommand{
-		DecisionID: decisionID,
-		NewState:   dto.NewState,
-		EmpID:      dto.EmpID,
+
+	decisionID, err := uuid.Parse(decisionId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid decision ID")
+		return
 	}
+	cmd := UpdateDecisionHTTPToCommand(decisionID, &dto)
 	_, err = mediatr.Send[*command.UpdateDecisionStateCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusNotFound, "Decision not found")
 		return
 	}
-	successWithLocation(w, "/decisions/"+decisionID, http.StatusOK)
+	successWithLocation(w, "/decisions/"+decisionID.String(), http.StatusOK)
 }

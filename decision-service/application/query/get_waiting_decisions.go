@@ -32,13 +32,7 @@ func (h *GetWaitingDecisionsQueryHandler) Handle(ctx context.Context, q *GetWait
 
 	results := make([]*GetDecisionQueryResult, len(decisions))
 	for i, d := range decisions {
-		results[i] = &GetDecisionQueryResult{
-			ID:         d.ID.String(),
-			EmployeeID: d.EmployeeID.String(),
-			ClaimID:    d.ClaimID.String(),
-			Payout:     d.Payout,
-			State:      string(d.Result),
-		}
+		results[i] = DecisionDomainToQueryResponse(d)
 	}
 	return &GetWaitingDecisionsQueryResponse{Waiting: results}, nil
 }

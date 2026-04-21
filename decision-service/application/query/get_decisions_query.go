@@ -34,13 +34,7 @@ func (h *GetDecisionsQueryHandler) Handle(ctx context.Context, query *GetDecisio
 		Decisions: make([]*GetDecisionQueryResult, len(decisions)),
 	}
 	for i, d := range decisions {
-		result.Decisions[i] = &GetDecisionQueryResult{
-			ID:         d.ID.String(),
-			EmployeeID: d.EmployeeID.String(),
-			ClaimID:    d.ClaimID.String(),
-			Payout:     d.Payout,
-			State:      string(d.Result),
-		}
+		result.Decisions[i] = DecisionDomainToQueryResponse(d)
 	}
 	return result, nil
 
