@@ -55,24 +55,8 @@ func (h *GetClaimQueryHandler) Handle(ctx context.Context, query *GetClaimByIdQu
 	}
 	filesResponse := make([]FileResponse, len(claimDomain.Files))
 	for i, file := range claimDomain.Files {
-		filesResponse[i] = FileResponse{
-			ID:         file.ID.String(),
-			FileName:   file.FileName,
-			FileExt:    file.FileExt,
-			FileSize:   file.FileSize,
-			UploadedAt: file.UploadedAt,
-			StorageURL: file.StorageURL,
-		}
+		filesResponse[i] = *FileDomainToQueryResponse(file)
 	}
-	return &GetClaimByIdQueryResponse{
-		ID:           claimDomain.ID.String(),
-		UserID:       claimDomain.UserID.String(),
-		Email:        claimDomain.Email,
-		VIN:          claimDomain.VIN,
-		AccidentDate: claimDomain.AccidentDate,
-		Status:       string(claimDomain.Status),
-		Files:        filesResponse,
-		UpdatedAt:    claimDomain.UpdatedAt,
-	}, err
+	return ClaimDomainToQueryResponse(claimDomain), err
 
 }

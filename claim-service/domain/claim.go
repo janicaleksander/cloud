@@ -55,6 +55,30 @@ type File struct {
 	StorageURL string
 }
 
+func NewClaim(id, userID uuid.UUID, email, vin string, accidentDate time.Time, status Status, files []*File) *Claim {
+	return &Claim{
+		ID:           id,
+		UserID:       userID,
+		Email:        email,
+		VIN:          vin,
+		AccidentDate: accidentDate,
+		Status:       status,
+		Files:        files,
+		UpdatedAt:    time.Now(),
+	}
+}
+
+func NewFile(id uuid.UUID, fileName, fileExt string, fileSize int64, uploadedAt time.Time, storageURL string) *File {
+	return &File{
+		ID:         id,
+		FileName:   fileName,
+		FileExt:    fileExt,
+		FileSize:   fileSize,
+		UploadedAt: time.Now(),
+		StorageURL: storageURL,
+	}
+}
+
 type ClaimRepository interface {
 	GetAll(context.Context) ([]*Claim, error)
 	GetById(context.Context, uuid.UUID) (*Claim, error)

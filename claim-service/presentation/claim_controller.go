@@ -124,7 +124,7 @@ func (c *ClaimController) CreateClaimHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	uid := uuid.New()
-	cmd := CreateClaimRequestHTTPToCommand(uid, &createClaimRequest, objectFiles)
+	cmd := CreateClaimHTTPToCommand(uid, &createClaimRequest, objectFiles)
 
 	_, err = mediatr.Send[*command.CreateClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
@@ -142,7 +142,8 @@ func (c *ClaimController) GetClaimHandler(w http.ResponseWriter, r *http.Request
 	}
 	slog.Info("HTTP GetClaimHandler called")
 	claimID := chi.URLParam(r, "id")
-	q := GetClaimRequestHTTPToQuery(claimID)
+
+	q := GetClaimHTTPToQuery(claimID)
 	response, err := mediatr.Send[*query.GetClaimByIdQuery, *query.GetClaimByIdQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such claim")
@@ -157,7 +158,7 @@ func (c *ClaimController) GetClaimsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	slog.Info("HTTP GetClaimsHandler called")
-	q := GetClaimsRequestHTTPToQuery()
+	q := GetClaimsHTTPToQuery()
 	response, err := mediatr.Send[*query.GetClaimsQuery, *query.GetClaimsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching claims: "+err.Error())
@@ -173,7 +174,7 @@ func (c *ClaimController) DeleteClaimHandler(w http.ResponseWriter, r *http.Requ
 	}
 	slog.Info("HTTP DeleteClaimHandler called")
 	claimID := chi.URLParam(r, "id")
-	cmd := DeleteClaimRequestHTTPToCommand(claimID)
+	cmd := DeleteClaimHTTPToCommand(claimID)
 	_, err := mediatr.Send[*command.DeleteClaimCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error deleting claim: "+err.Error())
@@ -189,7 +190,7 @@ func (c *ClaimController) GetFileFromStorageHandler(w http.ResponseWriter, r *ht
 		return
 	}
 	fileID := chi.URLParam(r, "id")
-	q := GetFileRequestHTTPToQuery(fileID)
+	q := GetFileHTTPToQuery(fileID)
 	response, err := mediatr.Send[*query.GetFileFromStorageQuery, *query.GetFileFromStorageQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusNotFound, "No such file")

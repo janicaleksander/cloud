@@ -58,22 +58,36 @@ func (h *CreateClaimCommandHandler) Handle(ctx context.Context, command *CreateC
 		info, err := command.ObjectFiles[idx].Stat()
 		if err != nil {
 			slog.Error(err.Error())
+			return nil, err
 		}
 
-		domainFiles = append(domainFiles, &domain.File{
-			ID:         fileUUID,
-			FileName:   command.ObjectFiles[idx].Name(),
-			FileExt:    ext,
-			FileSize:   info.Size(),
-			UploadedAt: time.Now(),
-			StorageURL: newURL,
-		})
+		domainFiles = append(domainFiles, domain.NewFile(
+			fileUUID,
+			command.ObjectFiles[idx].Name(),
+			ext,
+			info.Size(),
+			time.Now(),
+			newURL,
+		))
 	}
-	claimDomain := CreateClaimCommandToDomain(command)
-	claimDomain.Status = domain.NEW
-	if len(domainFiles) != 0 {
-		claimDomain.Files = domainFiles
+
+	claimID, err := uuid.Parse(command.ID)
+	if err != nil {
+		return nil, err
 	}
+	userID, err := uuid.Parse(command.UserID)
+	if err != nil {
+		return nil, err
+	}
+	claimDomain := domain.NewClaim(
+		claimID,
+		userID,
+		command.Email,
+		command.VIN,
+		command.AccidentDate,
+		domain.NEW,
+		domainFiles,
+	)
 
 	urls := make([]string, 0, len(claimDomain.Files))
 	for idx := range claimDomain.Files {
