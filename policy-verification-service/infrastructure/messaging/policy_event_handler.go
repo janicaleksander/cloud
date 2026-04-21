@@ -72,6 +72,7 @@ func (p *PolicyEventHandler) handleClaimSubmittedEvent(msg rabbitmq.Delivery) {
 		UserID:       claimSubmittedEvent.UserID,
 		VIN:          claimSubmittedEvent.VIN,
 		AccidentDate: claimSubmittedEvent.AccidentDate,
+		URLs:         claimSubmittedEvent.StorageURL,
 	}
 	_, err = mediatr.Send[*query.CheckPolicyQuery, *query.CheckPolicyQueryResponse](context.Background(), q)
 	if err != nil {

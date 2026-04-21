@@ -10,8 +10,8 @@ import (
 )
 
 type CreatePolicyCommand struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID     string
+	UserID string
 	VIN    string
 	From   time.Time
 	To     time.Time
@@ -31,8 +31,22 @@ func (h *CreatePolicyCommandHandler) SelfRegister() error {
 }
 
 func (h *CreatePolicyCommandHandler) Handle(ctx context.Context, cmd *CreatePolicyCommand) (*mediatr.Unit, error) {
-	policyDomain := CreatePolicyCommandToDomain(cmd)
-	_, err := h.repo.Save(ctx, policyDomain)
+	policyID, err := uuid.Parse(cmd.ID)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := uuid.Parse(cmd.UserID)
+	if err != nil {
+		return nil, err
+	}
+	policyDomain := domain.NewPolicy(
+		policyID,
+		userID,
+		cmd.VIN,
+		cmd.From,
+		cmd.To,
+	)
+	_, err = h.repo.Save(ctx, policyDomain)
 	if err != nil {
 		return nil, err
 	}

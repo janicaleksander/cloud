@@ -35,13 +35,7 @@ func (h *GetPoliciesQueryHandler) Handle(ctx context.Context, query *GetPolicies
 	}
 
 	for i, policy := range policies {
-		response.Policies[i] = &GetPolicyQueryResponse{
-			ID:     policy.ID.String(),
-			UserID: policy.UserID.String(),
-			VIN:    policy.VIN,
-			From:   policy.From,
-			To:     policy.To,
-		}
+		response.Policies[i] = PolicyDomainToQueryResponse(policy)
 	}
 
 	return response, nil

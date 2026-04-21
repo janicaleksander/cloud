@@ -53,7 +53,7 @@ func (p *PolicyController) CreatePolicyHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	uid := uuid.New()
-	cmd := CreatePolicyResponseHTTPToCommand(uid, &d)
+	cmd := CreatePolicyHTTPToCommand(uid, &d)
 
 	_, err = mediatr.Send[*command.CreatePolicyCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
@@ -64,7 +64,6 @@ func (p *PolicyController) CreatePolicyHandler(w http.ResponseWriter, r *http.Re
 
 }
 
-// TODO repiar in dtos that i have embeded {} with the same tag in every get
 func (p *PolicyController) GetPolicyHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -72,7 +71,13 @@ func (p *PolicyController) GetPolicyHandler(w http.ResponseWriter, r *http.Reque
 	}
 	slog.Info("HTTP GetPolicyHandler called")
 	policyId := chi.URLParam(r, "id")
-	q := &query.GetPolicyQuery{PolicyID: policyId}
+
+	policyID, err := uuid.Parse(policyId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
+		return
+	}
+	q := GetPolicyHTTPToQuery(policyID)
 
 	d, err := mediatr.Send[*query.GetPolicyQuery, *query.GetPolicyQueryResponse](context.Background(), q)
 	if err != nil {
@@ -90,7 +95,7 @@ func (p *PolicyController) GetPoliciesHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	slog.Info("HTTP GetPoliciesHandler called")
-	q := &query.GetPoliciesQuery{}
+	q := GetPoliciesHTTPToQuery()
 	policies, err := mediatr.Send[*query.GetPoliciesQuery, *query.GetPoliciesQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error fetching policies: "+err.Error())
@@ -113,12 +118,13 @@ func (p *PolicyController) UpdatePolicyHandler(w http.ResponseWriter, r *http.Re
 		failure(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	cmd := command.UpdatePolicyCommand{
-		PolicyID: policyId,
-		NewFrom:  d.From,
-		NewTo:    d.From,
+	policyID, err := uuid.Parse(policyId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
+		return
 	}
-	_, err = mediatr.Send[*command.UpdatePolicyCommand, *mediatr.Unit](context.Background(), &cmd)
+	cmd := UpdatePolicyTTPToCommand(policyID, d.From, d.To)
+	_, err = mediatr.Send[*command.UpdatePolicyCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error updating policy: "+err.Error())
 		return
@@ -133,9 +139,14 @@ func (p *PolicyController) DeletePolicyHandler(w http.ResponseWriter, r *http.Re
 	}
 	slog.Info("HTTP DeletePolicyHandler called")
 	policyId := chi.URLParam(r, "id")
+	policyID, err := uuid.Parse(policyId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid policy ID")
+		return
+	}
+	cmd := DeletePolicyHTTPToCommand(policyID)
 
-	cmd := command.DeletePolicyCommand{PolicyID: policyId}
-	_, err := mediatr.Send[*command.DeletePolicyCommand, *mediatr.Unit](context.Background(), &cmd)
+	_, err = mediatr.Send[*command.DeletePolicyCommand, *mediatr.Unit](context.Background(), cmd)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Error deleting policy: "+err.Error())
 		return

@@ -24,6 +24,15 @@ type Policy struct {
 	To     time.Time
 }
 
+func NewPolicy(id, userID uuid.UUID, vin string, from, to time.Time) *Policy {
+	return &Policy{
+		ID:     id,
+		UserID: userID,
+		VIN:    vin,
+		From:   from,
+		To:     to,
+	}
+}
 func (p Policy) IsValid(accidentDate time.Time) (bool, RejectionReason) {
 	if accidentDate.Before(p.From) {
 		return false, AccidentDateBeforePolicy
@@ -33,8 +42,6 @@ func (p Policy) IsValid(accidentDate time.Time) (bool, RejectionReason) {
 	}
 	return true, ""
 }
-
-//TODO This repo
 
 type PolicyRepository interface {
 	GetAll(context.Context) ([]*Policy, error)

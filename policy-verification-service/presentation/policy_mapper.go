@@ -1,48 +1,45 @@
 package presentation
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
-	"github.com/janicaleksander/cloud/policyverificationservice/domain"
+	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
 )
 
 //RequestToDomain
 
-func CreatePolicyRequestToDomain(r *CreatePolicyRequestDTO) *domain.Policy {
-	uid, err := uuid.Parse(r.UserID)
-	if err != nil {
-		return nil
-	}
-	return &domain.Policy{
-		UserID: uid,
-		VIN:    r.VIN,
-		From:   r.From,
-		To:     r.To,
-	}
-}
-
-// domain to response
-
-func GetPolicyDomainToResponse(p *domain.Policy) *GetPolicyResponseDTO {
-	return &GetPolicyResponseDTO{
-		ID:     p.ID.String(),
-		UserID: p.UserID.String(),
-		VIN:    p.VIN,
-		From:   p.From,
-		To:     p.To,
-	}
-}
-
-func CreatePolicyResponseHTTPToCommand(newID uuid.UUID, p *CreatePolicyRequestDTO) *command.CreatePolicyCommand {
-	uid, err := uuid.Parse(p.UserID)
-	if err != nil {
-		return nil
-	}
+func CreatePolicyHTTPToCommand(newID uuid.UUID, p *CreatePolicyRequestDTO) *command.CreatePolicyCommand {
 	return &command.CreatePolicyCommand{
-		ID:     newID,
-		UserID: uid,
+		ID:     newID.String(),
+		UserID: p.UserID,
 		VIN:    p.VIN,
 		From:   p.From,
 		To:     p.To,
+	}
+}
+
+func GetPolicyHTTPToQuery(policyID uuid.UUID) *query.GetPolicyQuery {
+	return &query.GetPolicyQuery{
+		PolicyID: policyID.String(),
+	}
+}
+
+func GetPoliciesHTTPToQuery() *query.GetPoliciesQuery {
+	return &query.GetPoliciesQuery{}
+}
+
+func UpdatePolicyTTPToCommand(policyID uuid.UUID, from, to time.Time) *command.UpdatePolicyCommand {
+	return &command.UpdatePolicyCommand{
+		PolicyID: policyID.String(),
+		NewFrom:  from,
+		NewTo:    to,
+	}
+}
+
+func DeletePolicyHTTPToCommand(policyID uuid.UUID) *command.DeletePolicyCommand {
+	return &command.DeletePolicyCommand{
+		PolicyID: policyID.String(),
 	}
 }

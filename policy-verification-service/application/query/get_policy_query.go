@@ -43,12 +43,6 @@ func (h *GetPolicyQueryHandler) Handle(ctx context.Context, query *GetPolicyQuer
 		return nil, err
 	}
 
-	return &GetPolicyQueryResponse{
-		ID:     policyDomain.ID.String(),
-		UserID: policyDomain.UserID.String(),
-		VIN:    policyDomain.VIN,
-		From:   policyDomain.From,
-		To:     policyDomain.To,
-	}, nil
+	return PolicyDomainToQueryResponse(policyDomain), nil
 
 }
