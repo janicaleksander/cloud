@@ -8,7 +8,7 @@ type ValuationModel struct {
 	ID      uuid.UUID   `gorm:"type:uuid;primaryKey"`
 	ClaimID uuid.UUID   `gorm:"not null;index"`
 	Amount  float64     `gorm:"not null"`
-	Parts   []PartModel `gorm:"foreignKey:ValuationID"`
+	Parts   []PartModel `gorm:"foreignKey:ValuationID;constraint:OnDelete:CASCADE;"`
 }
 
 type PartModel struct {

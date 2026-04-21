@@ -2,7 +2,6 @@ package aws
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 
@@ -19,7 +18,6 @@ func NewAWSStorage(client *s3.Client) *Storage {
 }
 
 func (s *Storage) StoreFile(ctx context.Context, bucket string, fileID string, contentType string, reader io.Reader) error {
-	fmt.Println(reader)
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(bucket),
 		Key:         aws.String(fileID),

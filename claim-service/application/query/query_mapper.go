@@ -7,7 +7,7 @@ import (
 func FileDomainToQueryResponse(fileDomain *domain.File) *FileResponse {
 	return &FileResponse{
 		ID:         fileDomain.ID.String(),
-		FileName:   fileDomain.FileExt,
+		FileName:   fileDomain.FileName,
 		FileExt:    fileDomain.FileExt,
 		FileSize:   fileDomain.FileSize,
 		UploadedAt: fileDomain.UploadedAt,
