@@ -9,7 +9,7 @@ import (
 	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
 	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/messaging"
-	dynamoDB "github.com/janicaleksander/cloud/policyverificationservice/infrastructure/tableDB"
+	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/tableDB"
 	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation/router"
@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db, err := dynamoDB.NewTableDB()
+	db, err := tableDB.NewTableDB()
 	if err != nil {
 		panic(err)
 	}

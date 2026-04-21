@@ -1,4 +1,4 @@
-package dynamoDB
+package tableDB
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-var tableNamePolicy = "policy_table"
-var tableNameNotification = "notification_table"
+var TableNamePolicy = "policy_table"
+var TableNameNotification = "notification_table"
 
 type TableDB struct {
-	client *dynamodb.Client
+	Client *dynamodb.Client
 }
 
 func NewTableDB() (*TableDB, error) {
@@ -36,7 +36,7 @@ func NewTableDB() (*TableDB, error) {
 		return nil, err
 	}
 	return &TableDB{
-		client: svc,
+		Client: svc,
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (t *TableDB) Migrate() error {
 			ReadCapacityUnits:  aws.Int64(5),
 			WriteCapacityUnits: aws.Int64(5),
 		},
-		TableName: aws.String(tableNamePolicy),
+		TableName: aws.String(TableNamePolicy),
 	}
 	paramNotificationTable := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []types.AttributeDefinition{
@@ -86,16 +86,16 @@ func (t *TableDB) Migrate() error {
 			ReadCapacityUnits:  aws.Int64(5),
 			WriteCapacityUnits: aws.Int64(5),
 		},
-		TableName: aws.String(tableNameNotification),
+		TableName: aws.String(TableNameNotification),
 	}
 	var riue1 *types.ResourceInUseException
-	_, err := t.client.CreateTable(context.Background(), paramPolicyTable)
+	_, err := t.Client.CreateTable(context.Background(), paramPolicyTable)
 	if err != nil && !errors.As(err, &riue1) {
 		return err
 	}
 
 	var riue2 *types.ResourceInUseException
-	_, err = t.client.CreateTable(context.Background(), paramNotificationTable)
+	_, err = t.Client.CreateTable(context.Background(), paramNotificationTable)
 	if err != nil && !errors.As(err, &riue2) {
 		return err
 	}
