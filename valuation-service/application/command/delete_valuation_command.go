@@ -24,8 +24,6 @@ func (h *DeleteValuationCommandHandler) SelfRegister() error {
 	return mediatr.RegisterRequestHandler[*DeleteValuationCommand, *mediatr.Unit](h)
 }
 
-// TODO remember about ID
-// TODO do mappers in services
 func (h *DeleteValuationCommandHandler) Handle(ctx context.Context, cmd *DeleteValuationCommand) (*mediatr.Unit, error) {
 	valuationID, err := uuid.Parse(cmd.ID)
 	if err != nil {

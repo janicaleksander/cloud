@@ -25,8 +25,6 @@ func (h *UpdateValuationCommandHandler) SelfRegister() error {
 	return mediatr.RegisterRequestHandler[*UpdateValuationCommand, *mediatr.Unit](h)
 }
 
-// TODO remember about ID
-// TODO do mappers in services
 func (h *UpdateValuationCommandHandler) Handle(ctx context.Context, cmd *UpdateValuationCommand) (*mediatr.Unit, error) {
 	vid, err := uuid.Parse(cmd.ValuationID)
 	if err != nil {
@@ -37,15 +35,11 @@ func (h *UpdateValuationCommandHandler) Handle(ctx context.Context, cmd *UpdateV
 		return nil, err
 	}
 	if valuationDomain.Amount != cmd.NewAmount && cmd.NewAmount != 0 {
-		_, err = h.repo.Update(ctx, &domain.Valuation{
-			ID:      valuationDomain.ID,
-			ClaimID: valuationDomain.ClaimID,
-			Amount:  cmd.NewAmount,
-			Parts:   valuationDomain.Parts,
-		})
-		if err != nil {
-			return nil, err
-		}
+		valuationDomain.Amount = cmd.NewAmount
+	}
+	_, err = h.repo.Update(ctx, valuationDomain)
+	if err != nil {
+		return nil, err
 	}
 
 	return &mediatr.Unit{}, nil

@@ -32,20 +32,8 @@ func (h *GetValuationsQueryHandler) Handle(ctx context.Context, query *GetValuat
 	}
 	responses := make([]*GetValuationQueryResponse, len(valuationDomains))
 	for i, valuationDomain := range valuationDomains {
-		parts := make([]PartResponse, len(valuationDomain.Parts))
-		for j, part := range valuationDomain.Parts {
-			parts[j] = PartResponse{
-				ID:   part.ID.String(),
-				Name: part.Name,
-				Cost: part.Cost,
-			}
-		}
-		responses[i] = &GetValuationQueryResponse{
-			ID:      valuationDomain.ID.String(),
-			ClaimID: valuationDomain.ClaimID.String(),
-			Amount:  valuationDomain.Amount,
-			Parts:   parts,
-		}
+		responses[i] = ValuationDomainToQueryResponse(valuationDomain)
 	}
+
 	return &GetValuationsQueryResponse{Valuations: responses}, nil
 }

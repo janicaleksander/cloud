@@ -9,7 +9,7 @@ import (
 )
 
 type GetValuationQuery struct {
-	ClaimID string
+	ValuationID string
 }
 
 type GetValuationQueryResponse struct {
@@ -37,7 +37,7 @@ func (h *GetValuationQueryHandler) SelfRegister() error {
 }
 
 func (h *GetValuationQueryHandler) Handle(ctx context.Context, query *GetValuationQuery) (*GetValuationQueryResponse, error) {
-	cid, err := uuid.Parse(query.ClaimID)
+	cid, err := uuid.Parse(query.ValuationID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,19 +45,6 @@ func (h *GetValuationQueryHandler) Handle(ctx context.Context, query *GetValuati
 	if err != nil {
 		return nil, err
 	}
-	parts := make([]PartResponse, len(valuationDomain.Parts))
-	for i, part := range valuationDomain.Parts {
-		parts[i] = PartResponse{
-			ID:   part.ID.String(),
-			Name: part.Name,
-			Cost: part.Cost,
-		}
-	}
-	return &GetValuationQueryResponse{
-		ID:      valuationDomain.ID.String(),
-		ClaimID: valuationDomain.ClaimID.String(),
-		Amount:  valuationDomain.Amount,
-		Parts:   parts,
-	}, nil
+	return ValuationDomainToQueryResponse(valuationDomain), nil
 
 }

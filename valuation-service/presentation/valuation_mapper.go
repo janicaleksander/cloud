@@ -1,22 +1,24 @@
 package presentation
 
 import (
-	"github.com/janicaleksander/cloud/valuationservice/domain"
+	"github.com/google/uuid"
+	"github.com/janicaleksander/cloud/valuationservice/application/command"
+	"github.com/janicaleksander/cloud/valuationservice/application/query"
 )
 
-func GetValuationDomainToResponse(v *domain.Valuation) *GetValuationResponseDTO {
-	parts := make([]Part, len(v.Parts))
-	for i, part := range v.Parts {
-		parts[i] = Part{
-			ID:   part.ID.String(),
-			Name: part.Name,
-			Cost: part.Cost,
-		}
+func GetValuationHTTPToQuery(id uuid.UUID) *query.GetValuationQuery {
+	return &query.GetValuationQuery{
+		ValuationID: id.String(),
 	}
-	return &GetValuationResponseDTO{
-		ID:      v.ID.String(),
-		ClaimID: v.ClaimID.String(),
-		Amount:  v.Amount,
-		Parts:   parts,
+}
+
+func GetValuationsHTTPToQuery() *query.GetValuationsQuery {
+	return &query.GetValuationsQuery{}
+}
+
+func DeleteValuationHTTPToCommand(id uuid.UUID) *command.DeleteValuationCommand {
+	return &command.DeleteValuationCommand{
+		ID: id.String(),
 	}
+
 }

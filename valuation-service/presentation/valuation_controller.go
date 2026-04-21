@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/janicaleksander/cloud/valuationservice/application/command"
 	"github.com/janicaleksander/cloud/valuationservice/application/query"
 	"github.com/mehdihadeli/go-mediatr"
@@ -44,7 +45,8 @@ func (v *ValuationController) GetValuationsHandler(w http.ResponseWriter, r *htt
 		return
 	}
 	slog.Info("HTTP GetValuationsHandler called")
-	q := &query.GetValuationsQuery{}
+
+	q := GetValuationsHTTPToQuery()
 	valuationsResponse, err := mediatr.Send[*query.GetValuationsQuery, *query.GetValuationsQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuations")
@@ -59,14 +61,43 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 		return
 	}
 	slog.Info("HTTP GetValuationHandler called")
-	valuationID := chi.URLParam(r, "id")
-	q := &query.GetValuationQuery{ClaimID: valuationID}
+	valuationId := chi.URLParam(r, "id")
+
+	valuationID, err := uuid.Parse(valuationId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid valuation ID")
+		return
+	}
+	q := GetValuationHTTPToQuery(valuationID)
+
 	valuationResponse, err := mediatr.Send[*query.GetValuationQuery, *query.GetValuationQueryResponse](context.Background(), q)
 	if err != nil {
 		failure(w, http.StatusInternalServerError, "Failed to get valuation")
 		return
 	}
 	success(w, map[string]any{"valuation": valuationResponse}, 200)
+}
+
+func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	slog.Info("HTTP DeleteValuationHandler called")
+	valuationId := chi.URLParam(r, "id")
+
+	valuationID, err := uuid.Parse(valuationId)
+	if err != nil {
+		failure(w, http.StatusBadRequest, "Invalid valuation ID")
+		return
+	}
+	cmd := DeleteValuationHTTPToCommand(valuationID)
+	_, err = mediatr.Send[*command.DeleteValuationCommand, *mediatr.Unit](context.Background(), cmd)
+	if err != nil {
+		failure(w, http.StatusInternalServerError, "Failed to delete valuation")
+		return
+	}
+	success(w, map[string]any{"message": "Valuation deleted successfully"}, 204)
 }
 
 /*
@@ -100,19 +131,3 @@ func (v *ValuationController) GetValuationHandler(w http.ResponseWriter, r *http
 		json.NewEncoder(w).Encode(d)
 	}
 */
-func (v *ValuationController) DeleteValuationHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		failure(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-	slog.Info("HTTP DeleteValuationHandler called")
-	valuationID := chi.URLParam(r, "id")
-
-	cmd := &command.DeleteValuationCommand{ID: valuationID}
-	_, err := mediatr.Send[*command.DeleteValuationCommand, *mediatr.Unit](context.Background(), cmd)
-	if err != nil {
-		failure(w, http.StatusInternalServerError, "Failed to delete valuation")
-		return
-	}
-	success(w, map[string]any{"message": "Valuation deleted successfully"}, 204)
-}

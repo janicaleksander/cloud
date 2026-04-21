@@ -54,25 +54,26 @@ func (h *CalculateValuationCommandHandler) Handle(ctx context.Context, cmd *Calc
 	}
 	parts := make([]*domain.Part, len(damages))
 	for i, damage := range damages {
-		parts[i] = &domain.Part{
-			ID:   uuid.New(),
-			Name: damage,
-			Cost: float64(len(damages)) * 1000, //this is mock
-		}
+		parts[i] = domain.NewPart(
+			uuid.New(),
+			damage,
+			float64(len(damages))*1000, //this is mock
+		)
+
 	}
-	//this is mock
 	amount := 0.0
 	for _, part := range parts {
 		amount += part.Cost
 	}
 
 	//send
-	valuationDomain := &domain.Valuation{
-		ID:      uuid.New(),
-		ClaimID: cid,
-		Amount:  amount,
-		Parts:   parts,
-	}
+	valuationDomain := domain.NewValuation(
+		uuid.New(),
+		cid,
+		amount,
+		parts,
+	)
+
 	createValuationCmd := CreateValuationDomainToCommand(valuationDomain)
 	_, err = mediatr.Send[*CreateValuationCommand, *mediatr.Unit](ctx, createValuationCmd)
 
