@@ -1,0 +1,45 @@
+# --- Git ---
+.git
+.gitignore
+
+# --- Docker ---
+Dockerfile
+docker-compose*.yml
+
+# --- Build outputs ---
+bin/
+build/
+dist/
+*.exe
+*.out
+*.test
+
+# --- Go ---
+*.mod.old
+*.sum.old
+vendor/        # jeśli NIE używasz vendoringu
+
+# --- Node (jeśli masz frontend) ---
+node_modules/
+npm-debug.log
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- Temp files ---
+tmp/
+temp/
+*.swp
+
+# --- Env / secrets ---
+.env
+.env.*
