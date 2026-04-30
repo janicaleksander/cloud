@@ -104,7 +104,7 @@ func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context,
 	for {
 		input := &dynamodb.QueryInput{
 			TableName:              aws.String(tableDB.TableNameNotification),
-			IndexName:              aws.String("user_id-index"),
+			IndexName:              aws.String("claim_id-index"),
 			KeyConditionExpression: aws.String("claim_id = :claimID"),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":claimID": &types.AttributeValueMemberS{Value: claimID.String()},
