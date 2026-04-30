@@ -145,6 +145,7 @@ func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uuid.UUI
 	slog.Info("Checking if user has policy for given VIN", "userID", userID, "vin", vin)
 	response, err := pr.db.Client.Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(tableDB.TableNamePolicy),
+		IndexName:              aws.String("user_id-index"),
 		KeyConditionExpression: aws.String("user_id = :userID"),
 		FilterExpression:       aws.String("vin = :Vin"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{

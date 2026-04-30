@@ -61,9 +61,28 @@ func (t *TableDB) Migrate() error {
 			{
 				AttributeName: aws.String("policy_id"),
 				KeyType:       types.KeyTypeHash,
-			}, {
+			},
+			{
 				AttributeName: aws.String("user_id"),
 				KeyType:       types.KeyTypeRange,
+			},
+		},
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String("user_id-index"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("user_id"),
+						KeyType:       types.KeyTypeHash,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: types.ProjectionTypeAll,
+				},
+				ProvisionedThroughput: &types.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(5),
+					WriteCapacityUnits: aws.Int64(5),
+				},
 			},
 		},
 		ProvisionedThroughput: &types.ProvisionedThroughput{
@@ -73,9 +92,9 @@ func (t *TableDB) Migrate() error {
 		TableName: aws.String(TableNamePolicy),
 	}
 
-	var riue1 *types.ResourceInUseException
+	var riue *types.ResourceInUseException
 	_, err := t.Client.CreateTable(context.Background(), paramPolicyTable)
-	if err != nil && !errors.As(err, &riue1) {
+	if err != nil && !errors.As(err, &riue) {
 		return err
 	}
 	return nil
