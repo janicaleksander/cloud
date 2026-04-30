@@ -11,7 +11,7 @@ import (
 )
 
 func NewDB() (*gorm.DB, error) {
-	slog.Info("Connecting to database for decision service")
+	slog.Info("Connecting to database")
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s sslrootcert=%s",
 		os.Getenv("POSTGRES_HOST"),
