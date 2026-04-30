@@ -14,12 +14,12 @@ import (
 )
 
 type PolicyRepository struct {
-	tableDB *tableDB.TableDB
+	db *tableDB.TableDB
 }
 
 func NewPolicyRepository(tableDB *tableDB.TableDB) *PolicyRepository {
 	slog.Info("Initializing PolicyRepository")
-	return &PolicyRepository{tableDB: tableDB}
+	return &PolicyRepository{db: tableDB}
 }
 
 func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error) {
@@ -28,7 +28,7 @@ func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error
 	var lastKey map[string]types.AttributeValue
 
 	for {
-		response, err := pr.tableDB.Client.Scan(
+		response, err := pr.db.Client.Scan(
 			ctx, &dynamodb.ScanInput{
 				ExclusiveStartKey: lastKey,
 				TableName:         aws.String(tableDB.TableNamePolicy),
@@ -58,7 +58,7 @@ func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error
 
 func (pr *PolicyRepository) GetById(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
 	slog.Info("Getting policy by ID from the database", "id", id)
-	response, err := pr.tableDB.Client.GetItem(ctx, &dynamodb.GetItemInput{
+	response, err := pr.db.Client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(tableDB.TableNamePolicy),
 		Key: map[string]types.AttributeValue{
 			"policy_id": &types.AttributeValueMemberS{Value: id.String()},
@@ -79,7 +79,7 @@ func (pr *PolicyRepository) Save(ctx context.Context, p *domain.Policy) (*domain
 	if err != nil {
 		return nil, err
 	}
-	_, err = pr.tableDB.Client.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = pr.db.Client.PutItem(ctx, &dynamodb.PutItemInput{
 		Item:      av,
 		TableName: aws.String(tableDB.TableNamePolicy),
 	})
@@ -98,7 +98,7 @@ func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*doma
 		return nil, err
 	}
 
-	_, err = pr.tableDB.Client.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = pr.db.Client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(tableDB.TableNamePolicy),
 		Item:                av,
 		ConditionExpression: aws.String("attribute_exists(policy_id)"),
@@ -111,7 +111,7 @@ func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*doma
 }
 func (pr *PolicyRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting policy by ID from the database", "id", id)
-	_, err := pr.tableDB.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+	_, err := pr.db.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(tableDB.TableNamePolicy),
 		Key: map[string]types.AttributeValue{
 			"policy_id": &types.AttributeValueMemberS{Value: id.String()},
@@ -122,7 +122,7 @@ func (pr *PolicyRepository) DeleteById(ctx context.Context, id uuid.UUID) error 
 }
 func (pr *PolicyRepository) IfUserHasPolicy(ctx context.Context, userID uuid.UUID, vin string) (bool, *domain.Policy) {
 	slog.Info("Checking if user has policy for given VIN", "userID", userID, "vin", vin)
-	response, err := pr.tableDB.Client.Query(ctx, &dynamodb.QueryInput{
+	response, err := pr.db.Client.Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(tableDB.TableNamePolicy),
 		KeyConditionExpression: aws.String("user_id = :userID"),
 		FilterExpression:       aws.String("vin = :Vin"),
