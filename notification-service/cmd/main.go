@@ -14,15 +14,14 @@ import (
 	"github.com/janicaleksander/cloud/notificationservice/persistence"
 	"github.com/janicaleksander/cloud/notificationservice/presentation"
 	"github.com/janicaleksander/cloud/notificationservice/presentation/router"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		slog.Error("Error loading .env file", "error", err)
-		panic(err)
-	}
+	/*	err := godotenv.Load()
+		if err != nil {
+			slog.Error("Error loading .env file", "error", err)
+			panic(err)
+		}*/
 	db, err := tableDB.NewTableDB()
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)

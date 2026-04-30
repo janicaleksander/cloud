@@ -43,3 +43,22 @@ temp/
 # --- Env / secrets ---
 .env
 .env.*
+
+# --- Terraform ---
+infrastructure/terraform/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+
+# --- AWS & Certificates ---
+.aws/
+.aws/credentials
+.aws/config
+
+# --- Other sensitive/heavy files ---
+*.zip
+*.tar.gz
+*.bak
+*.backup

@@ -13,14 +13,13 @@ import (
 	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation/router"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	/*	err := godotenv.Load()
+		if err != nil {
+			panic(err)
+		}*/
 	db, err := tableDB.NewTableDB()
 	if err != nil {
 		panic(err)

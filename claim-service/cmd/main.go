@@ -17,16 +17,15 @@ import (
 	"github.com/janicaleksander/cloud/claimservice/presentation"
 	"github.com/janicaleksander/cloud/claimservice/presentation/router"
 	"github.com/janicaleksander/cloud/common/rabbitmq"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		slog.Error("Error loading .env file", "error", err)
-		panic(err)
-	}
-
+	/*	err := godotenv.Load()
+		if err != nil {
+			slog.Error("Error loading .env file", "error", err)
+			panic(err)
+		}
+	*/
 	db, err := infrastructure.NewDB()
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)

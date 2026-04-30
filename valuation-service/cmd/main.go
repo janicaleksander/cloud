@@ -14,14 +14,13 @@ import (
 	"github.com/janicaleksander/cloud/valuationservice/persistence"
 	"github.com/janicaleksander/cloud/valuationservice/presentation"
 	"github.com/janicaleksander/cloud/valuationservice/presentation/router"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
+	/*	err := godotenv.Load()
+		if err != nil {
+			panic(err)
+		}*/
 	db, err := infrastructure.NewDB()
 	if err != nil {
 		panic(err)
