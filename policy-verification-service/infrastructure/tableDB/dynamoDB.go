@@ -19,6 +19,7 @@ type TableDB struct {
 }
 
 func NewTableDB() (*TableDB, error) {
+	slog.Info("initializing DynamoDB client")
 	awsRegion := os.Getenv("AWS_REGION")
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(awsRegion),
@@ -35,9 +36,12 @@ func NewTableDB() (*TableDB, error) {
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("DynamoDB client initialized successfully")
+
 	return &TableDB{
 		Client: svc,
 	}, nil
+
 }
 
 func (t *TableDB) Migrate() error {
@@ -48,11 +52,18 @@ func (t *TableDB) Migrate() error {
 				AttributeName: aws.String("policy_id"),
 				AttributeType: types.ScalarAttributeTypeS,
 			},
+			{
+				AttributeName: aws.String("user_id"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
 		},
 		KeySchema: []types.KeySchemaElement{
 			{
 				AttributeName: aws.String("policy_id"),
 				KeyType:       types.KeyTypeHash,
+			}, {
+				AttributeName: aws.String("user_id"),
+				KeyType:       types.KeyTypeRange,
 			},
 		},
 		ProvisionedThroughput: &types.ProvisionedThroughput{
@@ -67,5 +78,5 @@ func (t *TableDB) Migrate() error {
 	if err != nil && !errors.As(err, &riue1) {
 		return err
 	}
-	return err
+	return nil
 }

@@ -2,6 +2,7 @@ package persistance
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -58,16 +59,27 @@ func (pr *PolicyRepository) GetAll(ctx context.Context) ([]*domain.Policy, error
 
 func (pr *PolicyRepository) GetById(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
 	slog.Info("Getting policy by ID from the database", "id", id)
-	response, err := pr.db.Client.GetItem(ctx, &dynamodb.GetItemInput{
+	input := &dynamodb.QueryInput{
 		TableName: aws.String(tableDB.TableNamePolicy),
-		Key: map[string]types.AttributeValue{
-			"policy_id": &types.AttributeValueMemberS{Value: id.String()},
+		KeyConditionExpression: aws.String(
+			"policy_id = :pk",
+		),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk": &types.AttributeValueMemberS{Value: id.String()},
 		},
-	})
+	}
+	response, err := pr.db.Client.Query(ctx, input)
 	if err != nil {
 		return nil, err
 	}
-	policyDomain, err := PolicyModelToDomain(response.Item)
+	if len(response.Items) == 0 {
+		return nil, errors.New("policy not found")
+	}
+	if len(response.Items) > 1 {
+		slog.Warn("Multiple policies found with the same ID, returning the first one", "id", id)
+		return nil, errors.New("multiple policies found with the same ID")
+	}
+	policyDomain, err := PolicyModelToDomain(response.Items[0])
 	return policyDomain, err
 
 }
@@ -111,10 +123,19 @@ func (pr *PolicyRepository) Update(ctx context.Context, p *domain.Policy) (*doma
 }
 func (pr *PolicyRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	slog.Info("Deleting policy by ID from the database", "id", id)
-	_, err := pr.db.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+	policy, err := pr.GetById(ctx, id)
+	if err != nil {
+		slog.Error("Error getting policy by ID before deletion", "id", id, "error", err)
+		return err
+	}
+	if policy == nil {
+		return errors.New("policy not found")
+	}
+	_, err = pr.db.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(tableDB.TableNamePolicy),
 		Key: map[string]types.AttributeValue{
 			"policy_id": &types.AttributeValueMemberS{Value: id.String()},
+			"user_id":   &types.AttributeValueMemberS{Value: policy.UserID.String()},
 		},
 	})
 	return err
