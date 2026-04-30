@@ -73,8 +73,12 @@ func main() {
 
 	claimController := presentation.NewClaimController()
 	r := router.NewRouter(claimController)
-	slog.Info("Claim service is running on port:%s\n", os.Getenv("APP_PORT"))
-	err = http.ListenAndServe("localhost:8080", r)
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Claim service is running", "addr", ":"+port)
+	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
 		slog.Error("Error running http: ", err)
 		panic(err)

@@ -61,8 +61,12 @@ func main() {
 	}
 
 	r := router.NewRouter(decisionController)
-	slog.Info("Starting decision service on port:", os.Getenv("APP_PORT"))
-	err = http.ListenAndServe("localhost:8084", r)
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Starting decision service", "addr", ":"+port)
+	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
 		slog.Error("Error running http: ", err)
 		panic(err)

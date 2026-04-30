@@ -82,8 +82,13 @@ func main() {
 	go policyEventHandler.Run(rabbit)
 
 	r := router.NewRouter(policyController)
-	slog.Info("Starting Policy Verification Service on port:", os.Getenv("APP_PORT"))
-	err = http.ListenAndServe("localhost:8081", r)
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Starting Policy Verification Service", "addr", ":"+port)
+	err = http.ListenAndServe(":"+port, r)
+
 	if err != nil {
 		slog.Error("Error running http: ", err)
 		panic(err)

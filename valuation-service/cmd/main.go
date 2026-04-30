@@ -58,8 +58,12 @@ func main() {
 	valuationHandler := messaging.NewValuationEventHandler()
 	valuationHandler.Run(rabbit)
 	r := router.NewRouter(valuationController)
-	slog.Info("Starting valuation service on port ", os.Getenv("APP_PORT"))
-	err = http.ListenAndServe("localhost:8082", r)
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Starting valuation service", "addr", ":"+port)
+	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
 		slog.Error("Error running http: ", err)
 		panic(err)

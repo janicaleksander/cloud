@@ -69,8 +69,12 @@ func main() {
 		panic(err)
 	}
 	r := router.NewRouter(notificationController)
-	slog.Info("Starting notification service on port: ", os.Getenv("APP_PORT"))
-	err = http.ListenAndServe("localhost:8085", r)
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Starting notification service", "addr", ":"+port)
+	err = http.ListenAndServe(":"+port, r)
 
 	if err != nil {
 		slog.Error("Error starting HTTP server", "error", err)
