@@ -114,6 +114,3 @@ func (t *TableDB) Migrate() error {
 	}
 	return nil
 }
-
-//TODO przed dodanien sprawdcizc czy cos juz jest -> user 1 polisa max
-// jeden email dla claimID danego
