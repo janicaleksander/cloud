@@ -46,7 +46,7 @@ func (nr *NotificationRepository) GetNotification(ctx context.Context, id uuid.U
 	input := &dynamodb.QueryInput{
 		TableName: aws.String(tableDB.TableNameNotification),
 		KeyConditionExpression: aws.String(
-			"PK = :pk",
+			"notification_id = :pk",
 		),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk": &types.AttributeValueMemberS{Value: id.String()},
@@ -104,9 +104,10 @@ func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context,
 	for {
 		input := &dynamodb.QueryInput{
 			TableName:              aws.String(tableDB.TableNameNotification),
-			KeyConditionExpression: aws.String("SK = :sk"),
+			IndexName:              aws.String("user_id-index"),
+			KeyConditionExpression: aws.String("claim_id = :claimID"),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":sk": &types.AttributeValueMemberS{Value: claimID.String()},
+				":claimID": &types.AttributeValueMemberS{Value: claimID.String()},
 			},
 			ExclusiveStartKey: lastKey,
 		}
@@ -133,10 +134,18 @@ func (nr *NotificationRepository) GetNotificationsByClaimID(ctx context.Context,
 }
 func (nr *NotificationRepository) DeleteNotificationByID(ctx context.Context, notID uuid.UUID) error {
 	slog.Info("Deleting notification by ID from database", "notID", notID)
-	_, err := nr.db.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+	nnotification, err := nr.GetNotification(ctx, notID)
+	if err != nil {
+		return err
+	}
+	if nnotification == nil {
+		return errors.New("notification not found")
+	}
+	_, err = nr.db.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(tableDB.TableNameNotification),
 		Key: map[string]types.AttributeValue{
 			"notification_id": &types.AttributeValueMemberS{Value: notID.String()},
+			"claim_id":        &types.AttributeValueMemberS{Value: nnotification.ClaimID.String()},
 		},
 	})
 	return err
@@ -163,8 +172,9 @@ func (nr *NotificationRepository) GetEmailByClaimID(ctx context.Context, claimID
 	slog.Info("Getting email by claim ID from database", "claimID", claimID)
 	input := &dynamodb.QueryInput{
 		TableName: aws.String(tableDB.TableNameNotificationReceiver),
+		IndexName: aws.String("claim_id-index"),
 		KeyConditionExpression: aws.String(
-			"SK = :sk"),
+			"claim_id = :sk"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":sk": &types.AttributeValueMemberS{Value: claimID.String()},
 		},

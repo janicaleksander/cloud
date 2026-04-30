@@ -66,6 +66,24 @@ func (t *TableDB) Migrate() error {
 				KeyType:       types.KeyTypeRange,
 			},
 		},
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String("claim_id-index"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("claim_id"),
+						KeyType:       types.KeyTypeHash,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: types.ProjectionTypeAll,
+				},
+				ProvisionedThroughput: &types.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(5),
+					WriteCapacityUnits: aws.Int64(5),
+				},
+			},
+		},
 		ProvisionedThroughput: &types.ProvisionedThroughput{
 			ReadCapacityUnits:  aws.Int64(5),
 			WriteCapacityUnits: aws.Int64(5),
@@ -98,6 +116,24 @@ func (t *TableDB) Migrate() error {
 			{
 				AttributeName: aws.String("claim_id"),
 				KeyType:       types.KeyTypeRange,
+			},
+		},
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String("claim_id-index"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("claim_id"),
+						KeyType:       types.KeyTypeHash,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: types.ProjectionTypeAll,
+				},
+				ProvisionedThroughput: &types.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(5),
+					WriteCapacityUnits: aws.Int64(5),
+				},
 			},
 		},
 		ProvisionedThroughput: &types.ProvisionedThroughput{
