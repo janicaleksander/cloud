@@ -8,8 +8,8 @@ import (
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
 	"github.com/janicaleksander/cloud/policyverificationservice/application/query"
-	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/messaging"
+	"github.com/janicaleksander/cloud/policyverificationservice/infrastructure/tableDB"
 	"github.com/janicaleksander/cloud/policyverificationservice/persistance"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation"
 	"github.com/janicaleksander/cloud/policyverificationservice/presentation/router"
@@ -21,11 +21,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db, err := infrastructure.NewDB()
+	db, err := tableDB.NewTableDB()
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(&persistance.PolicyModel{})
+	err = db.Migrate()
 	if err != nil {
 		panic(err)
 	}
