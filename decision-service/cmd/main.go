@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/decisionservice/application/command"
@@ -61,7 +61,7 @@ func main() {
 	}
 
 	r := router.NewRouter(decisionController)
-	log.Println("serving on 8084")
+	slog.Info("Starting decision service on port:", os.Getenv("APP_PORT"))
 	err = http.ListenAndServe("localhost:8084", r)
 	if err != nil {
 		slog.Error("Error running http: ", err)

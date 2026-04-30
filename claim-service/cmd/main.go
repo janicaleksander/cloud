@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -71,13 +71,9 @@ func main() {
 	claimEventHandler := messaging.NewClaimEventHandler()
 	go claimEventHandler.Run(rabbit)
 
-	// =========================
-	// HTTP
-	// =========================
 	claimController := presentation.NewClaimController()
 	r := router.NewRouter(claimController)
-
-	log.Println("serving on 8080")
+	slog.Info("Claim service is running on port:%s\n", os.Getenv("APP_PORT"))
 	err = http.ListenAndServe("localhost:8080", r)
 	if err != nil {
 		slog.Error("Error running http: ", err)

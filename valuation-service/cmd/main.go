@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/valuationservice/application/command"
@@ -58,8 +58,7 @@ func main() {
 	valuationHandler := messaging.NewValuationEventHandler()
 	valuationHandler.Run(rabbit)
 	r := router.NewRouter(valuationController)
-
-	log.Println("serving on 8082")
+	slog.Info("Starting valuation service on port ", os.Getenv("APP_PORT"))
 	err = http.ListenAndServe("localhost:8082", r)
 	if err != nil {
 		slog.Error("Error running http: ", err)

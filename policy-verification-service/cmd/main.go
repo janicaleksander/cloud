@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/policyverificationservice/application/command"
@@ -82,7 +82,7 @@ func main() {
 	go policyEventHandler.Run(rabbit)
 
 	r := router.NewRouter(policyController)
-	log.Println("serving on 8081")
+	slog.Info("Starting Policy Verification Service on port:", os.Getenv("APP_PORT"))
 	err = http.ListenAndServe("localhost:8081", r)
 	if err != nil {
 		slog.Error("Error running http: ", err)

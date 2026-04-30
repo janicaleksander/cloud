@@ -8,6 +8,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /valuation-service ./cmd/main.go
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=builder /valuation-service /
-COPY global-bundle.pem /global-bundle-pem
+COPY global-bundle.pem /global-bundle.pem
 EXPOSE 8083
 CMD ["/valuation-service"]

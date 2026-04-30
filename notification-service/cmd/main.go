@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/janicaleksander/cloud/common/rabbitmq"
 	"github.com/janicaleksander/cloud/notificationservice/application"
@@ -69,8 +69,7 @@ func main() {
 		panic(err)
 	}
 	r := router.NewRouter(notificationController)
-	log.Println("Notification service is running...")
-
+	slog.Info("Starting notification service on port: ", os.Getenv("APP_PORT"))
 	err = http.ListenAndServe("localhost:8085", r)
 
 	if err != nil {
