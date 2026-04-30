@@ -47,6 +47,5 @@ type NotificationRepository interface {
 	DeleteNotificationByID(context.Context, uuid.UUID) error
 
 	SaveNotificationReceiver(context.Context, *NotificationReceiver) (*NotificationReceiver, error)
-	UpdateNotificationReceiver(context.Context, *NotificationReceiver) (*NotificationReceiver, error)
 	GetEmailByClaimID(context.Context, uuid.UUID) (string, error)
 }

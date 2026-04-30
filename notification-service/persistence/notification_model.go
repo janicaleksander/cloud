@@ -2,20 +2,18 @@ package persistence
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type NotificationModel struct {
-	ID      uuid.UUID `gorm:"type:uuid;primaryKey"`
-	ClaimID uuid.UUID `gorm:"not null"`
-	Body    string    `gorm:"not null"`
-	SentTo  string    `gorm:"not null"`
-	Time    time.Time `gorm:"not null"`
+	ID      string    `dynamodbav:"notification_id"`
+	ClaimID string    `dynamodbav:"claim_id"`
+	Body    string    `dynamodbav:"body"`
+	SentTo  string    `dynamodbav:"sent_to"`
+	Time    time.Time `dynamodbav:"time"`
 }
 
 type NotificationReceiverModel struct {
-	ID      uuid.UUID `gorm:"type:uuid;primaryKey"`
-	ClaimID uuid.UUID `gorm:"not null"`
-	Email   string    `gorm:"not null"`
+	ID      string `dynamodbav:"notification_receiver_id"`
+	ClaimID string `dynamodbav:"claim_id"`
+	Email   string `dynamodbav:"email"`
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/janicaleksander/cloud/notificationservice/application"
 	"github.com/janicaleksander/cloud/notificationservice/application/command"
 	"github.com/janicaleksander/cloud/notificationservice/application/query"
-	"github.com/janicaleksander/cloud/notificationservice/infrastructure"
 	"github.com/janicaleksander/cloud/notificationservice/infrastructure/messaging"
+	"github.com/janicaleksander/cloud/notificationservice/infrastructure/tableDB"
 	"github.com/janicaleksander/cloud/notificationservice/persistence"
 	"github.com/janicaleksander/cloud/notificationservice/presentation"
 	"github.com/janicaleksander/cloud/notificationservice/presentation/router"
@@ -23,14 +23,12 @@ func main() {
 		slog.Error("Error loading .env file", "error", err)
 		panic(err)
 	}
-
-	db, err := infrastructure.NewDB()
+	db, err := tableDB.NewTableDB()
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)
 		panic(err)
 	}
-
-	err = db.AutoMigrate(&persistence.NotificationReceiverModel{}, &persistence.NotificationModel{})
+	err = db.Migrate()
 	if err != nil {
 		slog.Error("Error migrating database", "error", err)
 		panic(err)
