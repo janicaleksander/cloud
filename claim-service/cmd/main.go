@@ -24,8 +24,7 @@ func main() {
 		if err != nil {
 			slog.Error("Error loading .env file", "error", err)
 			panic(err)
-		}
-	*/
+		}*/
 	db, err := infrastructure.NewDB()
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)

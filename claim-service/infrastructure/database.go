@@ -41,5 +41,6 @@ func NewDB() (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
+	slog.Info("Database connection established successfully")
 	return db, nil
 }
